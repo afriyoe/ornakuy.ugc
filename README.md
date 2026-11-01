@@ -1,46 +1,60 @@
-# Sales Roblox Ornakuy
+# ORNA KUY — Dashboard Analisis Penjualan Roblox UGC
 
-Dashboard brand UGC Roblox untuk grup 950136185. Semua isi dashboard dan datanya ada di satu file, `index.html`.
+Dashboard satu halaman untuk brand pakaian UGC Roblox **ORNA KUY** (TikTok group 950136185).
 
-Ada 3 menu utama:
+## Fitur
 
-- **Analisis:** penjualan dari file ekspor SalesV2 (ringkasan, produk, warna & model, waktu & sesi, pembeli).
-- **Marketing:** catatan postingan TikTok (tanggal, username, link, views, like, komentar, share, save) dan performa per akun.
-- **Keuangan:** pembukuan payout, uang masuk, dan uang keluar, dengan saldo dan rekap bulanan.
+- **Analisis Penjualan** — revenue, pcs, pembeli, tren harian/mingguan/bulanan
+- **Produk & Kategori** — ranking produk dengan sort interaktif, Publishing Advance Rebates
+- **Top Pembeli** — 10 pembeli terbanyak + distribusi frekuensi
+- **Marketing** — tracking postingan endorse (eksternal) & internal TikTok
+- **Keuangan** — pembukuan pemasukan vs pengeluaran, KPI, transaksi cepat
+- **TikTok Ads** — detail pengeluaran iklan
 
-Tombol **Export Spreadsheet (.xlsx)** mengunduh semua data ke file Excel.
+## Cara Build
 
-> Repo ini sebaiknya **privat**. Datanya berisi User ID pembeli dan angka penjualan.
+Dashboard dibangun dari file sumber asli (`source/index.html`) melalui rantai patch Python:
 
-## Cara membuka dashboard
+```bash
+# Build dari awal (patch1 → patch20)
+python3 -I patches/patch.py source/index.html build/new.html
+python3 -I patches/patch2.py build/new.html build/new2.html
+# ... seterusnya sampai patch20
+python3 -I patches/patch20.py build/new19.html build/new20.html
 
-1. Buka repo ini di GitHub, klik `index.html`, lalu klik ikon **Download raw file**.
-2. Klik dua kali file yang sudah diunduh. Dashboard terbuka di browser (Chrome, Edge, atau Safari).
+# Hasil akhir
+cp build/new20.html index.html
+```
 
-Saat dibuka, browser perlu koneksi internet untuk memuat grafik dan font.
+Atau jalankan build script:
 
-## Cara update data
+```bash
+bash build.sh
+```
 
-1. Di Roblox Creator Dashboard, ekspor **Sales** grup (file `SalesV2_Group950136185_....csv` atau `.zip`).
-2. Buka `index.html`, lalu klik **Upload CSV / ZIP**. Bisa juga dengan menyeret file ke halaman. Bisa beberapa file sekaligus.
-3. Dashboard langsung menggabungkan data baru dengan data lama dan menampilkan jumlah transaksi baru serta item baru.
+## Struktur File
 
-Catatan di menu Marketing dan Keuangan juga bisa ditambah, diedit, dan dihapus langsung di dashboard.
+```
+├── index.html              # Dashboard final (hasil build)
+├── build.sh                # Build script otomatis
+├── source/
+│   └── index.html          # File sumber asli (ekspor SalesV2)
+├── patches/
+│   ├── patch.py            # Patch 1: setup awal
+│   ├── patch2.py           # Patch 2
+│   ├── ...
+│   └── patch20.py          # Patch 20: Publishing Advance Rebates
+└── README.md
+```
 
-Data hasil upload dan catatan baru disimpan **di browser itu saja**. Supaya tersimpan permanen dan sama di semua perangkat:
+## Data
 
-4. Di menu Analisis, klik **Unduh dashboard (.html)**. Hasilnya file `index.html` baru yang sudah berisi semua data: sales, marketing, dan keuangan.
-5. Di GitHub, klik **Add file → Upload files**, upload `index.html` baru itu (file lama otomatis tergantikan), lalu klik **Commit changes**.
+Data penjualan di-embed langsung dalam `<script>` tags di HTML:
+- `ornakuy-data` — data sales dari ekspor SalesV2
+- `ornakuy-records` — records: endorse posts, keuangan, pembukuan, akun internal
 
-Tombol **Kembali ke data bawaan** menghapus data yang tersimpan di browser dan kembali ke data yang ada di dalam file.
+## Teknologi
 
-## Cara data digabung
-
-- Setiap ekspor SalesV2 dianggap lengkap untuk rentang waktunya sendiri. Transaksi di rentang itu diganti dengan isi ekspor, dan transaksi di luar rentang itu (misalnya bulan-bulan sebelumnya) tetap disimpan.
-- Upload file yang sama dua kali tidak membuat data dobel.
-- Upload ekspor lama tidak menghapus data yang lebih baru.
-- Awalan "ORNA |" di nama item dihapus otomatis.
-
-## Folder `data/` (opsional)
-
-Kalau mau menyimpan arsip file ekspor mentah, upload ke folder `data/`. Dashboard tidak membaca folder ini, isinya hanya untuk cadangan.
+- HTML/CSS/JS murni (single file, tanpa framework)
+- Chart.js 4.4.1 (CDN)
+- Responsive desktop layout
