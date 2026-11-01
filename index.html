@@ -360,6 +360,51 @@ a.ulink:hover{text-decoration:underline}
 #apifyModal .am-prog{margin-top:12px;font-size:13px;color:var(--muted)}
 #apifyModal .am-prog{margin-top:12px;font-size:13px;color:var(--muted)}
 :root{--r:6px}
+/* ---------- tampilan HP ---------- */
+.m-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+@media (max-width:760px){
+  .wrap{padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-block:12px calc(86px + env(safe-area-inset-bottom,0px));gap:22px}
+  header{gap:10px}
+  header>.eyebrow{display:none}
+  h1{font-size:24px}
+  h2{font-size:18px}
+  .m-head .mn-right{margin:0;width:auto;padding:0;gap:6px;flex-wrap:nowrap}
+  .m-head .mn-right .btn{padding:8px 9px;font-size:10.5px;white-space:nowrap}
+  .m-head h1{line-height:1.05}
+  .m-head .save-st{display:none}
+  #xlsxBtn{font-size:0!important;padding:8px 10px!important}
+  #xlsxBtn::after{content:"XLSX";font:600 10.5px var(--mono)}
+  .m-status{font-size:12px;color:var(--muted);margin-top:-4px}
+  .m-status:empty{display:none}
+  .m-status.ok{color:var(--good)} .m-status.err{color:var(--bad)}
+  .mainnav{position:fixed;left:0;right:0;bottom:0;z-index:40;margin:0;display:grid;grid-template-columns:repeat(4,1fr);background:var(--panel);border-top:1px solid var(--line);border-bottom:0;padding:0 max(4px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(4px,env(safe-area-inset-left,0px));box-shadow:0 -10px 30px -18px rgba(0,0,0,.7)}
+  .mainnav>button{position:relative;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 10.5px/1 var(--mono)!important;letter-spacing:.04em;padding:9px 2px 10px!important;margin:0;border-bottom:0;border-top:3px solid transparent;text-align:center}
+  .mainnav>button::before{content:"";width:22px;height:22px;background:currentColor;display:block}
+  .mainnav>button[data-m=ana]::before{-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20V10M10 20V4M16 20v-7M22 20H2'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20V10M10 20V4M16 20v-7M22 20H2'/%3E%3C/svg%3E") center/contain no-repeat}
+  .mainnav>button[data-m=mk]::before{-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 11v3a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z'/%3E%3Cpath d='M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 11v3a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z'/%3E%3Cpath d='M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12'/%3E%3C/svg%3E") center/contain no-repeat}
+  .mainnav>button[data-m=fin]::before{-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='6' width='20' height='14' rx='2'/%3E%3Cpath d='M2 10h20M16 15h2M6 6V4h12v2'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='6' width='20' height='14' rx='2'/%3E%3Cpath d='M2 10h20M16 15h2M6 6V4h12v2'/%3E%3C/svg%3E") center/contain no-repeat}
+  .mainnav>button[data-m=plan]::before{-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14'/%3E%3C/svg%3E") center/contain no-repeat}
+  .mainnav>button[aria-selected="true"]{color:var(--accent);border-top-color:var(--accent)}
+  .mainnav .nav-badge{position:absolute;top:4px;left:calc(50% + 6px);margin:0}
+  .rangebar{padding:8px 10px;gap:8px}
+  .rangebar .f-dates,.rangebar .f-group{display:none}
+  .rangebar.open .f-dates,.rangebar.open .f-group{display:flex}
+  .range-info{order:-1;flex-basis:100%;margin:0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:12.5px}
+  .range-info::after{content:"Ubah ▾";font:600 11px var(--mono);color:var(--accent)}
+  .rangebar.open .range-info::after{content:"Tutup ▴"}
+  .filter{padding:10px 12px}
+  .vtabs{margin:2px -12px -10px}
+  .datapanel{padding:10px 12px}
+  .panel{padding:14px}
+  .kpi{padding:12px 13px}
+  .pend-toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .sec-head{gap:8px}
+  .controls{width:100%}
+  .tabs{flex-wrap:wrap}
+  .linkbar .upd-btn{margin-left:0;width:100%;justify-content:flex-end}
+  dialog.post-dlg{width:calc(100vw - 16px);max-height:calc(100vh - 16px);padding:12px}
+  .pv-media{max-height:60vh}
+}
 .goal-ov{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:radial-gradient(120% 90% at 50% 0%,#2a0f22 0%,#0d0b12 60%);overflow:auto}
 .goal-card{width:min(720px,100%);display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;color:#f6f2fb}
 .goal-kick{font:700 13px/1 var(--mono);letter-spacing:.32em;text-transform:uppercase;color:#ff5cab}
@@ -948,7 +993,7 @@ let STORED = null; try{ const x=JSON.parse(localStorage.getItem(STORE_KEY)||'nul
 // Google Sheets = master data di versi GitHub: salinan terakhir dari spreadsheet dipakai lebih dulu
 const SHC=(()=>{ try{ if(window.claude) return null; const c=JSON.parse(localStorage.getItem('ornakuy-sheet')||'null'); if(!c||!c.url||!c.key) return null; return JSON.parse(localStorage.getItem('ornakuy-sheet-cache')||'null'); }catch(e){ return null; } })();
 const SHC_STATE={stamp:SHC?SHC.stamp||0:0};
-const SALES_SRC = (SHC&&validSales(SHC.sales))?['sheet',SHC.sales]:[['file',FILE_SALES],['embed',EMBED],['cache',STORED&&STORED.raw]].filter(c=>validSales(c[1]))
+const SALES_SRC = [['file',FILE_SALES],['embed',EMBED],['cache',STORED&&STORED.raw]].filter(c=>validSales(c[1]))
   .sort((a,b)=>lastTs(b[1])-lastTs(a[1]) || b[1].tx.length-a[1].tx.length)[0] || ['none',{p:[],b:[],g:[],tx:[]}];
 const USE_STORED = SALES_SRC[0]==='cache';
 const RAW = SALES_SRC[1];
@@ -960,7 +1005,8 @@ let ART=null;
 const ART_READY = (window.claude && typeof window.claude.use==='function') ? window.claude.use('artifact').then(a=>{ ART=a; return a; }).catch(()=>null) : Promise.resolve(null);
 async function persist({sales,records}){
   try{ if(sales) localStorage.setItem(STORE_KEY,JSON.stringify({savedAt:Date.now(),raw:sales})); if(records) localStorage.setItem(REC_KEY,JSON.stringify(records)); }catch(e){}
-  if(SHEET_ON()){ RECS.book=BOOK; const sheets=records?shBuildRecs():{}; if(sales) sheets['Sales']=shSalesSheet(sales); const ok=await shPush(sheets,sales); return {ok:!!ok,where:'sheet'}; }
+  // data sales (revenue) tidak dikirim ke spreadsheet: tetap lewat upload CSV/ZIP dan file dashboard
+  if(records&&SHEET_ON()){ RECS.book=BOOK; const ok=await shPush(shBuildRecs()); return {ok:!!ok,where:'sheet'}; }
   const a=await ART_READY;
   if(a){ // the artifact saves state by publishing a new version of itself with the data embedded
     try{ await a.publish(buildHtml(sales||PENDING||RAW)); return {ok:true,where:'artifact'}; }
@@ -1380,7 +1426,7 @@ async function handleFiles(files){
     dpMsg(sum+' Menyimpan…','info');
     const res=await persist({sales:cur});
     let cached=false; try{ cached=lastTs(JSON.parse(localStorage.getItem(STORE_KEY)).raw)===lastTs(cur); }catch(e){}
-    if(res.where==='artifact'||res.where==='sheet'||cached){ try{ sessionStorage.setItem('ornakuy-msg',JSON.stringify({sum,where:res.where})); }catch(e){} location.reload(); }
+    if(res.where==='artifact'||cached){ try{ sessionStorage.setItem('ornakuy-msg',JSON.stringify({sum,where:res.where})); }catch(e){} location.reload(); }
     else dpMsg(sum+' Data belum bisa disimpan di sini, jadi klik "Unduh dashboard (.html)" agar data barunya tidak hilang.','err');
   }catch(err){ dpMsg(err.message||String(err),'err'); }
 }
@@ -3419,19 +3465,18 @@ function shParse(j){
     }catch(e){ out.err='Tab Transaksi: '+(e.message||e); } }
   const mk=sheetsToMarketing(S); if(mk.mk) out.mk=mk.mk; if(mk.int) out.int=mk.int;
   if(Array.isArray(S['Planning'])){ const row=S['Planning'].slice(1).find(r=>r[0]==='plan'); if(row){ try{ out.plan=row[1]?JSON.parse(row[1]):null; }catch(e){} } }
-  if(has('Sales')){ const sl=shSalesFrom(S['Sales']); if(validSales(sl)) out.sales=sl; }
-  out.empty=!out.book&&!out.sales&&!out.mk; return out;
+  out.empty=!out.book&&!out.mk; return out;
 }
-function shSaveCache(sales){ try{ localStorage.setItem('ornakuy-sheet-cache',JSON.stringify({stamp:SHC_STATE.stamp,recs:{...RECS,book:BOOK},sales:sales||(SHC&&SHC.sales)||null})); }catch(e){ setSaveSt('Salinan lokal spreadsheet terlalu besar untuk browser ini','err'); } }
+function shSaveCache(){ try{ localStorage.setItem('ornakuy-sheet-cache',JSON.stringify({stamp:SHC_STATE.stamp,recs:{...RECS,book:BOOK}})); }catch(e){ setSaveSt('Salinan lokal spreadsheet terlalu besar untuk browser ini','err'); } }
 async function shCall(params){ const c=shCfg(); const r=await fetch(c.url+(c.url.includes('?')?'&':'?')+new URLSearchParams({...params,key:c.key})); const j=await r.json(); if(!j.ok) throw new Error(j.error||'gagal'); return j; }
 let shQueue=Promise.resolve();
-function shPush(sheets,sales,force){
+function shPush(sheets,force){
   const c=shCfg(); shDot('wait','Menyimpan ke spreadsheet…'); setSaveSt('Menyimpan ke spreadsheet…');
   shQueue=shQueue.then(async()=>{
     const r=await fetch(c.url,{method:'POST',body:JSON.stringify({key:c.key,action:'write',base:force?0:SHC_STATE.stamp,sheets})}); const j=await r.json();
     if(j.conflict){ shDot('err','Spreadsheet berubah'); setSaveSt('Spreadsheet sudah diubah dari tempat lain. Klik Spreadsheet → Muat dari spreadsheet dulu, lalu ulangi.','err'); return false; }
     if(!j.ok) throw new Error(j.error||'gagal');
-    SHC_STATE.stamp=j.stamp; shSaveCache(sales&&validSales(sales)?sales:null); shDot('ok','Tersambung · tersimpan'); setSaveSt('Tersimpan ke spreadsheet','ok'); return true;
+    SHC_STATE.stamp=j.stamp; shSaveCache(); shDot('ok','Tersambung · tersimpan'); setSaveSt('Tersimpan ke spreadsheet','ok'); return true;
   }).catch(e=>{ shDot('err',String(e.message||e)); setSaveSt('Gagal simpan ke spreadsheet: '+(e.message||e)+'. Data tetap tersimpan di browser ini.','err'); return false; });
   return shQueue;
 }
@@ -3440,7 +3485,7 @@ async function shLoad(reload){
   if(P.empty) return {empty:true};
   const recs={v:1,updatedAt:j.stamp||Date.now(),mk:P.mk||RECS.mk,fin:[],int:P.int||RECS.int,plan:'plan' in P?P.plan:RECS.plan,media:RECS.media,book:P.book||BOOK};
   SHC_STATE.stamp=j.stamp||0;
-  localStorage.setItem('ornakuy-sheet-cache',JSON.stringify({stamp:SHC_STATE.stamp,recs,sales:P.sales||(SHC&&SHC.sales)||null}));
+  localStorage.setItem('ornakuy-sheet-cache',JSON.stringify({stamp:SHC_STATE.stamp,recs}));
   if(reload) location.reload(); return {ok:true,err:P.err};
 }
 (async function shBoot(){
@@ -3480,9 +3525,9 @@ function shModal(){
       try{ const j=await shCall({action:'ping'}); st(`Tersambung ke "${j.name}". ${j.stamp?'Klik Muat dari spreadsheet untuk memakai datanya.':'Spreadsheet masih kosong: klik Kirim semua data.'}`,'ok'); shDot(j.stamp?'wait':'err',''); }
       catch(err){ st('Gagal: '+(err.message||err)+'. Cek URL, kata sandi, dan akses "Anyone".','err'); } return; }
     if(a==='load'){ st('Memuat…'); try{ const r=await shLoad(false); if(r.empty){ st('Spreadsheet masih kosong. Klik Kirim semua data dulu.','err'); return; } st('Data dimuat. Memuat ulang halaman…','ok'); location.reload(); }catch(err){ st('Gagal: '+(err.message||err),'err'); } return; }
-    if(a==='push'){ if(!await confirmBox('Kirim semua data ke spreadsheet?','Tab Transaksi, Kategori, Pending, Detail TikTok Ads, Postingan, Akun Internal, Planning, dan Sales di spreadsheet akan ditimpa dengan data dashboard ini.','Kirim')) return;
-      st('Mengirim… (data sales cukup besar, tunggu sebentar)'); RECS.book=BOOK; const sheets={...shBuildRecs(),Sales:shSalesSheet(PENDING||RAW)};
-      const ok=await shPush(sheets,PENDING||RAW,true); st(ok?'✓ Semua data terkirim. Spreadsheet sekarang jadi master data.':'Gagal mengirim. Lihat pesan di kanan atas.',ok?'ok':'err'); return; }
+    if(a==='push'){ if(!await confirmBox('Kirim semua data ke spreadsheet?','Tab Transaksi, Kategori, Pending, Detail TikTok Ads, Postingan, Akun Internal, dan Planning di spreadsheet akan ditimpa dengan data dashboard ini. Data sales (revenue) tidak dikirim.','Kirim')) return;
+      st('Mengirim…'); RECS.book=BOOK;
+      const ok=await shPush(shBuildRecs(),true); st(ok?'✓ Semua data terkirim. Spreadsheet sekarang jadi master data.':'Gagal mengirim. Lihat pesan di kanan atas.',ok?'ok':'err'); return; }
   });
 }
 $('shBtn').addEventListener('click',shModal);
@@ -3504,6 +3549,20 @@ $('shBtn').addEventListener('click',shModal);
   const go=$('goalGo'); setTimeout(()=>go.focus({preventScroll:true}),50);
   ov.addEventListener('keydown',e=>{ if(e.key==='Tab'){ e.preventDefault(); go.focus(); } });
   go.addEventListener('click',()=>{ ov.classList.add('out'); document.documentElement.style.overflow=''; setTimeout(()=>ov.remove(),matchMedia('(prefers-reduced-motion:reduce)').matches?0:340); });
+})();
+
+// ===== tampilan HP: judul + tombol di atas, menu utama di bawah =====
+(function(){
+  const nav=$('mainnav'), mr=nav.querySelector('.mn-right'), h1=document.querySelector('header h1'); if(!mr||!h1) return;
+  const head=document.createElement('div'); head.className='m-head'; h1.before(head); head.appendChild(h1);
+  const st=document.createElement('div'); st.className='m-status'; head.after(st);
+  const mq=matchMedia('(max-width:760px)');
+  const place=()=>{ if(mq.matches){ if(mr.parentElement!==head) head.appendChild(mr); } else if(mr.parentElement!==nav) nav.appendChild(mr); };
+  place(); mq.addEventListener?mq.addEventListener('change',place):mq.addListener(place);
+  // pesan simpan tetap terlihat di HP
+  const ss=$('saveSt'); new MutationObserver(()=>{ st.textContent=ss.textContent; st.className='m-status '+(ss.className.match(/\b(ok|err)\b/)||[''])[0]; }).observe(ss,{childList:true,characterData:true,subtree:true,attributes:true});
+  $('rangeInfo').addEventListener('click',()=>{ if(mq.matches) $('rangebar').classList.toggle('open'); });
+  nav.addEventListener('click',e=>{ if(mq.matches&&e.target.closest('button[data-m]')) window.scrollTo({top:0}); });
 })();
 
 // ===== Marketing: Checkbox + Apify Update =====
