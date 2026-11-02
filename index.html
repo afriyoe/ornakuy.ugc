@@ -539,6 +539,8 @@ a.ulink:hover{text-decoration:underline}
 @media (max-width:700px){.rbx-form{grid-template-columns:1fr 1fr}.rbx-hint{grid-column:1/-1}}
 #view-fin[data-fintab="rbx"]>:not(#finTabs):not(#robuxSec),#view-fin:not([data-fintab="rbx"])>#robuxSec{display:none!important}
 .kpis.rbx-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.kpis.biz-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:1000px){.kpis.biz-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:700px){.kpis.rbx-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .biz-set{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px;align-items:end;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel-2)}
 .biz-set label{display:flex;flex-direction:column;gap:5px;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
@@ -994,6 +996,7 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
       <div id="rbxChecks"></div>
     </div>
     <p class="fmsg" id="rbxSaved" role="status" aria-live="polite" style="margin:8px 0 0"></p>
+    <div id="pubWarn" class="rbx-sync warn" hidden></div>
     <div id="rbxBody"></div>
     <div id="bizBody"></div>
   </section>
@@ -2576,6 +2579,7 @@ function rebSeries(){ if(REB) return REB; const m=new Map(), ts=[], cum=[]; let 
   REB={ts,cum,items:m.size,total:s,capSum}; return REB; }
 function rebAt(t){ const S=rebSeries(); let lo=0, hi=S.ts.length-1, k=-1; while(lo<=hi){ const mid=(lo+hi)>>1; if(S.ts[mid]<=t){ k=mid; lo=mid+1; } else hi=mid-1; } return k<0?0:S.cum[k]; }
 function renderRobux(){
+  renderPubWarn();
   if($('view-fin').dataset.fintab!=='rbx') return;
   renderBiz();
   const L=RBX(), salesEnd=TX.length?TX[TX.length-1].ts:0, first=TX.length?TX[0].ts:0, f=$('rbxForm');
@@ -2658,7 +2662,15 @@ function renderRobux(){
 // RECS.proj = {growth:null|% per bulan, mk:'data'|'pct', mkPct:%, months:3|6|12}
 const BIZ_MK=['Endorse','Iklan TikTok'];
 let bizC=null, bizSetOpen=false;
-const PROJ=()=>{ const p=RECS.proj||{}; return {growth:p.growth==null||p.growth===''?null:+p.growth, mk:p.mk==='pct'?'pct':'data', mkPct:p.mkPct==null||p.mkPct===''?30:+p.mkPct, months:[3,6,12].includes(+p.months)?+p.months:3}; };
+const PROJ=()=>{ const p=RECS.proj||{}, n=(v,d)=>v==null||v===''||!isFinite(+v)?d:+v; return {growth:p.growth==null||p.growth===''?null:+p.growth, mk:p.mk==='pct'?'pct':'data', mkPct:n(p.mkPct,30), months:[3,6,12].includes(+p.months)?+p.months:3,
+  pubMax:n(p.pubMax,5), pubAdv:n(p.pubAdv,600), pubFee:n(p.pubFee,80)}; };
+// produk baru per hari = produk yang pertama kali muncul di data sales (dari file download Roblox) pada hari itu
+let PUB=null;
+function pubData(){ if(PUB) return PUB; const first=new Map(); for(const r of TX) if(!first.has(r.p)) first.set(r.p,r.d);
+  const day=new Map(); first.forEach((d,p)=>{ const a=day.get(d)||[]; a.push(p); day.set(d,a); }); PUB={first,day}; return PUB; }
+function pubWarnDays(){ const P=PROJ(), {day}=pubData(); return [addDays(MAX,-1),MAX].map(d=>[d,(day.get(d)||[]).length]).filter(x=>x[1]>P.pubMax); }
+function renderPubWarn(){ const w=pubWarnDays(), el=$('pubWarn'), P=PROJ(); if(el){ el.hidden=!w.length; el.innerHTML=w.length?`⚠ <b>Publish melebihi batas ${P.pubMax} produk/hari:</b> `+w.map(([d,n])=>`${dLabel(d)} terdeteksi ${n} produk baru (modal ${R(n*(P.pubAdv+P.pubFee))})`).join(' · ')+'. Detail di tabel Publish produk baru.':''; }
+  const b=document.querySelector('#finTabs [data-t=rbx]'); if(b) b.innerHTML='Robux &amp; proyeksi'+(w.length?' <span class="nav-badge" title="Publish melebihi batas">!</span>':''); }
 const mLabel=m=>`${BULAN_L[+m.slice(5)-1]} ${m.slice(0,4)}`;
 const nextM=m=>{ const [y,mm]=m.split('-').map(Number); return mm===12?`${y+1}-01`:`${y}-${String(mm+1).padStart(2,'0')}`; };
 const daysIn=m=>new Date(Date.UTC(+m.slice(0,4),+m.slice(5),0)).getUTCDate();
@@ -2681,34 +2693,45 @@ function renderBiz(){
   // rasio marketing dari data: 30 hari terakhir
   const from30=addDays(MAX,-29); let rev30=0, mk30=0; for(const r of TX) if(r.d>=from30) rev30+=r.rev; for(const r of bookRows()) if(BIZ_MK.includes(r.cat)&&r.d&&r.d>=from30&&r.d<=MAX) mk30+=r.out||0;
   const ratioData=rev30?mk30/(rev30*rate):0, ratio=P.mk==='pct'?P.mkPct/100:ratioData;
-  const base=bizAvg(7), rows=[];
+  const base=bizAvg(7), rows=[], {day:PD}=pubData(), pubM=new Map(); PD.forEach((a,d)=>pubM.set(d.slice(0,7),(pubM.get(d.slice(0,7))||0)+a.length));
+  const pubCost=n=>n*P.pubFee*rate; // bersih: publishing advance (600) kembali lewat rebates, yang hilang biaya upload (80)
   for(const m of months){ const x=A.get(m), k=MK.get(m)||{endorse:0,iklan:0}, mk=k.endorse+k.iklan;
-    rows.push({m,act:true,part:m===curM||x.days.size<daysIn(m),days:x.days.size,pcs:x.pcs,price:x.price,rev:x.rev,end:k.endorse,ikl:k.iklan,mk}); }
+    rows.push({m,act:true,part:m===curM||x.days.size<daysIn(m),days:x.days.size,pcs:x.pcs,price:x.price,rev:x.rev,end:k.endorse,ikl:k.iklan,mk,pub:pubM.get(m)||0}); }
   // bulan berjalan: aktual + sisa hari, lalu bulan-bulan berikutnya dengan growth per bulan
   const proj=[]; { const x=A.get(curM)||{pcs:0,price:0,rev:0,days:new Set()}, k=MK.get(curM)||{endorse:0,iklan:0}, rest=daysIn(curM)-(+MAX.slice(8));
-    const rev=x.rev+base.rev*rest; proj.push({m:curM,est:true,pcs:x.pcs+base.pcs*rest,price:x.price+base.price*rest,rev,mk:Math.max(k.endorse+k.iklan,rev*rate*ratio)}); }
-  let m=curM; for(let i=1;i<=P.months;i++){ m=nextM(m); const f=Math.pow(1+g,i), d=daysIn(m), rev=base.rev*d*f; proj.push({m,est:true,pcs:base.pcs*d*f,price:base.price*d*f,rev,mk:rev*rate*ratio}); }
-  const tr=(r,cls)=>{ const rp=r.rev*rate, pct=rp?r.mk/rp:0; return `<tr class="${cls||''}"><td class="txt" style="text-align:left">${mLabel(r.m)}${r.act?(r.part?` <span class="muted">· ${r.days} hari</span>`:''):' <span class="muted">· proyeksi</span>'}</td><td>${fmt(r.pcs)}</td><td>${R(r.price)}</td><td>${R(r.rev)}</td><td><b>${Rp(rp)}</b></td><td>${Rp(r.mk)}${r.act&&r.mk?`<br><span class="muted">endorse ${Rp(r.end)} · iklan ${Rp(r.ikl)}</span>`:''}</td><td>${rp?(pct*100).toFixed(1).replace('.',',')+'%':'–'}</td><td><b>${Rp(rp-r.mk)}</b></td></tr>`; };
-  const tot=proj.slice(1).reduce((a,r)=>({rev:a.rev+r.rev*rate,mk:a.mk+r.mk}),{rev:0,mk:0});
-  el.innerHTML=`<div class="panel" style="margin-top:14px"><div class="sec-head" style="margin:0"><div><h3 style="color:var(--fg)">Proyeksi bisnis: sales, revenue &amp; marketing</h3>
+    const rev=x.rev+base.rev*rest; proj.push({m:curM,est:true,pcs:x.pcs+base.pcs*rest,price:x.price+base.price*rest,rev,mk:Math.max(k.endorse+k.iklan,rev*rate*ratio),pub:(pubM.get(curM)||0)+P.pubMax*rest}); }
+  let m=curM; for(let i=1;i<=P.months;i++){ m=nextM(m); const f=Math.pow(1+g,i), d=daysIn(m), rev=base.rev*d*f; proj.push({m,est:true,pcs:base.pcs*d*f,price:base.price*d*f,rev,mk:rev*rate*ratio,pub:P.pubMax*d}); }
+  const tr=(r,cls)=>{ const rp=r.rev*rate, pct=rp?r.mk/rp:0; return `<tr class="${cls||''}"><td class="txt" style="text-align:left">${mLabel(r.m)}${r.act?(r.part?` <span class="muted">· ${r.days} hari</span>`:''):' <span class="muted">· proyeksi</span>'}</td><td>${fmt(r.pcs)}</td><td>${R(r.price)}</td><td><b>${Rp(rp)}</b><br><span class="muted">${R(r.rev)}</span></td><td>${Rp(r.mk)}${r.act&&r.mk?`<br><span class="muted">endorse ${Rp(r.end)} · iklan ${Rp(r.ikl)}</span>`:''}</td><td>${rp?(pct*100).toFixed(1).replace('.',',')+'%':'–'}</td><td>${fmt(r.pub)} produk<br><span class="muted">${Rp(pubCost(r.pub))}</span></td><td><b>${Rp(rp-r.mk-pubCost(r.pub))}</b></td></tr>`; };
+  const tot=proj.slice(1).reduce((a,r)=>({rev:a.rev+r.rev*rate,mk:a.mk+r.mk,pub:a.pub+pubCost(r.pub),n:a.n+r.pub}),{rev:0,mk:0,pub:0,n:0});
+  const last14=[...Array(14).keys()].map(i=>addDays(MAX,-i)), nameOf=pi=>RAW.p[pi][0];
+  const pubHtml=`<div class="panel" style="margin-top:14px"><h3 style="color:var(--fg)">Publish produk baru (14 hari terakhir)</h3>
+    <p class="note" style="margin:4px 0 0">Batas ${P.pubMax} produk/hari = modal ${R(P.pubMax*(P.pubAdv+P.pubFee))}/hari (${fmt(P.pubMax)} × (R$${fmt(P.pubAdv)} + R$${fmt(P.pubFee)})). Produk baru terdeteksi saat pertama kali terjual di file download Roblox, jadi produk yang belum laku belum terhitung.</p>
+    <div class="tbl-wrap" style="max-height:none"><table id="pubTable"><thead><tr><th style="text-align:left">Tanggal</th><th>Produk baru</th><th>Modal publish</th><th>Bersih (setelah rebates)</th><th style="text-align:left">Status</th></tr></thead><tbody>
+    ${last14.map(d=>{ const a=PD.get(d)||[], n=a.length, over=n>P.pubMax; return `<tr${over?' class="biz-proj"':''}><td class="txt" style="text-align:left">${dLabelY(d)}${d===MAX?' <span class="muted">· data s/d '+LAST_HM+'</span>':''}</td><td title="${esc(a.map(nameOf).join('\n'))}"><b>${n}</b></td><td>${R(n*(P.pubAdv+P.pubFee))}</td><td>${R(n*P.pubFee)}</td><td style="text-align:left;font-family:var(--body)">${n?over?`⚠ lebih ${n-P.pubMax} dari batas`:'✓ sesuai batas':'–'}</td></tr>`; }).join('')}
+    </tbody></table></div></div>`;
+  el.innerHTML=pubHtml+`<div class="panel" style="margin-top:14px"><div class="sec-head" style="margin:0"><div><h3 style="color:var(--fg)">Proyeksi bisnis: sales, revenue &amp; marketing</h3>
       <p class="note" style="margin:4px 0 0">Dasar: rata-rata 7 hari terakhir (${fmt(base.pcs)} pcs, ${R(base.rev)} revenue per hari), growth ${(g*100).toFixed(1).replace('.',',')}% per bulan${P.growth==null?' (dari data: revenue per hari '+(gm?mLabel(gm[1])+' vs '+mLabel(gm[0]):'–')+')':' (diatur manual)'}. Biaya marketing = Endorse + Iklan TikTok dari Semua transaksi, ${P.mk==='pct'?`diatur ${fmt(P.mkPct)}% dari revenue`:`mengikuti data 30 hari terakhir (${(ratioData*100).toFixed(1).replace('.',',')}% dari revenue)`}. Rate ${fmt(rate)}.</p></div>
       <div class="controls"><button class="btn" type="button" id="bizSetBtn" aria-expanded="${bizSetOpen}">⚙ Atur proyeksi</button></div></div>
     <form id="bizSet" class="biz-set" ${bizSetOpen?'':'hidden'} autocomplete="off">
       <label>Growth revenue per bulan (%)<input name="growth" inputmode="decimal" placeholder="otomatis: ${(gData*100).toFixed(1).replace('.',',')}" value="${P.growth==null?'':String(P.growth).replace('.',',')}"></label>
       <label>Biaya marketing<select name="mk"><option value="data"${P.mk==='data'?' selected':''}>Ikuti data (${(ratioData*100).toFixed(1).replace('.',',')}%)</option><option value="pct"${P.mk==='pct'?' selected':''}>Persen dari revenue</option></select></label>
       <label>Persen marketing (%)<input name="mkPct" inputmode="decimal" value="${String(P.mkPct).replace('.',',')}" ${P.mk==='pct'?'':'disabled'}></label>
+      <label>Maks publish per hari<input name="pubMax" inputmode="numeric" value="${P.pubMax}"></label>
+      <label>Publishing advance (R$)<input name="pubAdv" inputmode="numeric" value="${P.pubAdv}"></label>
+      <label>Biaya upload (R$)<input name="pubFee" inputmode="numeric" value="${P.pubFee}"></label>
       <label>Jumlah bulan<select name="months">${[3,6,12].map(n=>`<option value="${n}"${P.months===n?' selected':''}>${n} bulan</option>`).join('')}</select></label>
       <p class="note">Kosongkan growth untuk kembali ke angka otomatis dari data. Perubahan langsung dihitung ulang dan tersimpan.</p></form>
-    <div class="kpis rbx-kpis" style="margin-top:12px">
+    <div class="kpis biz-kpis" style="margin-top:12px">
       <div class="kpi"><span class="eyebrow">Revenue ${P.months} bulan ke depan</span><span class="v">${Rp(tot.rev)}</span><span class="s">${R(tot.rev/rate)}</span></div>
       <div class="kpi"><span class="eyebrow">Biaya marketing</span><span class="v">${Rp(tot.mk)}</span><span class="s">${tot.rev?(tot.mk/tot.rev*100).toFixed(1).replace('.',','):0}% dari revenue</span></div>
-      <div class="kpi hl"><span class="eyebrow">Sisa setelah marketing</span><span class="v">${Rp(tot.rev-tot.mk)}</span><span class="s">belum dikurangi biaya lain</span></div>
+      <div class="kpi"><span class="eyebrow">Biaya publish (bersih)</span><span class="v">${Rp(tot.pub)}</span><span class="s">${fmt(tot.n)} produk × R$${fmt(P.pubFee)} · modal ${R(P.pubMax*(P.pubAdv+P.pubFee))}/hari</span></div>
+      <div class="kpi hl"><span class="eyebrow">Sisa setelah marketing &amp; publish</span><span class="v">${Rp(tot.rev-tot.mk-tot.pub)}</span><span class="s">belum dikurangi biaya lain</span></div>
       <div class="kpi"><span class="eyebrow">Growth dipakai</span><span class="v">${(g*100).toFixed(1).replace('.',',')}%</span><span class="s">per bulan · ${P.growth==null?'otomatis dari data':'manual'}</span></div>
     </div>
-    <div class="tbl-wrap" style="max-height:none"><table id="bizTable"><thead><tr><th style="text-align:left">Bulan</th><th>Sales (pcs)</th><th>Penjualan</th><th>Revenue</th><th>Revenue (Rp)</th><th>Biaya marketing</th><th>% revenue</th><th>Sisa setelah marketing</th></tr></thead><tbody>
+    <div class="tbl-wrap" style="max-height:none"><table id="bizTable"><thead><tr><th style="text-align:left">Bulan</th><th>Sales (pcs)</th><th>Penjualan</th><th>Revenue</th><th>Biaya marketing</th><th>% revenue</th><th>Publish</th><th>Sisa</th></tr></thead><tbody>
       ${rows.map(r=>tr(r)).join('')}${proj.map(r=>tr(r,'biz-proj')).join('')}
     </tbody></table></div>
-    <p class="note" style="margin:6px 0 0">Baris berwarna = proyeksi. ${mLabel(curM)} (proyeksi) = aktual sampai ${dLabel(MAX)} + sisa hari dengan rata-rata 7 hari terakhir. Penjualan = harga yang dibayar pembeli; revenue = yang masuk ke grup.</p>
+    <p class="note" style="margin:6px 0 0">Baris berwarna = proyeksi. ${mLabel(curM)} (proyeksi) = aktual sampai ${dLabel(MAX)} + sisa hari dengan rata-rata 7 hari terakhir. Penjualan = harga yang dibayar pembeli; revenue = yang masuk ke grup. Publish = produk baru (aktual: terdeteksi dari data sales; proyeksi: batas ${P.pubMax}/hari) × biaya upload R$${fmt(P.pubFee)}, karena publishing advance R$${fmt(P.pubAdv)} kembali lewat rebates. Sisa = revenue − marketing − publish.</p>
     <div class="rbx-chart"><canvas id="bizChart" aria-label="Grafik revenue dan biaya marketing per bulan"></canvas></div></div>`;
   if(bizC) bizC.destroy();
   const all=[...rows.filter(r=>r.m!==curM),...proj], acc=css('--accent'), mut=css('--muted');
@@ -2720,7 +2743,8 @@ $('bizBody').addEventListener('click',e=>{ if(e.target.closest('#bizSetBtn')){ b
 let bizSaveT=0;
 $('bizBody').addEventListener('change',e=>{ const f=e.target.closest('#bizSet'); if(!f) return;
   const num=v=>{ const t=String(v||'').trim().replace(',','.'); return t===''?null:(isFinite(+t)?+t:null); };
-  RECS.proj={growth:num(f.elements.growth.value),mk:f.elements.mk.value,mkPct:num(f.elements.mkPct.value)??30,months:+f.elements.months.value};
+  RECS.proj={growth:num(f.elements.growth.value),mk:f.elements.mk.value,mkPct:num(f.elements.mkPct.value)??30,months:+f.elements.months.value,pubMax:num(f.elements.pubMax.value)??5,pubAdv:num(f.elements.pubAdv.value)??600,pubFee:num(f.elements.pubFee.value)??80};
+  renderPubWarn();
   setTimeout(()=>{ const a=document.activeElement&&document.activeElement.name; renderBiz(); if(a){ const x=$('bizSet')&&$('bizSet').elements[a]; if(x) x.focus({preventScroll:true}); } },0); clearTimeout(bizSaveT); bizSaveT=setTimeout(()=>saveRecords(),600); });
 function fmtDur(sec){ const h=Math.round(sec/3600); return h>=48?`${Math.round(h/24)} hari`:h>=1?`${h} jam`:`${Math.max(1,Math.round(sec/60))} menit`; }
 // ---------- isi catatan dari screenshot Configure → Revenue → Summary (OCR di browser) ----------
