@@ -525,6 +525,21 @@ a.ulink:hover{text-decoration:underline}
 #finTable tr.fe-del td{opacity:.45}
 #finTable tr.fe-del .fe{text-decoration:line-through}
 #finTable .fe-delbtn{all:unset;cursor:pointer;font:600 11px var(--mono);padding:5px 8px;border-radius:4px;border:1px solid var(--bad);color:var(--bad);white-space:nowrap}
+.cmodal .am-box.ads-box{max-width:640px;max-height:calc(100vh - 32px);overflow:auto}
+.ads-box table{width:100%;border-collapse:collapse;font-size:13px}.ads-box td,.ads-box th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+.ads-box td.n{text-align:right;font-family:var(--mono)}.ads-box tr.dup{opacity:.45}
+.rbx-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px;align-items:end}
+.rbx-form label{display:flex;flex-direction:column;gap:5px;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.rbx-form input{padding:9px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--fg);font:14px var(--body);min-width:0}
+.rbx-shot{grid-column:1/-1;font-size:13px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel-2)}.rbx-shot .bad{color:var(--accent);font-weight:600}.rbx-shot .btn{padding:6px 10px;margin-left:6px}
+.rbx-hint{grid-column:span 2;margin:0;align-self:center}.rbx-act{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}.rbx-form .fmsg{grid-column:1/-1;margin:0}
+.rbx-sync{font-size:13px;padding:10px 12px;border-radius:var(--r);margin:14px 0 0;border:1px solid var(--line);background:var(--panel-2)}
+.rbx-sync.warn{border-color:var(--accent);background:var(--accent-soft)}
+.rbx-chart{height:260px;margin-top:10px}
+@media (max-width:700px){.rbx-form{grid-template-columns:1fr 1fr}.rbx-hint{grid-column:1/-1}}
+#view-fin[data-fintab="rbx"]>:not(#finTabs):not(#robuxSec),#view-fin:not([data-fintab="rbx"])>#robuxSec{display:none!important}
+.kpis.rbx-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:700px){.kpis.rbx-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .cmodal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px}
 .cmodal .am-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:22px;max-width:440px;width:100%}
 .cmodal h3{margin:0 0 8px;color:var(--fg);text-transform:none;letter-spacing:0;font-size:17px}
@@ -814,7 +829,7 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
       </div>
       <div class="kpis" id="intKpis2"></div>
       <div id="intLinkBox" class="linkbar"><span class="lb-lab">🔗 Tambah link:</span><input type="text" id="intLinkIn" placeholder="Paste link TikTok akun internal..."><button class="btn primary" id="intLinkAdd" type="button">Tambah</button><span class="fmsg" id="intLinkMsg"></span>
-        <div class="upd-btn"><span class="upd-st" id="intUpdSt" role="status" aria-live="polite"></span><span class="upd-count" id="intUpdCount"></span><button class="btn ghost" type="button" data-apify-set title="Atur token Apify">⚙</button><button class="btn primary" id="intUpdBtn" type="button">🔄 Update stats</button></div></div>
+        <div class="upd-btn"><span class="upd-st" id="intUpdSt" role="status" aria-live="polite"></span><span class="upd-count" id="intUpdCount"></span><button class="btn ghost" type="button" data-apify-set title="Atur token Apify">⚙</button><button class="btn" id="intFindBtn" type="button" title="Cek TikTok untuk postingan baru lewat Apps Script + Apify">🔎 Cari postingan baru</button><button class="btn primary" id="intUpdBtn" type="button">🔄 Update stats</button></div></div>
       <div class="panel"><div class="tbl-wrap" style="max-height:none;margin-top:0;border-top:0"><table id="intTable"></table></div>
         <div class="factions" style="margin-top:12px"><button class="btn" id="intMore" type="button" hidden="">Tampilkan semua</button><span class="note" style="margin:0">Klik baris untuk membuka preview postingan. Centang beberapa postingan lalu klik Update stats untuk mengambil angka terbaru dari Apify (tanpa centang = semua postingan di tabel).</span></div></div>
     </section>
@@ -874,7 +889,7 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
       <div class="sec-head"><div><div class="eyebrow">Postingan</div><h2>Semua postingan endorse</h2>
         <p>Klik baris untuk membuka preview. Centang beberapa postingan lalu klik Update stats (tanpa centang = semua postingan di tabel).</p></div></div>
       <div id="mkLinkBox" class="linkbar"><span class="lb-lab">🔗 Tambah link:</span><input type="text" id="mkLinkIn" placeholder="Paste satu atau banyak link TikTok endorse..."><button class="btn primary" id="mkLinkAdd" type="button">Tambah</button><span class="fmsg" id="mkLinkMsg"></span>
-        <div class="upd-btn"><span class="upd-st" id="mkUpdSt" role="status" aria-live="polite"></span><span class="upd-count" id="mkUpdCount"></span><button class="btn ghost" type="button" data-apify-set title="Atur token Apify">⚙</button><button class="btn primary" id="mkUpdBtn" type="button">🔄 Update stats</button></div></div>
+        <div class="upd-btn"><span class="upd-st" id="mkUpdSt" role="status" aria-live="polite"></span><span class="upd-count" id="mkUpdCount"></span><button class="btn ghost" type="button" data-apify-set title="Atur token Apify">⚙</button><button class="btn" id="mkFindBtn" type="button" title="Cek TikTok untuk postingan baru lewat Apps Script + Apify">🔎 Cari postingan baru</button><button class="btn primary" id="mkUpdBtn" type="button">🔄 Update stats</button></div></div>
       <div class="panel"><div class="tbl-wrap" style="max-height:none;margin-top:0;border-top:0"><table id="mkTable"></table></div></div>
     </section>
     <section data-mt="data" id="extFmtSec">
@@ -889,6 +904,10 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
   </div>
 
   <div class="view" id="view-fin" hidden="">
+    <nav class="subtabs" id="finTabs" role="tablist" aria-label="Bagian keuangan">
+      <button role="tab" data-t="book" aria-selected="true">Pembukuan</button>
+      <button role="tab" data-t="rbx" aria-selected="false">Robux &amp; proyeksi</button>
+    </nav>
     <div class="datapanel">
       <div class="dp-info"><span class="eyebrow">Sumber data · satu file untuk Keuangan + Marketing</span><span id="bkSource"></span></div>
       <div class="dp-actions">
@@ -907,7 +926,7 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
       <div class="kpis" id="finKpis"></div>
       <div id="finChat">
         <h3>✏️ Tambah transaksi cepat</h3>
-        <textarea id="finChatInput" placeholder="Ketik transaksi, satu per baris. Contoh:&#10;1 nov 1,7jt jasa custom ugc celana dari Lexa Store&#10;pending gaji content creator tanggal 19 1 juta tiap bulan"></textarea>
+        <textarea id="finChatInput" placeholder="Ketik transaksi, satu per baris. Contoh:&#10;1 nov 1,7jt jasa custom ugc celana dari Lexa Store&#10;kemarin 50k endorse tiktok 1 foto slide @kreator&#10;pending gaji content creator tanggal 19 1 juta tiap bulan"></textarea>
         <p class="fc-hint">Tulis <b>pending</b> untuk tagihan atau pemasukan yang belum terjadi. Belum dihitung ke pemasukan/pengeluaran sampai kamu tandai selesai. Tambah "tiap bulan" supaya otomatis muncul lagi bulan berikutnya.</p>
         <div class="fc-actions"><button class="btn primary" type="button" id="finChatParse">Parse</button><button class="btn ghost" type="button" id="finChatClear" hidden="">Reset</button><span class="fmsg" id="finChatMsg"></span></div>
         <div class="fc-preview" id="finChatPreview" hidden=""></div>
@@ -940,7 +959,8 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
     </section>
     <section id="adsSec">
       <div class="sec-head"><div><div class="eyebrow">Detail TikTok Ads</div><h2>Belanja iklan TikTok</h2>
-        <p>Pengeluaran bersih = dibayar − pengembalian sisa anggaran, hanya status Berhasil. Isi saldo yang gagal atau masih diproses tidak dihitung.</p></div></div>
+        <p>Pengeluaran bersih = dibayar − pengembalian sisa anggaran, hanya status Berhasil. Isi saldo yang gagal atau masih diproses tidak dihitung. Bagian ini hanya catatan: tidak mengubah saldo di Semua transaksi. Uang keluar dari rekening untuk isi saldo TikTok dicatat manual di Semua transaksi (kategori Iklan TikTok).</p></div>
+        <div class="controls"><span class="upd-st" id="adsShotSt" role="status" aria-live="polite"></span><label class="btn primary" for="adsShotIn" style="cursor:pointer">📷 Tambah dari screenshot</label><input type="file" id="adsShotIn" accept="image/*" multiple hidden></div></div>
       <div class="panel">
         <div class="sumrow" id="adsSum"></div>
         <div class="tbl-wrap" style="max-height:none"><table id="adsMonthTable"></table></div>
@@ -948,6 +968,25 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
           <div class="tbl-wrap" style="max-height:460px"><table id="adsTable"></table></div></details>
       </div>
     </section>
+  <section id="robuxSec">
+    <div class="sec-head"><div><div class="eyebrow">Saldo Robux &amp; proyeksi</div><h2>Robux di grup dan nilainya dalam Rupiah</h2>
+      <p>Catat Community Funds, pending, rebates, dan payout dari Roblox di waktu yang sama dengan data sales terakhir. Roblox menahan revenue 30 hari: pending = revenue 30 hari terakhir, lalu masuk ke saldo. Dari situ jadwal pending cair dan proyeksinya bisa dihitung. Tidak mengubah Semua transaksi di Pembukuan, dan tidak mengikuti filter tanggal.</p></div></div>
+    <div class="panel">
+      <form id="rbxForm" class="rbx-form" autocomplete="off">
+        <label>Waktu catatan (WIB)<input type="datetime-local" name="t" required></label>
+        <label>Saldo (R$)<input type="text" inputmode="numeric" name="s" placeholder="contoh 120.000" required></label>
+        <label>Pending (R$)<input type="text" inputmode="numeric" name="p" placeholder="contoh 45.000" required></label>
+        <label>Rate (Rp per R$)<input type="text" inputmode="numeric" name="rate" value="125" required></label>
+        <label>Publishing Advance Rebates (R$)<input type="text" inputmode="numeric" name="rb" placeholder="opsional"></label>
+        <label>Community Revenue Payouts (R$)<input type="text" inputmode="numeric" name="po" placeholder="opsional, tanpa minus"></label>
+        <p class="note rbx-hint">Saldo = Community Funds. Pending, rebates, dan payout dari Configure → Revenue → Summary → Past Year (angka kumulatif, payout ditulis tanpa minus).</p>
+        <div class="rbx-act"><button class="btn primary" type="submit">Simpan catatan</button><label class="btn" for="rbxShotIn" style="cursor:pointer">📷 Isi dari screenshot Summary</label><input type="file" id="rbxShotIn" accept="image/*" hidden><button class="btn ghost" type="button" id="rbxUseSales">Samakan dengan data sales terakhir</button></div>
+        <div id="rbxShotRes" class="rbx-shot" hidden></div>
+        <div class="fmsg" id="rbxMsg" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+    <div id="rbxBody"></div>
+  </section>
   </div>
   <div class="view" id="view-plan" hidden="">
     <section>
@@ -1045,6 +1084,9 @@ const daysBetween = (a,b) => Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T0
 function agg(rows){ const s=new Set(); let pcs=0,rev=0,price=0; for(const r of rows){pcs++;rev+=r.rev;price+=r.price;s.add(r.b);} return {pcs,rev,price,buyers:s.size}; }
 function groupBy(rows,fn){ const m=new Map(); for(const r of rows){const k=fn(r); if(!m.has(k)) m.set(k,[]); m.get(k).push(r);} return m; }
 
+// batas publishing advance rebate per item: bawaan 600, bisa diubah per item (klik 2x angka sisa rebate di Produk)
+const rebCapOf=pi=>{ const id=String(RAW.p[pi][2]), m=RECS.rebCap||{}; return m[id]!=null&&m[id]!==''?+m[id]:600; };
+let ALLREV=null; const allRevOf=pi=>{ if(!ALLREV){ ALLREV=new Map(); for(const r of TX) ALLREV.set(r.p,(ALLREV.get(r.p)||0)+r.rev); } return ALLREV.get(pi)||0; };
 function compute(from,to){
   if(to>MAX&&from<=MAX) to=MAX;
   if(from<MIN&&to>=MIN) from=MIN;
@@ -1065,7 +1107,7 @@ function compute(from,to){
     m = mm===12 ? `${y+1}-01` : `${y}-${String(mm+1).padStart(2,'0')}`;
   }
   D.products=[...groupBy(rows,r=>r.p)].map(([p,g])=>{ const [name,type,id]=RAW.p[p];
-    const a=agg(g); return {name,type,id,...a,curPrice:g[g.length-1].price,nprices:new Set(g.map(r=>r.price)).size,rebate:Math.max(0,600-a.rev)}; });
+    const a=agg(g), cap=rebCapOf(p); return {pi:p,name,type,id,...a,curPrice:g[g.length-1].price,nprices:new Set(g.map(r=>r.price)).size,cap,rebate:Math.max(0,cap-(allRevOf(p)))}; });
   const buyers=[...groupBy(rows,r=>r.b)].map(([b,g])=>({id:RAW.b[b],...agg(g),items:new Set(g.map(r=>r.p)).size,first:g[0].d,last:g[g.length-1].d}));
   D.buyersTotal=buyers.length;
   D.topAll=[...buyers].sort((a,b)=>b.pcs-a.pcs||b.rev-a.rev); D.top=D.topAll.slice(0,10); D.topBig=D.topAll.filter(b=>b.pcs>=10);
@@ -1196,7 +1238,7 @@ function renderProducts(){
       <small>${tname(p.type)} · harga sekarang R$${p.curPrice}${p.nprices>1?` · ${p.nprices} harga berbeda`:''} · ${pct(p.pcs,T.pcs)} pcs</small>
       <div class="track"><div class="fill" style="width:${(p[prodKey]/max*100).toFixed(1)}%"></div></div></div>
     <span class="c"><b>${fmt(p.pcs)}</b><small>pcs</small></span>
-    <span class="c r2"><b>${R(p.rev)}</b><small>${pct(p.rev,T.rev)}</small></span><span class="c" style="font-size:12px;color:${p.rebate?'var(--warn,#e67700)':'var(--muted)'}">${p.rebate?R(p.rebate):'✓'}</span></div>`).join('');
+    <span class="c r2"><b>${R(p.rev)}</b><small>${pct(p.rev,T.rev)}</small></span><span class="c reb-cell" data-reb="${p.pi}" title="Batas rebate item ini R$${fmt(p.cap)}${p.cap!==600?' (diubah)':''} · revenue total ${R(allRevOf(p.pi))}. Klik 2x untuk mengubah." style="font-size:12px;cursor:default;color:${p.rebate?'var(--warn,#e67700)':'var(--muted)'}">${p.rebate?R(p.rebate):'✓'}${p.cap!==600?`<small>batas ${fmt(p.cap)}</small>`:''}</span></div>`).join('');
 }
 
 function renderTop(){
@@ -2221,6 +2263,66 @@ function renderAds(){
       return `<tr${ok?'':' style="opacity:.55"'}><td>${esc(a.ts)}</td><td class="txt" style="text-align:left">${esc(a.j)}</td><td style="text-align:left;font-family:var(--body)">${lab[a.k]}</td><td class="${a.amt<0?'neg':'pos'}">${Rp(a.amt)}</td><td style="text-align:left;font-family:var(--body)">${esc(a.st)}</td></tr>`; }).join('')+`</tbody>`;
 }
 $('finCat').addEventListener('change',e=>{ finSel.c=e.target.value; renderFin(); });
+// ---------- Detail TikTok Ads: tambah dari screenshot (OCR di browser) ----------
+const ADS_OCR='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+let adsOcrLib=null;
+function adsLoadOcr(){ if(window.Tesseract) return Promise.resolve(); if(adsOcrLib) return adsOcrLib;
+  adsOcrLib=new Promise((ok,no)=>{ const sc=document.createElement('script'); sc.src=ADS_OCR; sc.onload=ok; sc.onerror=()=>{ adsOcrLib=null; no(new Error('Mesin pembaca gambar tidak bisa dimuat (cek koneksi internet).')); }; document.head.appendChild(sc); });
+  return adsOcrLib; }
+// Baca teks screenshot riwayat transaksi TikTok Ads → [{ts:'YYYY-MM-DD HH:MM', j, amt, st}]
+function adsParseShot(text){
+  const lines=String(text).split(/\n+/).map(l=>l.trim()).filter(Boolean), out=[];
+  const re=/(20\d\d)\s*-\s*(\d\d)\s*-\s*(\d\d)\s*(\d{1,2})[:.](\d\d)(?:[:.]\d\d)?\s*([AaPp][Mm])?\s*([+\-−–]?)\s*R\s*p\s*([\d.,\s]+\d)/;
+  lines.forEach((l,i)=>{ const m=l.match(re); if(!m) return;
+    let h=+m[4]; const ap=(m[6]||'').toUpperCase(); if(ap==='PM'&&h<12) h+=12; if(ap==='AM'&&h===12) h=0;
+    const amt=+m[8].replace(/[^\d]/g,''); if(!amt) return;
+    let desc=''; for(let k=i+1;k<Math.min(i+4,lines.length);k++){ if(re.test(lines[k])) break; if(/[a-z]{4}/i.test(lines[k])){ desc=lines[k]; break; } }
+    let j=/tambah/i.test(desc)?'Tambahkan saldo':/pengembalian|sisa/i.test(desc)?'Pengembalian sisa anggaran pesanan':/kenaikan/i.test(desc)?'Kenaikan anggaran pesanan':/pembayaran/i.test(desc)?'Pembayaran anggaran pesanan':'';
+    const neg=/[\-−–]/.test(m[7]); if(!j) j=neg?'Pembayaran anggaran pesanan':'Pengembalian sisa anggaran pesanan';
+    const sign=/Tambahkan|Pengembalian/.test(j)?1:-1;
+    const st=/diproses/i.test(desc)?'Sedang diproses':/gagal/i.test(desc)?'Gagal':'Berhasil';
+    out.push({ts:`${m[1]}-${m[2]}-${m[3]} ${String(h).padStart(2,'0')}:${m[5]}`,j,amt:sign*amt,st,cut:!desc});
+  });
+  return out;
+}
+const adsKey=a=>String(a.ts!=null?a.ts:a[0]).slice(0,16)+'|'+(a.amt!=null?a.amt:a[2]);
+$('adsShotIn').addEventListener('change',async e=>{
+  const files=[...e.target.files]; e.target.value=''; if(!files.length) return;
+  const st=$('adsShotSt'), say=(t,c)=>{ st.className='upd-st '+(c||''); st.textContent=t; };
+  let worker=null;
+  try{
+    say('Menyiapkan pembaca gambar… (pertama kali agak lama)'); await adsLoadOcr();
+    worker=await Tesseract.createWorker('eng');
+    const per=[]; let i=0;
+    for(const f of files){ i++; say(`Membaca screenshot ${i}/${files.length}…`); const {data}=await worker.recognize(f); per.push(adsParseShot(data.text)); }
+    // gabungkan screenshot yang tumpang tindih: baris sama di dua screenshot dihitung sekali
+    const need=new Map(), sample=new Map();
+    per.forEach(list=>{ const c=new Map(); list.forEach(a=>{ const k=adsKey(a); c.set(k,(c.get(k)||0)+1); if(!sample.has(k)||sample.get(k).cut) sample.set(k,a); }); c.forEach((v,k)=>need.set(k,Math.max(need.get(k)||0,v))); });
+    const have=new Map(); (BOOK.ads||[]).forEach(a=>{ const k=adsKey(a); have.set(k,(have.get(k)||0)+1); });
+    const rows=[]; need.forEach((v,k)=>{ const old=have.get(k)||0; for(let x=0;x<v;x++) rows.push({...sample.get(k),dup:x<old}); });
+    rows.sort((a,b)=>b.ts.localeCompare(a.ts));
+    const fresh=rows.filter(r=>!r.dup);
+    if(!rows.length){ say('Tidak ada transaksi terbaca. Pastikan screenshot dari halaman Transaksi TikTok Ads.','err'); return; }
+    say(`${rows.length} transaksi terbaca · ${fresh.length} baru`,fresh.length?'ok':'');
+    adsShotReview(rows);
+  }catch(err){ say('Gagal: '+(err.message||err),'err'); }
+  finally{ if(worker) worker.terminate(); }
+});
+function adsShotReview(rows){
+  const m=document.createElement('div'); m.className='cmodal'; const fresh=rows.filter(r=>!r.dup).length;
+  m.innerHTML=`<div class="am-box ads-box" role="dialog" aria-modal="true" aria-label="Tambah transaksi TikTok Ads"><h3>Transaksi dari screenshot</h3>
+    <p class="note" style="margin:0 0 10px">${fresh?`<b>${fresh} transaksi baru</b> akan ditambahkan. `:'<b>Semua transaksi sudah ada.</b> '}${rows.length-fresh?`${rows.length-fresh} sudah ada di data (abu-abu, dilewati). `:''}Data lama tidak diubah, dan Semua transaksi di Keuangan tidak ikut berubah. Hilangkan centang kalau ada yang salah baca.</p>
+    <div class="tbl-wrap" style="max-height:52vh;margin:0"><table><thead><tr><th></th><th>Waktu</th><th>Jenis</th><th style="text-align:right">Jumlah</th><th>Status</th></tr></thead><tbody>${rows.map((r,i)=>`<tr class="${r.dup?'dup':''}"><td>${r.dup?'✓':`<input type="checkbox" data-i="${i}" checked aria-label="Tambahkan">`}</td><td>${esc(r.ts)}</td><td>${esc(r.j)}${r.cut?' <span class="muted">(terpotong)</span>':''}</td><td class="n">${Rp(r.amt)}</td><td>${r.dup?'sudah ada':esc(r.st)}</td></tr>`).join('')}</tbody></table></div>
+    <div class="am-actions" style="margin-top:14px"><button class="btn ghost" type="button" data-x="0">Batal</button>${fresh?'<button class="btn primary" type="button" data-x="1">Tambahkan</button>':''}</div></div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click',async e=>{ const b=e.target.closest('[data-x]'); if(!b){ if(e.target===m) m.remove(); return; }
+    if(b.dataset.x==='0'){ m.remove(); return; }
+    const pick=[...m.querySelectorAll('input[data-i]:checked')].map(x=>rows[+x.dataset.i]); m.remove(); if(!pick.length) return;
+    BOOK.ads=(BOOK.ads||[]).concat(pick.map(r=>[r.ts,r.j,r.amt,r.st])).sort((a,b)=>String(a[0]).localeCompare(String(b[0])));
+    BOOK.src={...(BOOK.src||{}),at:Date.now()}; RECS.book=BOOK; renderFin();
+    const st=$('adsShotSt'); st.className='upd-st ok'; st.textContent=`✓ ${pick.length} transaksi ditambahkan ke Detail TikTok Ads`;
+    await saveRecords(); });
+}
 // ---------- Keuangan: edit / hapus transaksi ----------
 function confirmBox(title,text,ok){ return new Promise(res=>{ const m=document.createElement('div'); m.className='cmodal';
   m.innerHTML=`<div class="am-box" role="alertdialog" aria-modal="true" aria-label="${esc(title)}"><h3>${esc(title)}</h3><p>${esc(text)}</p><div class="am-actions"><button class="btn ghost" type="button" data-r="0">Batal</button><button class="btn primary" type="button" data-r="1">${esc(ok)}</button></div></div>`;
@@ -2444,13 +2546,178 @@ $('xlsxBtn').addEventListener('click',async()=>{
 });
 (function(){ let m=null; try{ m=localStorage.getItem('ornakuy-main'); }catch(e){} showMain(m||'ana'); })();
 
+// ---------- Saldo Robux & proyeksi ----------
+// RECS.robux = [{t:'YYYY-MM-DD HH:MM' (WIB), s:saldo R$, p:pending R$, rate:Rp per R$, note}]
+let rbxC=null;
+const RBX=()=>(Array.isArray(RECS.robux)?RECS.robux:[]).slice().sort((a,b)=>a.t.localeCompare(b.t));
+const wibTs=t=>Math.floor(Date.parse(t.replace(' ','T')+':59+07:00')/1000); // akhir menit, supaya transaksi sales di menit yang sama ikut terhitung
+const wibStrTs=ts=>new Date((ts+7*3600)*1000).toISOString().slice(0,16).replace('T',' ');
+const rbxNum=v=>Math.round(+String(v||'').replace(/[^\d]/g,''))||0;
+const revBetween=(a,b)=>{ let s=0; for(const r of TX) if(r.ts>a&&r.ts<=b) s+=r.rev; return s; };
+const dLabT=t=>`${+t.slice(8,10)} ${BULAN[+t.slice(5,7)-1]} ${t.slice(11,16)}`;
+function rbxAvgRev(n){ // rata-rata revenue per hari dari n hari penuh terakhir (hari terakhir data dianggap belum lengkap)
+  const m=new Map(); for(const r of TX) m.set(r.d,(m.get(r.d)||0)+r.rev);
+  const end=addDays(MAX,-1); let s=0; for(let i=0;i<n;i++) s+=m.get(addDays(end,-i))||0; return s/n; }
+const HOLD=30*86400; // Roblox menahan revenue penjualan 30 hari sebelum masuk Community Funds
+const REB_CAP=600;   // publishing advance yang dikembalikan per item (sama dengan kolom sisa rebate di Produk)
+let REB=null;        // [ts, rebate kumulatif seharusnya] dari data sales: tiap item menyumbang revenue-nya sampai 600
+function rebSeries(){ if(REB) return REB; const m=new Map(), ts=[], cum=[]; let s=0;
+  let capSum=0; for(const r of TX){ const c=rebCapOf(r.p), p=m.get(r.p)||0, n=p+r.rev; if(!m.has(r.p)) capSum+=c; s+=Math.min(n,c)-Math.min(p,c); m.set(r.p,n); ts.push(r.ts); cum.push(s); }
+  REB={ts,cum,items:m.size,total:s,capSum}; return REB; }
+function rebAt(t){ const S=rebSeries(); let lo=0, hi=S.ts.length-1, k=-1; while(lo<=hi){ const mid=(lo+hi)>>1; if(S.ts[mid]<=t){ k=mid; lo=mid+1; } else hi=mid-1; } return k<0?0:S.cum[k]; }
+function renderRobux(){
+  if($('view-fin').dataset.fintab!=='rbx') return;
+  const L=RBX(), salesEnd=TX.length?TX[TX.length-1].ts:0, first=TX.length?TX[0].ts:0, f=$('rbxForm');
+  if(!f.elements.t.value){ f.elements.t.value=(salesEnd?wibStrTs(salesEnd):todayWIB()+' 12:00').replace(' ','T'); }
+  if(L.length&&!f.dataset.rateSet){ f.elements.rate.value=L[L.length-1].rate||125; f.dataset.rateSet='1'; }
+  const body=$('rbxBody');
+  if(!L.length){ body.innerHTML=`<p class="note" style="margin-top:14px">Belum ada catatan. Isi angka dari Roblox di atas. Waktu catatan sudah disamakan dengan data sales terakhir (${salesEnd?dLabT(wibStrTs(salesEnd)):'–'}); kalau Roblox dicek di waktu lain, cek email Roblox dulu supaya data sales ikut terbaru.</p>`; if(rbxC){ rbxC.destroy(); rbxC=null; } return; }
+  const last=L[L.length-1], lt=wibTs(last.t), rate=last.rate||125, held=last.s+last.p;
+  const expPend=t=>revBetween(t-HOLD,t), cleared=t=>revBetween(0,t-HOLD);
+  // periode antar catatan
+  const per=[]; for(let i=1;i<L.length;i++){ const a=L[i-1], b=L[i], ta=wibTs(a.t), tb=wibTs(b.t), masuk=revBetween(ta,tb), days=Math.max((tb-ta)/86400,1/24);
+    const rb=(a.rb!=null&&b.rb!=null)?b.rb-a.rb:null, po=(a.po!=null&&b.po!=null)?b.po-a.po:null;
+    const keluar=a.s+a.p+masuk+(rb||0)-(b.s+b.p);
+    per.push({a,b,masuk,rb,po,keluar,lain:po!=null?keluar-po:null,days,full:salesEnd>=tb}); }
+  // payout per hari: dari antar catatan kalau ada, kalau belum dari kumulatif sejak penjualan pertama
+  const withPo=L.filter(x=>x.po!=null); let poDay=null, rateSrc='';
+  if(withPo.length>=2){ const A=withPo[0], B=withPo[withPo.length-1], d=Math.max((wibTs(B.t)-wibTs(A.t))/86400,1/24); poDay=(B.po-A.po)/d; rateSrc=`rata-rata ${dLabT(A.t)} – ${dLabT(B.t)}`; }
+  else if(withPo.length===1&&first){ const B=withPo[0], d=Math.max((wibTs(B.t)-first)/86400,1); poDay=B.po/d; rateSrc=`perkiraan dari kumulatif sejak penjualan pertama (${Math.round(d)} hari)`; }
+  // rebates: aturan 600 per item dari data sales (dibayar Roblox dengan sedikit jeda), berhenti saat semua item sudah lewat 600
+  const RS=rebSeries(), rbNow=rebAt(Math.max(lt,salesEnd)), lag=last.rb!=null?Math.max(0,rebAt(lt)-last.rb):0, rbRemain=Math.max(0,RS.capSum-RS.total);
+  const rbAcc=salesEnd?(rebAt(salesEnd)-rebAt(salesEnd-7*86400))/7:0, rbSince=salesEnd>lt?rebAt(salesEnd)-rebAt(lt):0;
+  const futReb=d=>Math.min(lag+rbRemain, lag+rbAcc*d);
+  const okPer=per.filter(x=>x.full), outGeneric=okPer.length?okPer.reduce((s,x)=>s+x.keluar,0)/okPer.reduce((s,x)=>s+x.days,0):null;
+  const netOut=poDay!=null?poDay:outGeneric; // Robux keluar per hari (payout); rebates dihitung terpisah
+  const since=salesEnd>lt?revBetween(lt,salesEnd):0, sinceDays=salesEnd>lt?(salesEnd-lt)/86400:0;
+  const nowEst=held+since+(last.rb!=null?rbSince:0)-(netOut||0)*sinceDays;
+  const rows=bookRows(), bank=rows.length?rows[rows.length-1].bal:0;
+  const gap=salesEnd-lt, sync=Math.abs(gap)<=3600?['','✓ Waktu catatan terakhir cocok dengan data sales terakhir.']:gap<0?['warn',`Data sales baru sampai ${dLabT(wibStrTs(salesEnd))}, lebih awal ${fmtDur(-gap)} dari catatan terakhir (${dLabT(last.t)}). Revenue di sela itu belum terhitung: cek email Roblox (tombol Spreadsheet) supaya data sales menyusul.`]:['',`Data sales sudah ${fmtDur(gap)} lebih baru dari catatan terakhir. Revenue sejak catatan ikut dihitung di perkiraan.`];
+  const ep=expPend(lt), pd=last.p-ep, pendOk=salesEnd>=lt-60&&Math.abs(pd)<=Math.max(50,last.p*0.002);
+  const chk=salesEnd<lt-60?'':pendOk?`<div class="rbx-sync">✓ Pending cocok dengan data sales: revenue 30 hari terakhir = ${R(ep)}${pd?` (selisih ${R(pd)})`:''}. Saldo dari penjualan yang sudah lewat 30 hari = ${R(cleared(lt))}.</div>`
+    :`<div class="rbx-sync warn">Pending di Roblox ${R(last.p)}, sedangkan revenue 30 hari terakhir di data sales ${R(ep)} (selisih ${R(pd)}). Cek apakah waktu catatan dan data sales sudah sama.</div>`;
+  const k=(lab,v,sub,cls)=>`<div class="kpi ${cls||''}"><span class="eyebrow">${lab}</span><span class="v">${v}</span><span class="s">${sub}</span></div>`;
+  const a14=rbxAvgRev(14), a7=rbxAvgRev(7);
+  const proj=(a,d)=>nowEst+(a-(netOut||0))*d+(last.rb!=null?futReb(d):0);
+  const nowT=Math.max(lt,salesEnd), clearIn=d=>revBetween(nowT-HOLD,nowT-HOLD+d*86400);
+  const fundsNow=last.s+(salesEnd>lt?revBetween(lt-HOLD,salesEnd-HOLD):0)+(last.rb!=null?rbSince:0)-(netOut||0)*sinceDays;
+  body.innerHTML=`<div class="rbx-sync ${sync[0]}">${sync[1]}</div>${chk}
+    <div class="kpis rbx-kpis" style="margin-top:14px">
+      ${k('Saldo (Community Funds)',R(last.s),`${Rp(last.s*rate)} · siap dicairkan`)}
+      ${k('Pending',R(last.p),`${Rp(last.p*rate)} · cair bertahap 30 hari`)}
+      ${k('Saldo + pending',R(held),`${Rp(held*rate)} · per ${dLabT(last.t)}`,'hl')}
+      ${k('Perkiraan sekarang',R(nowEst),`${Rp(nowEst*rate)}${since?` · + revenue ${R(since)} sejak catatan`:''}`)}
+      ${k('Payout/hari',netOut==null?'–':R(netOut),netOut==null?'isi payout, atau tunggu catatan kedua':poDay!=null?`${Rp(netOut*rate)}/hari · ${rateSrc}`:`rata-rata ${okPer.length} periode (total keluar)`)}
+      ${k('Rebates',last.rb!=null?R(last.rb):'–',last.rb!=null?`sudah masuk · menunggu ±${R(lag)} · sisa potensi ${R(rbRemain)} (${RS.items} item, batas per item di Produk)`:`sisa potensi ${R(rbRemain)} · isi rebates di catatan`)}
+      ${k('Posisi total',Rp(bank+nowEst*rate),`saldo rekening ${Rp(bank)} + nilai Robux ${Rp(nowEst*rate)}`)}
+    </div>
+    <div class="panel" style="margin-top:14px"><h3 style="color:var(--fg)">Jadwal pending cair ke saldo</h3>
+      <p class="note" style="margin:4px 0 0">Dihitung dari data sales: penjualan masuk saldo tepat 30 hari setelah terjual. Angka ini sudah pasti, tidak tergantung penjualan baru.</p>
+      <div class="tbl-wrap" style="max-height:none"><table><thead><tr><th style="text-align:left">Dalam</th><th>Robux cair</th><th>Nilai</th><th>Perkiraan saldo</th><th>Nilai saldo</th></tr></thead><tbody>
+        ${[1,3,7,14,30].map(d=>{ const c=clearIn(d), fs=fundsNow+c+(last.rb!=null?futReb(d):0)-(netOut||0)*d; return `<tr><td class="txt" style="text-align:left">${d} hari <span class="muted">(s/d ${dLabT(wibStrTs(nowT+d*86400))})</span></td><td>${R(c)}</td><td>${Rp(c*rate)}</td><td><b>${R(fs)}</b></td><td>${Rp(fs*rate)}</td></tr>`; }).join('')}
+      </tbody></table></div>
+      <p class="note" style="margin:6px 0 0">Perkiraan saldo = saldo sekarang + Robux cair + rebates (batas per item, bawaan 600; berhenti saat sisanya habis)${netOut!=null?' − payout per hari':''}, belum termasuk penjualan baru (penjualan baru baru cair 30 hari kemudian).</p></div>
+    <div class="panel" style="margin-top:14px"><h3 style="color:var(--fg)">Proyeksi nilai Robux (saldo + pending, rate ${fmt(rate)})</h3>
+      <p class="note" style="margin:4px 0 0">Perkiraan sekarang + (rata-rata revenue harian − payout per hari) × hari + rebates yang tersisa (batas per item). ${netOut==null?'<b>Robux keluar belum diketahui</b>, jadi proyeksi ini menganggap tidak ada Robux yang keluar dan bisa terlalu tinggi.':''}</p>
+      <div class="tbl-wrap" style="max-height:none"><table><thead><tr><th style="text-align:left">Skenario</th><th>Revenue/hari</th><th>30 hari</th><th>60 hari</th><th>90 hari</th></tr></thead><tbody>
+        ${[['Konservatif (rata-rata 14 hari)',a14],['Normal (rata-rata 7 hari)',a7]].map(([n,a])=>`<tr><td class="txt" style="text-align:left">${n}</td><td>${R(a)}</td>${[30,60,90].map(d=>`<td><b>${Rp(proj(a,d)*rate)}</b><br><span class="muted">${R(proj(a,d))}</span></td>`).join('')}</tr>`).join('')}
+      </tbody></table></div>
+      <div class="rbx-chart"><canvas id="rbxChart" aria-label="Grafik proyeksi nilai Robux 90 hari"></canvas></div></div>
+    <div class="panel" style="margin-top:14px"><h3 style="color:var(--fg)">Catatan saldo &amp; Robux keluar</h3>
+      <div class="tbl-wrap" style="max-height:none"><table id="rbxTable"><thead><tr><th style="text-align:left">Waktu</th><th>Saldo</th><th>Pending</th><th>Saldo + pending</th><th>Revenue masuk</th><th>Rebates</th><th>Payout</th><th>Keluar lain</th><th></th></tr></thead><tbody>
+      ${L.map((x,i)=>{ const q=per[i-1], r=x.rate||125; return `<tr><td class="txt" style="text-align:left">${dLabT(x.t)}${x.note?` <span class="muted">· ${esc(x.note)}</span>`:''}</td><td>${R(x.s)}</td><td>${R(x.p)}</td><td><b>${R(x.s+x.p)}</b><br><span class="muted">${Rp((x.s+x.p)*r)}</span></td>
+        <td>${q?R(q.masuk):'<span class="muted">catatan awal</span>'}${q&&!q.full?'<br><span class="muted">data sales belum lengkap</span>':''}</td>
+        <td>${q&&q.rb!=null?R(q.rb):x.rb!=null?`<span class="muted">${R(x.rb)} total</span>`:'–'}</td>
+        <td>${q&&q.po!=null?`<b>${R(q.po)}</b><br><span class="muted">${Rp(q.po*r)}</span>`:x.po!=null?`<span class="muted">${R(x.po)} total</span>`:'–'}</td>
+        <td>${q?(q.lain!=null?R(q.lain):`${R(q.keluar)}<br><span class="muted">total keluar</span>`):'–'}</td>
+        <td><button class="btn ghost" type="button" data-rbxdel="${esc(x.t)}" aria-label="Hapus catatan ${esc(x.t)}">✕</button></td></tr>`; }).reverse().join('')}
+      </tbody></table></div>
+      <p class="note" style="margin:8px 0 0">Data sebelum catatan pertama dilewati. Per periode: revenue masuk dari data sales, rebates dan payout dari selisih angka kumulatif Roblox. Keluar lain = berkurang di luar payout (seharusnya mendekati 0).</p></div>`;
+  if(rbxC) rbxC.destroy();
+  const days=[...Array(91).keys()], acc=css('--accent'), mut=css('--muted');
+  rbxC=new Chart($('rbxChart'),{type:'line',data:{labels:days.map(d=>{ const t=addDays(todayWIB(),d); return `${+t.slice(8)} ${BULAN[+t.slice(5,7)-1]}`; }),
+    datasets:[{label:'Normal',data:days.map(d=>proj(a7,d)*rate),borderColor:acc,backgroundColor:acc,pointRadius:0,borderWidth:2},{label:'Konservatif',data:days.map(d=>proj(a14,d)*rate),borderColor:mut,backgroundColor:mut,pointRadius:0,borderWidth:2,borderDash:[5,4]}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:true,labels:{color:css('--fg-2'),boxWidth:12}},tooltip:{...tooltip(),displayColors:true,callbacks:{label:i=>`${i.dataset.label}: ${Rp(i.parsed.y)}`}}},
+      scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:7}},y:{grid:{color:css('--line')},border:{display:false},ticks:{callback:v=>'Rp'+(v/1e6).toLocaleString('id-ID',{maximumFractionDigits:1})+' jt'}}}}});
+}
+function fmtDur(sec){ const h=Math.round(sec/3600); return h>=48?`${Math.round(h/24)} hari`:h>=1?`${h} jam`:`${Math.max(1,Math.round(sec/60))} menit`; }
+// ---------- isi catatan dari screenshot Configure → Revenue → Summary (OCR di browser) ----------
+async function rbxShotImage(file){ // perbesar 2x + abu-abu: angka kecil seperti 344,166 jauh lebih akurat terbaca
+  const bmp=await createImageBitmap(file), c=document.createElement('canvas'); c.width=bmp.width*2; c.height=bmp.height*2;
+  const g=c.getContext('2d'); g.filter='grayscale(1)'; g.imageSmoothingQuality='high'; g.drawImage(bmp,0,0,c.width,c.height);
+  return await new Promise(ok=>c.toBlob(ok,'image/png')); }
+function rbxParseSummary(text){
+  const t=String(text).replace(/\r/g,''), num=re=>{ const m=t.match(re); if(!m) return null; const v=+m[1].replace(/[^\d]/g,''); return isFinite(v)?v:null; };
+  return {s:num(/Community\s*Funds[^\d\n]*([\d][\d.,\s]*\d|\d)/i), sog:num(/Sale\s*of\s*Goods[^\d\n]*([\d][\d.,]*)/i), rb:num(/Publishing\s*Advance\s*Rebates?[^\d\n]*([\d][\d.,]*)/i),
+    po:num(/Revenue\s*Payouts?[^\d\n]*?-?\s*([\d][\d.,]*)/i), p:num(/Pending\s*Robux[^\d\n]*([\d][\d.,]*)/i)}; }
+$('rbxShotIn').addEventListener('change',async e=>{
+  const file=e.target.files[0]; e.target.value=''; if(!file) return;
+  const box=$('rbxShotRes'), f=$('rbxForm'); box.hidden=false; box.textContent='Menyiapkan pembaca gambar… (pertama kali agak lama)';
+  let worker=null;
+  try{
+    await adsLoadOcr(); worker=await Tesseract.createWorker('eng'); box.textContent='Membaca screenshot…';
+    const {data}=await worker.recognize(await rbxShotImage(file)); const v=rbxParseSummary(data.text);
+    const miss=['s','p','rb','po'].filter(k=>v[k]==null);
+    if(miss.length===4){ box.innerHTML='<span class="bad">Angka tidak terbaca.</span> Pastikan screenshot dari Configure → Revenue → Summary (Past Year).'; return; }
+    if(v.s!=null) f.elements.s.value=fmt(v.s); if(v.p!=null) f.elements.p.value=fmt(v.p); if(v.rb!=null) f.elements.rb.value=fmt(v.rb); if(v.po!=null) f.elements.po.value=fmt(v.po);
+    const end=TX.length?TX[TX.length-1].ts:0; if(end) f.elements.t.value=wibStrTs(end).replace(' ','T');
+    const t=wibTs(String(f.elements.t.value).replace('T',' ')), lines=[`Terbaca: Community Funds <b>${v.s!=null?R(v.s):'–'}</b> · Pending <b>${v.p!=null?R(v.p):'–'}</b> · Rebates <b>${v.rb!=null?R(v.rb):'–'}</b> · Payout <b>${v.po!=null?R(v.po):'–'}</b>${v.sog!=null?` · Sale of Goods ${R(v.sog)}`:''}`];
+    if(miss.length) lines.push(`<span class="bad">Belum terbaca: ${miss.map(k=>({s:'Community Funds',p:'Pending',rb:'Rebates',po:'Payout'})[k]).join(', ')}.</span> Isi manual.`);
+    if(v.s!=null&&v.sog!=null&&v.rb!=null&&v.po!=null){ const exp=v.sog+v.rb-v.po; lines.push(exp===v.s?'✓ Funds = Sale of Goods + Rebates − Payout, cocok.':`<span class="bad">Funds ${R(v.s)} tidak sama dengan Sale of Goods + Rebates − Payout = ${R(exp)}.</span> Cek angka yang terbaca.`); }
+    if(v.sog!=null&&end>=t-60){ const pe=revBetween(0,t)-v.sog;
+      if(v.p===pe) lines.push(`✓ Pending cocok dengan data sales (${R(pe)}).`);
+      else lines.push(`<span class="bad">Pending terbaca ${v.p!=null?R(v.p):'–'}, menurut data sales ${R(pe)}.</span><button class="btn" type="button" data-rbxfix="${pe}">Pakai ${R(pe)}</button>`); }
+    else if(v.sog!=null) lines.push('Data sales belum sampai waktu catatan, jadi pending belum bisa dicocokkan. Cek email Roblox dulu kalau perlu.');
+    lines.push(`Waktu catatan disamakan dengan data sales terakhir (${end?dLabT(wibStrTs(end)):'–'}). Ubah kalau screenshot diambil di waktu lain, lalu klik <b>Simpan catatan</b>.`);
+    box.innerHTML=lines.map(x=>`<div>${x}</div>`).join('');
+  }catch(err){ box.innerHTML=`<span class="bad">Gagal membaca:</span> ${esc(err.message||String(err))}`; }
+  finally{ if(worker) worker.terminate(); }
+});
+$('rbxShotRes').addEventListener('click',e=>{ const b=e.target.closest('[data-rbxfix]'); if(!b) return; $('rbxForm').elements.p.value=fmt(+b.dataset.rbxfix); b.closest('div').innerHTML=`✓ Pending diganti ${R(+b.dataset.rbxfix)} sesuai data sales.`; });
+$('rbxUseSales').addEventListener('click',()=>{ const e=TX.length?TX[TX.length-1].ts:0; if(e) $('rbxForm').elements.t.value=wibStrTs(e).replace(' ','T'); $('rbxMsg').textContent=e?`Waktu disamakan dengan transaksi sales terakhir (${dLabT(wibStrTs(e))}).`:''; });
+$('rbxForm').addEventListener('submit',async e=>{ e.preventDefault(); const f=e.target, t=String(f.elements.t.value||'').replace('T',' ').slice(0,16);
+  const opt=v=>String(v||'').trim()===''?null:rbxNum(v);
+  const x={t,s:rbxNum(f.elements.s.value),p:rbxNum(f.elements.p.value),rate:rbxNum(f.elements.rate.value)||125,note:'',rb:opt(f.elements.rb.value),po:opt(f.elements.po.value)};
+  if(!/^\d{4}-\d\d-\d\d \d\d:\d\d$/.test(t)){ $('rbxMsg').textContent='Isi waktu catatan.'; return; }
+  const L=RBX().filter(y=>y.t!==t); L.push(x); RECS.robux=L.sort((a,b)=>a.t.localeCompare(b.t));
+  f.elements.s.value=''; f.elements.p.value=''; f.elements.rb.value=''; f.elements.po.value=''; $('rbxShotRes').hidden=true; $('rbxMsg').textContent=`✓ Catatan ${dLabT(t)} disimpan.`; renderRobux(); await saveRecords(); });
+$('rbxBody').addEventListener('click',async e=>{ const b=e.target.closest('[data-rbxdel]'); if(!b) return;
+  if(!await confirmBox('Hapus catatan saldo?',`Catatan ${dLabT(b.dataset.rbxdel)} dihapus. Perhitungan Robux keluar ikut berubah.`,'Hapus')) return;
+  RECS.robux=RBX().filter(x=>x.t!==b.dataset.rbxdel); renderRobux(); await saveRecords(); });
+
+// ---------- ubah batas rebate per item (klik 2x angka sisa rebate di Produk) ----------
+$('prodBars').addEventListener('dblclick',async e=>{
+  const cell=e.target.closest('[data-reb]'); if(!cell||cell.querySelector('input')) return;
+  const pi=+cell.dataset.reb, [name,,id]=RAW.p[pi], cap=rebCapOf(pi);
+  if(!await confirmBox('Ingin mengubah rebates?',`Batas publishing advance rebate untuk "${name}" sekarang R$${fmt(cap)}. Mengubahnya ikut mengubah sisa rebate, KPI Pub. Advance Rebates, dan proyeksi di Saldo Robux.`,'Ubah')) return;
+  const old=cell.innerHTML; cell.innerHTML=`<input type="text" inputmode="numeric" value="${cap}" aria-label="Batas rebate ${esc(name)}" style="width:72px;padding:4px 6px;border:1px solid var(--accent);border-radius:4px;background:var(--bg);color:var(--fg);font:12px var(--mono);text-align:right">`;
+  const inp=cell.querySelector('input'); inp.focus(); inp.select(); let done=false;
+  const finish=async save=>{ if(done) return; done=true;
+    const v=Math.round(+String(inp.value).replace(/[^\d]/g,''));
+    if(!save||!isFinite(v)||String(inp.value).trim()===''||v===cap){ cell.innerHTML=old; return; }
+    RECS.rebCap={...(RECS.rebCap||{})}; if(v===600) delete RECS.rebCap[String(id)]; else RECS.rebCap[String(id)]=v;
+    REB=null; D=compute(RANGE.from,RANGE.to); renderAll(); renderRobux(); await saveRecords(); };
+  inp.addEventListener('keydown',k=>{ if(k.key==='Enter'){ k.preventDefault(); finish(true); } if(k.key==='Escape') finish(false); });
+  inp.addEventListener('blur',()=>finish(true));
+});
+
+// ---------- sub tab Keuangan: Pembukuan | Robux & proyeksi ----------
+function showFinTab(t){ if(!['book','rbx'].includes(t)) t='book';
+  document.querySelectorAll('#finTabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
+  $('view-fin').dataset.fintab=t;
+  if(t==='rbx'){ renderRobux(); requestAnimationFrame(()=>rbxC&&rbxC.resize()); }
+  try{ localStorage.setItem('ornakuy-fintab',t); }catch(e){} }
+$('finTabs').addEventListener('click',e=>{ const b=e.target.closest('button[data-t]'); if(b) showFinTab(b.dataset.t); });
+(function(){ let t=null; try{ t=localStorage.getItem('ornakuy-fintab'); }catch(e){} showFinTab(t||'book'); })();
+
 // ---------- view tabs ----------
 const VIEWS=['ring','time','prod','color','buyer'];
 function showView(v,scroll){
   if(!VIEWS.includes(v)) v='ring';
   document.querySelectorAll('#vtabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.v===v));
   document.querySelectorAll('#content [data-tab]').forEach(el=>el.hidden=el.dataset.tab!==v);
-  requestAnimationFrame(()=>[pChart,dowC,freqC].forEach(c=>c&&c.resize&&c.resize()));
+  requestAnimationFrame(()=>[pChart,dowC,freqC,rbxC].forEach(c=>c&&c.resize&&c.resize()));
   try{ localStorage.setItem('ornakuy-view',v); }catch(e){}
   if(scroll){ const top=$('filter').getBoundingClientRect().bottom; if(top<0||window.scrollY>$('content').offsetTop) window.scrollTo({top:Math.max(0,$('content').offsetTop-($('filter').offsetHeight+24)),behavior:'instant'}); }
 }
@@ -2718,8 +2985,11 @@ new MutationObserver(retheme).observe(document.documentElement,{attributes:true,
     const r={date:'',cat:'',desc:line,amount:0,dir:'out',raw:line,pending:false,recur:''};
     if(/\b(?:pending|nanti|jatuh\s*tempo|reminder|ingatkan|jadwalkan)\b/i.test(line)){ r.pending=true; line=line.replace(/\b(?:pending|nanti|jatuh\s*tempo|reminder|ingatkan|jadwalkan)\b/gi,' '); }
     if(/\b(?:tiap|setiap)\s+bulan\b|\bbulanan\b|\brutin\b/i.test(line)){ r.recur='bulanan'; line=line.replace(/\b(?:tiap|setiap)\s+bulan\b|\bbulanan\b|\brutin\b/gi,' '); }
+    // tanggal relatif: hari ini, kemarin, kemarin lusa, 3 hari lalu, besok, lusa
+    const rel=[[/\bkemarin\s+lusa\b|\b2\s*hari\s*(?:yang\s*)?lalu\b/i,-2],[/\b(\d{1,2})\s*hari\s*(?:yang\s*)?lalu\b/i,null],[/\b(?:kemarin|kemaren|kmrn|kmarin|yesterday)\b/i,-1],[/\b(?:hari\s*ini|hr\s*ini|hri\s*ini|today|tadi(?:\s+(?:pagi|siang|sore|malam))?)\b/i,0],[/\b(?:besok|bsk|tomorrow)\b/i,1],[/\blusa\b/i,2]];
+    for(const [re,n] of rel){ const m=line.match(re); if(m){ r.date=addDays(todayWIB(),n==null?-Number(m[1]):n); line=line.replace(m[0],' '); break; } }
     line=line.replace(/\b(?:tanggal|tgl)\s+(?=\d{1,2}\s+(?:jan|feb|mar|apr|mei|may|jun|jul|agu|aug|sep|okt|oct|nov|des|dec))/i,'');
-    const tg=line.match(/\b(?:tanggal|tgl)\s+(\d{1,2})\b/i);
+    const tg=r.date?null:line.match(/\b(?:tanggal|tgl)\s+(\d{1,2})\b/i);
     if(tg){ const t=todayWIB(), day=Math.min(28,+tg[1]); let ym=t.slice(0,7); if(+tg[1]<+t.slice(8,10)&&r.pending){ const [y,m]=ym.split('-').map(Number); ym=m===12?`${y+1}-01`:`${y}-${String(m+1).padStart(2,'0')}`; }
       const last=new Date(Date.UTC(+ym.slice(0,4),+ym.slice(5),0)).getUTCDate(); r.date=`${ym}-${String(Math.min(+tg[1],last)).padStart(2,'0')}`; line=line.replace(tg[0],' '); }
     // extract date: "13 nov", "1 november 2026", etc
@@ -2899,6 +3169,28 @@ function pickedUrls(tableId,kind){
 }
 $('mkUpdBtn').addEventListener('click',()=>updateStats('mk',pickedUrls('mkTable','mk')));
 $('intUpdBtn').addEventListener('click',()=>updateStats('int',pickedUrls('intTable','int')));
+// ===== Cari postingan baru (Apps Script + Apify, juga jalan otomatis tiap hari) =====
+let findBusy=false;
+async function findPosts(kind){
+  const st=$(kind==='mk'?'mkUpdSt':'intUpdSt'), btn=$(kind==='mk'?'mkFindBtn':'intFindBtn');
+  const say=(t,c)=>{ st.className='upd-st '+(c||''); st.textContent=t; };
+  if(findBusy) return;
+  if(window.claude){ say('Cari postingan baru hanya jalan di versi GitHub (tersambung ke spreadsheet).','err'); return; }
+  if(!SHEET_ON()){ say('Sambungkan spreadsheet dulu lewat tombol Spreadsheet.','err'); return; }
+  findBusy=true; btn.setAttribute('aria-disabled','true'); say('Mencari postingan baru di TikTok… (bisa 1–5 menit)');
+  try{
+    const c=shCfg(), r=await fetch(c.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'tiktok',key:c.key,apify:apifyToken()})});
+    const t=await r.text(); let j; try{ j=JSON.parse(t); }catch(e){ throw new Error('Apps Script belum diperbarui. Tempel script terbaru lalu deploy versi baru.'); }
+    if(!j.ok) throw new Error(/tidak dikenal/i.test(j.error||'')?'Apps Script belum diperbarui. Tempel script terbaru lalu deploy versi baru.':(j.error||'gagal'));
+    if(j.info&&j.postingan==null){ say(j.info,''); return; }
+    const e=(j.eksternalBaru||[]).length, i=(j.internalBaru||[]).length;
+    say(`✓ ${e} postingan eksternal baru, ${i} internal baru, ${fmt(j.diperbarui||0)} statistik diperbarui · memuat ulang…`,'ok');
+    await shLoad(false); setTimeout(()=>location.reload(),900);
+  }catch(err){ say('Gagal: '+(err.message||err),'err'); }
+  finally{ findBusy=false; btn.removeAttribute('aria-disabled'); }
+}
+$('mkFindBtn').addEventListener('click',()=>findPosts('mk'));
+$('intFindBtn').addEventListener('click',()=>findPosts('int'));
 
 // ===== tabel/daftar: tampil N baris, sisanya scroll =====
 const FIT={colorBars:10,modelBars:10,comboTable:10,topTable:10,extRecap:10,extFmtTable:10,extHourTable:10,endTable:10,mkTable:10,mkUserTable:10,intAccTable:10,intTable:10,intRecap:10,intFmtTable:10,intHourTable:10,prodBars:10,finOutBars:5,finInBars:5};
@@ -3435,7 +3727,7 @@ addEventListener('keydown',e=>{ if(e.key==='Escape') closePendMenu(); });
 })();
 
 // ===== Google Sheets sebagai master data (versi GitHub) =====
-const SH_CODE="// ORNA KUY — jembatan Google Sheets + sales otomatis dari email Roblox (Apps Script web app)\n// 1. Ganti KUNCI di bawah dengan kata sandi buatanmu sendiri (samakan dengan kunci di dashboard).\n// 2. Deploy → New deployment → Web app → Execute as: Me → Who has access: Anyone → Deploy.\n// 3. Pilih fungsi pasangOtomatis di toolbar atas lalu klik Run sekali (izinkan akses Gmail & Drive).\n// 4. Salin \"Web app URL\" ke dashboard (tombol Spreadsheet).\nconst KUNCI = 'GANTI_DENGAN_KUNCI_RAHASIA';\n// Email \"Download Your Sales of Goods\" dari Roblox (link berlaku 48 jam), yang belum diproses.\nconst CARI_EMAIL = 'from:accounts@roblox.com \"Sales of Goods\" newer_than:3d -label:ORNA-diproses';\nconst FILE_SALES = 'ORNA_KUY_sales.json';\nconst KOLOM = ['Buyer User Id', 'Date and Time', 'Location', 'Location Id', 'Asset Id', 'Asset Name', 'Asset Type', 'Revenue', 'Price'];\n\nfunction doGet(e) { return handle_((e && e.parameter) || {}, null); }\nfunction doPost(e) {\n  let body = {};\n  try { body = JSON.parse((e && e.postData && e.postData.contents) || '{}'); }\n  catch (err) { return out_({ ok: false, error: 'Data yang dikirim bukan JSON' }); }\n  return handle_(body, body);\n}\n\nfunction handle_(p, body) {\n  if (KUNCI === 'GANTI_DENGAN_KUNCI_RAHASIA') return out_({ ok: false, error: 'KUNCI di Apps Script belum diganti' });\n  if (String(p.key || '') !== KUNCI) return out_({ ok: false, error: 'Kunci salah' });\n  const ss = SpreadsheetApp.getActiveSpreadsheet(), props = PropertiesService.getScriptProperties();\n  const action = p.action || 'ping';\n  if (action === 'ping') return out_({ ok: true, stamp: stamp_(ss), salesStamp: Number(props.getProperty('salesStamp')) || 0, name: ss.getName(), sheets: ss.getSheets().map(s => s.getName()) });\n  if (action === 'read') {\n    const tz = ss.getSpreadsheetTimeZone(), res = {};\n    ss.getSheets().forEach(sh => {\n      const n = sh.getName(); if (n === 'Info') return;\n      res[n] = sh.getDataRange().getValues().map(row => row.map(v => v instanceof Date ? fmtDate_(v, tz) : v));\n    });\n    return out_({ ok: true, stamp: stamp_(ss), sheets: res });\n  }\n  if (action === 'sales') {\n    const f = salesFile_(false), st = Number(props.getProperty('salesStamp')) || 0;\n    const raw = f ? f.getBlob().getDataAsString() : 'null';\n    return ContentService.createTextOutput('{\"ok\":true,\"salesStamp\":' + st + ',\"sales\":' + (raw || 'null') + '}').setMimeType(ContentService.MimeType.JSON);\n  }\n  if (action === 'salesWrite') {\n    const s = body && body.sales; if (!s || !Array.isArray(s.tx)) return out_({ ok: false, error: 'Data sales tidak valid' });\n    const lock = LockService.getScriptLock(); lock.waitLock(30000);\n    try { salesFile_(true).setContent(JSON.stringify(s)); const st = Date.now(); props.setProperty('salesStamp', String(st)); log_('Upload dari dashboard', s.tx.length + ' transaksi'); return out_({ ok: true, salesStamp: st }); }\n    finally { lock.releaseLock(); }\n  }\n  if (action === 'import') return out_(cekEmailRoblox());\n  if (action === 'write') {\n    const lock = LockService.getScriptLock(); lock.waitLock(30000);\n    try {\n      const cur = stamp_(ss);\n      if (body.base && cur > Number(body.base)) return out_({ ok: false, conflict: true, stamp: cur, error: 'Spreadsheet berubah sejak dashboard dibuka' });\n      const sheets = body.sheets || {};\n      Object.keys(sheets).forEach(name => {\n        const d = sheets[name], width = d.header.length;\n        const rows = (d.rows || []).map(r => { const a = r.slice(0, width); while (a.length < width) a.push(''); return a.map(v => v == null ? '' : v); });\n        const sh = ss.getSheetByName(name) || ss.insertSheet(name), need = rows.length + 1;\n        sh.clearContents();\n        if (sh.getMaxRows() < need) sh.insertRowsAfter(sh.getMaxRows(), need - sh.getMaxRows());\n        if (sh.getMaxColumns() < width) sh.insertColumnsAfter(sh.getMaxColumns(), width - sh.getMaxColumns());\n        (d.text || []).forEach(c => sh.getRange(1, c + 1, need, 1).setNumberFormat('@'));\n        sh.getRange(1, 1, need, width).setValues([d.header].concat(rows));\n        sh.getRange(1, 1, 1, width).setFontWeight('bold'); sh.setFrozenRows(1);\n      });\n      const blank = ss.getSheetByName('Sheet1');\n      if (blank && ss.getSheets().length > 1 && blank.getLastRow() === 0) ss.deleteSheet(blank);\n      const st = Date.now(); setStamp_(ss, st, 'dashboard');\n      return out_({ ok: true, stamp: st });\n    } finally { lock.releaseLock(); }\n  }\n  return out_({ ok: false, error: 'Aksi tidak dikenal' });\n}\n\n// ---------- sales otomatis dari email Roblox ----------\n// Jalankan sekali dari editor: membuat pengecekan email otomatis tiap 30 menit.\nfunction pasangOtomatis() {\n  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'cekEmailRoblox').forEach(t => ScriptApp.deleteTrigger(t));\n  ScriptApp.newTrigger('cekEmailRoblox').timeBased().everyMinutes(30).create();\n  salesFile_(true);\n  return cekEmailRoblox();\n}\nfunction cekEmailRoblox() {\n  const lock = LockService.getScriptLock(); if (!lock.tryLock(20000)) return { ok: true, info: 'Sedang berjalan' };\n  try {\n    const label = GmailApp.getUserLabelByName('ORNA-diproses') || GmailApp.createLabel('ORNA-diproses');\n    const threads = GmailApp.search(CARI_EMAIL, 0, 20), props = PropertiesService.getScriptProperties(), hasil = [];\n    let base = null, total = 0;\n    threads.forEach(th => {\n      let selesai = true;\n      th.getMessages().forEach(m => {\n        const links = linksFrom_(m.getBody()); if (!links.length) return;\n        let ok = false, alasan = '';\n        for (const url of links) {\n          const f = fetchSales_(url); if (!f.rows) { alasan = f.err; continue; }\n          if (!base) { const file = salesFile_(true), t = file.getBlob().getDataAsString(); base = t ? JSON.parse(t) : null; if (!base || !base.tx) base = { p: [], b: [], g: [], tx: [] }; }\n          const r = merge_(base, f.rows); base = r.raw; total += r.fresh; ok = true;\n          hasil.push(m.getSubject() + ': ' + r.count + ' baris, ' + r.fresh + ' baru'); log_(m.getSubject(), r.count + ' baris, ' + r.fresh + ' baru');\n          break;\n        }\n        if (!ok) { selesai = false; hasil.push('Gagal: ' + alasan); log_(m.getSubject(), 'Gagal: ' + alasan); }\n      });\n      if (selesai) th.addLabel(label); // yang gagal dicoba lagi di pengecekan berikutnya (selama link masih berlaku)\n    });\n    if (base) { salesFile_(true).setContent(JSON.stringify(base)); props.setProperty('salesStamp', String(Date.now())); }\n    return { ok: true, email: threads.length, baru: total, hasil: hasil, salesStamp: Number(props.getProperty('salesStamp')) || 0 };\n  } finally { lock.releaseLock(); }\n}\nfunction linksFrom_(html) {\n  const out = [], re = /<a[^>]+href=\"([^\"]+)\"[^>]*>([\\s\\S]*?)<\\/a>/gi; let m;\n  while ((m = re.exec(html))) { const href = m[1].replace(/&amp;/g, '&'), txt = m[2].replace(/<[^>]+>/g, '').trim();\n    if (/download|unduh/i.test(txt) || /\\.(zip|csv)(\\?|$)/i.test(href)) out.push(href); }\n  return out;\n}\nfunction fetchSales_(url) {\n  try {\n    const res = UrlFetchApp.fetch(url, { followRedirects: true, muteHttpExceptions: true });\n    if (res.getResponseCode() >= 400) return { err: 'download ditolak (HTTP ' + res.getResponseCode() + '), mungkin link sudah kedaluwarsa' };\n    const blob = res.getBlob(), bytes = blob.getBytes(), texts = [];\n    if (bytes[0] === 0x50 && bytes[1] === 0x4B) { blob.setContentType('application/zip'); Utilities.unzip(blob).forEach(b => { if (/\\.csv$/i.test(b.getName())) texts.push(b.getDataAsString('UTF-8')); }); }\n    else texts.push(blob.getDataAsString('UTF-8'));\n    const rows = [];\n    texts.forEach(t => { const csv = Utilities.parseCsv(t.replace(/^﻿/, '')); if (!csv.length) return; const h = csv[0].map(x => String(x).trim());\n      if (KOLOM.some(k => h.indexOf(k) < 0)) return;\n      csv.slice(1).forEach(r => { const o = {}; h.forEach((k, i) => o[k] = r[i]); rows.push(o); }); });\n    return rows.length ? { rows: rows } : { err: 'file yang diunduh bukan data Sales of Goods (' + (blob.getContentType() || 'tipe tidak dikenal') + ')' };\n  } catch (err) { return { err: String(err.message || err) }; }\n}\n// sama seperti dashboard: isi ekspor menggantikan rentang waktunya, sisanya dipertahankan\nfunction merge_(base, rows) {\n  const R = { p: base.p.map(x => x.slice()), b: base.b.slice(), g: base.g.slice(), tx: null };\n  const pidx = new Map(R.p.map((p, i) => [String(p[2]), i])), bidx = new Map(R.b.map((b, i) => [String(b), i])), gidx = new Map(R.g.map((g, i) => [String(g), i])), add = [];\n  rows.forEach(r => {\n    const ts = Math.floor(Date.parse(r['Date and Time']) / 1000); if (!isFinite(ts)) return;\n    const a = String(r['Asset Id']).trim();\n    if (!pidx.has(a)) { pidx.set(a, R.p.length); R.p.push([String(r['Asset Name']).replace(/^ORNA\\s*\\|?\\s*/, '').trim(), r['Asset Type'], Number(a)]); }\n    const b = String(r['Buyer User Id']).trim(); if (!bidx.has(b)) { bidx.set(b, R.b.length); R.b.push(Number(b)); }\n    const loc = r['Location'] === 'Website' ? 0 : 1; let g = -1;\n    if (loc) { const gid = String(r['Location Id']).trim(); if (!gidx.has(gid)) { gidx.set(gid, R.g.length); R.g.push(gid); } g = gidx.get(gid); }\n    add.push([ts, bidx.get(b), pidx.get(a), loc, g, Math.round(parseFloat(r['Revenue']) || 0), Math.round(parseFloat(r['Price']) || 0)]);\n  });\n  if (!add.length) return { raw: base, fresh: 0, count: 0 };\n  add.sort((x, y) => x[0] - y[0]);\n  const mn = add[0][0], mx = add[add.length - 1][0], key = t => t.join(',');\n  const had = new Set(base.tx.filter(t => t[0] >= mn && t[0] <= mx).map(key)), fresh = add.filter(t => !had.has(key(t))).length;\n  R.tx = base.tx.filter(t => t[0] < mn || t[0] > mx).concat(add).sort((x, y) => x[0] - y[0]);\n  return { raw: R, fresh: fresh, count: add.length };\n}\nfunction salesFile_(create) {\n  const props = PropertiesService.getScriptProperties(), id = props.getProperty('salesFileId');\n  if (id) { try { return DriveApp.getFileById(id); } catch (e) {} }\n  if (!create) return null;\n  const parent = DriveApp.getFileById(SpreadsheetApp.getActiveSpreadsheet().getId()).getParents();\n  const folder = parent.hasNext() ? parent.next() : DriveApp.getRootFolder();\n  const f = folder.createFile(FILE_SALES, '', 'application/json'); props.setProperty('salesFileId', f.getId()); return f;\n}\nfunction log_(judul, isi) {\n  const ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName('Info') || ss.insertSheet('Info');\n  sh.getRange('A5:C5').setValues([['Log sales otomatis', '', '']]);\n  sh.insertRowAfter(5); sh.getRange('A6:C6').setValues([[Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd HH:mm'), judul, isi]]);\n  if (sh.getLastRow() > 40) sh.deleteRows(41, sh.getLastRow() - 40);\n}\n\n// ---------- spreadsheet ----------\n// Edit manual di spreadsheet ikut dicatat, supaya dashboard tahu ada data baru.\nfunction onEdit(e) {\n  try { if (e.range.getSheet().getName() !== 'Info') setStamp_(e.source, Date.now(), 'edit manual'); } catch (err) {}\n}\nfunction stamp_(ss) { const sh = ss.getSheetByName('Info'); return sh ? Number(sh.getRange('B1').getValue()) || 0 : 0; }\nfunction setStamp_(ss, st, by) {\n  const sh = ss.getSheetByName('Info') || ss.insertSheet('Info');\n  sh.getRange('A1:B3').setValues([['updatedAt', st], ['diperbarui', Utilities.formatDate(new Date(st), ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd HH:mm:ss')], ['oleh', by]]);\n}\nfunction fmtDate_(d, tz) { const hm = Utilities.formatDate(d, tz, 'HH:mm'); return Utilities.formatDate(d, tz, hm === '00:00' ? 'yyyy-MM-dd' : 'yyyy-MM-dd HH:mm'); }\nfunction out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }\n";
+const SH_CODE="// ORNA KUY — jembatan Google Sheets + sales otomatis dari email Roblox + postingan TikTok otomatis (Apps Script web app)\n// 1. Ganti KUNCI di bawah dengan kata sandi buatanmu sendiri (samakan dengan kunci di dashboard).\n// 2. Deploy → New deployment → Web app → Execute as: Me → Who has access: Anyone → Deploy.\n// 3. Pilih fungsi pasangOtomatis di toolbar atas lalu klik Run sekali (izinkan akses Gmail, Drive & layanan luar).\n//    Ini memasang cek email Roblox tiap 30 menit dan cek postingan TikTok tiap hari (jam di TT_JAM).\n// 4. Salin \"Web app URL\" ke dashboard (tombol Spreadsheet).\nconst KUNCI = 'GANTI_DENGAN_KUNCI_RAHASIA';\n// Email \"Download Your Sales of Goods\" dari Roblox (link berlaku 48 jam), yang belum diproses.\nconst CARI_EMAIL = 'from:accounts@roblox.com \"Sales of Goods\" newer_than:3d -label:ORNA-diproses';\nconst FILE_SALES = 'ORNA_KUY_sales.json';\nconst KOLOM = ['Buyer User Id', 'Date and Time', 'Location', 'Location Id', 'Asset Id', 'Asset Name', 'Asset Type', 'Revenue', 'Price'];\n\nfunction doGet(e) { return handle_((e && e.parameter) || {}, null); }\nfunction doPost(e) {\n  let body = {};\n  try { body = JSON.parse((e && e.postData && e.postData.contents) || '{}'); }\n  catch (err) { return out_({ ok: false, error: 'Data yang dikirim bukan JSON' }); }\n  return handle_(body, body);\n}\n\nfunction handle_(p, body) {\n  if (KUNCI === 'GANTI_DENGAN_KUNCI_RAHASIA') return out_({ ok: false, error: 'KUNCI di Apps Script belum diganti' });\n  if (String(p.key || '') !== KUNCI) return out_({ ok: false, error: 'Kunci salah' });\n  const ss = SpreadsheetApp.getActiveSpreadsheet(), props = PropertiesService.getScriptProperties();\n  const action = p.action || 'ping';\n  if (action === 'ping') return out_({ ok: true, stamp: stamp_(ss), salesStamp: Number(props.getProperty('salesStamp')) || 0, tiktok: !!props.getProperty('apifyToken'), name: ss.getName(), sheets: ss.getSheets().map(s => s.getName()) });\n  if (action === 'read') {\n    const tz = ss.getSpreadsheetTimeZone(), res = {};\n    ss.getSheets().forEach(sh => {\n      const n = sh.getName(); if (n === 'Info') return;\n      res[n] = sh.getDataRange().getValues().map(row => row.map(v => v instanceof Date ? fmtDate_(v, tz) : v));\n    });\n    return out_({ ok: true, stamp: stamp_(ss), sheets: res });\n  }\n  if (action === 'sales') {\n    const f = salesFile_(false), st = Number(props.getProperty('salesStamp')) || 0;\n    const raw = f ? f.getBlob().getDataAsString() : 'null';\n    return ContentService.createTextOutput('{\"ok\":true,\"salesStamp\":' + st + ',\"sales\":' + (raw || 'null') + '}').setMimeType(ContentService.MimeType.JSON);\n  }\n  if (action === 'salesWrite') {\n    const s = body && body.sales; if (!s || !Array.isArray(s.tx)) return out_({ ok: false, error: 'Data sales tidak valid' });\n    const lock = LockService.getScriptLock(); lock.waitLock(30000);\n    try { salesFile_(true).setContent(JSON.stringify(s)); const st = Date.now(); props.setProperty('salesStamp', String(st)); log_('Upload dari dashboard', s.tx.length + ' transaksi'); return out_({ ok: true, salesStamp: st }); }\n    finally { lock.releaseLock(); }\n  }\n  if (action === 'import') return out_(cekEmailRoblox());\n  if (action === 'tiktok') { apifyToken_(String(p.apify || '')); return out_(cekPostinganTikTok()); }\n  if (action === 'write') {\n    const lock = LockService.getScriptLock(); lock.waitLock(30000);\n    try {\n      const cur = stamp_(ss);\n      if (body.base && cur > Number(body.base)) return out_({ ok: false, conflict: true, stamp: cur, error: 'Spreadsheet berubah sejak dashboard dibuka' });\n      const sheets = body.sheets || {};\n      Object.keys(sheets).forEach(name => {\n        const d = sheets[name], width = d.header.length;\n        const rows = (d.rows || []).map(r => { const a = r.slice(0, width); while (a.length < width) a.push(''); return a.map(v => v == null ? '' : v); });\n        const sh = ss.getSheetByName(name) || ss.insertSheet(name), need = rows.length + 1;\n        sh.clearContents();\n        if (sh.getMaxRows() < need) sh.insertRowsAfter(sh.getMaxRows(), need - sh.getMaxRows());\n        if (sh.getMaxColumns() < width) sh.insertColumnsAfter(sh.getMaxColumns(), width - sh.getMaxColumns());\n        (d.text || []).forEach(c => sh.getRange(1, c + 1, need, 1).setNumberFormat('@'));\n        sh.getRange(1, 1, need, width).setValues([d.header].concat(rows));\n        sh.getRange(1, 1, 1, width).setFontWeight('bold'); sh.setFrozenRows(1);\n      });\n      const blank = ss.getSheetByName('Sheet1');\n      if (blank && ss.getSheets().length > 1 && blank.getLastRow() === 0) ss.deleteSheet(blank);\n      const st = Date.now(); setStamp_(ss, st, 'dashboard');\n      return out_({ ok: true, stamp: st });\n    } finally { lock.releaseLock(); }\n  }\n  return out_({ ok: false, error: 'Aksi tidak dikenal' });\n}\n\n// ---------- sales otomatis dari email Roblox ----------\n// Jalankan sekali dari editor: membuat pengecekan email otomatis tiap 30 menit.\nfunction pasangOtomatis() {\n  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'cekEmailRoblox').forEach(t => ScriptApp.deleteTrigger(t));\n  ScriptApp.newTrigger('cekEmailRoblox').timeBased().everyMinutes(30).create();\n  pasangTikTok_();\n  salesFile_(true);\n  return cekEmailRoblox();\n}\nfunction cekEmailRoblox() {\n  const lock = LockService.getScriptLock(); if (!lock.tryLock(20000)) return { ok: true, info: 'Sedang berjalan' };\n  try {\n    const label = GmailApp.getUserLabelByName('ORNA-diproses') || GmailApp.createLabel('ORNA-diproses');\n    const threads = GmailApp.search(CARI_EMAIL, 0, 20), props = PropertiesService.getScriptProperties(), hasil = [];\n    let base = null, total = 0;\n    // email yang sudah berhasil diproses (atau link-nya sudah kedaluwarsa) tidak diunduh ulang\n    let done = []; try { done = JSON.parse(props.getProperty('emailSelesai') || '[]'); } catch (e) {}\n    const sudah = new Set(done), tandai = id => { if (!sudah.has(id)) { sudah.add(id); done.push(id); } };\n    threads.forEach(th => {\n      let selesai = true;\n      th.getMessages().forEach(m => {\n        const id = m.getId(); if (sudah.has(id)) return;\n        const links = linksFrom_(m.getBody()); if (!links.length) { tandai(id); return; }\n        let ok = false, alasan = '';\n        for (const url of links) {\n          const f = fetchSales_(url); if (!f.rows) { alasan = f.err; continue; }\n          if (!base) { const file = salesFile_(true), t = file.getBlob().getDataAsString(); base = t ? JSON.parse(t) : null; if (!base || !base.tx) base = { p: [], b: [], g: [], tx: [] }; }\n          const r = merge_(base, f.rows); base = r.raw; total += r.fresh; ok = true;\n          hasil.push(m.getSubject() + ': ' + r.count + ' baris, ' + r.fresh + ' baru'); log_(m.getSubject(), r.count + ' baris, ' + r.fresh + ' baru');\n          break;\n        }\n        if (ok) tandai(id);\n        else if (Date.now() - m.getDate().getTime() > 48 * 3600 * 1000) tandai(id); // link Roblox berlaku 48 jam: yang lewat tidak dicoba lagi\n        else { selesai = false; hasil.push('Gagal: ' + alasan); log_(m.getSubject(), 'Gagal: ' + alasan); }\n      });\n      if (selesai) th.addLabel(label); // yang gagal dicoba lagi di pengecekan berikutnya (selama link masih berlaku)\n    });\n    if (base) { salesFile_(true).setContent(JSON.stringify(base)); props.setProperty('salesStamp', String(Date.now())); }\n    props.setProperty('emailSelesai', JSON.stringify(done.slice(-300)));\n    return { ok: true, email: threads.length, baru: total, hasil: hasil, salesStamp: Number(props.getProperty('salesStamp')) || 0 };\n  } finally { lock.releaseLock(); }\n}\nfunction linksFrom_(html) {\n  const out = [], re = /<a[^>]+href=\"([^\"]+)\"[^>]*>([\\s\\S]*?)<\\/a>/gi; let m;\n  while ((m = re.exec(html))) { const href = m[1].replace(/&amp;/g, '&'), txt = m[2].replace(/<[^>]+>/g, '').trim();\n    if (/download|unduh/i.test(txt) || /\\.(zip|csv)(\\?|$)/i.test(href)) out.push(href); }\n  return out;\n}\nfunction fetchSales_(url, depth) {\n  depth = depth || 0;\n  try {\n    const res = UrlFetchApp.fetch(url, { followRedirects: true, muteHttpExceptions: true, headers: { 'User-Agent': 'Mozilla/5.0' } });\n    const code = res.getResponseCode();\n    if (code >= 400) return { err: 'download ditolak (HTTP ' + code + '), mungkin link sudah kedaluwarsa' };\n    const blob = res.getBlob(), bytes = blob.getBytes(), type = String((res.getHeaders() || {})['Content-Type'] || blob.getContentType() || ''), texts = [];\n    if (bytes[0] === 0x50 && bytes[1] === 0x4B) { blob.setContentType('application/zip'); Utilities.unzip(blob).forEach(b => { if (/\\.csv$/i.test(b.getName())) texts.push(b.getDataAsString('UTF-8')); }); }\n    else {\n      const t = blob.getDataAsString('UTF-8');\n      // halaman perantara (HTML): cari link file sebenarnya lalu ikuti sekali lagi\n      if (/html/i.test(type) || /^\\s*<\/.test(t)) {\n        if (depth < 2) {\n          const cand = [], re = /(https?:\\/\\/[^\"'\\s<>\\\\]+)/g; let m;\n          while ((m = re.exec(t))) { const u = m[1].replace(/&amp;/g, '&'); if (/\\.(csv|zip)(\\?|$)|download|export|report|sales/i.test(u) && cand.indexOf(u) < 0 && u !== url) cand.push(u); }\n          for (const u of cand.slice(0, 6)) { const r = fetchSales_(u, depth + 1); if (r.rows) return r; }\n        }\n        const judul = (t.match(/<title>([^<]*)<\\/title>/i) || [])[1] || t.replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 80);\n        return { err: 'link membuka halaman web, bukan file (' + judul + ')' };\n      }\n      texts.push(t);\n    }\n    const rows = [];\n    texts.forEach(t => { const csv = Utilities.parseCsv(t.replace(/^﻿/, '')); if (!csv.length) return; const h = csv[0].map(x => String(x).trim());\n      if (KOLOM.some(k => h.indexOf(k) < 0)) return;\n      csv.slice(1).forEach(r => { const o = {}; h.forEach((k, i) => o[k] = r[i]); rows.push(o); }); });\n    return rows.length ? { rows: rows } : { err: 'file yang diunduh bukan data Sales of Goods (' + (type || 'tipe tidak dikenal') + ')' };\n  } catch (err) { return { err: String(err.message || err) }; }\n}\n// Untuk cek manual dari editor: pilih cekLinkTerakhir lalu Run, hasilnya ada di Execution log.\nfunction cekLinkTerakhir() {\n  const th = GmailApp.search('from:accounts@roblox.com \"Sales of Goods\" newer_than:3d', 0, 1);\n  if (!th.length) { Logger.log('Tidak ada email Sales of Goods dalam 3 hari terakhir'); return; }\n  const m = th[0].getMessages().pop(), links = linksFrom_(m.getBody());\n  Logger.log('Email: ' + m.getSubject() + ' · ' + m.getDate()); Logger.log('Link ditemukan: ' + links.length);\n  links.forEach(u => { const r = fetchSales_(u); Logger.log((r.rows ? 'OK ' + r.rows.length + ' baris' : 'GAGAL: ' + r.err) + ' ← ' + u.slice(0, 120)); });\n}\n// sama seperti dashboard: isi ekspor menggantikan rentang waktunya, sisanya dipertahankan\nfunction merge_(base, rows) {\n  const R = { p: base.p.map(x => x.slice()), b: base.b.slice(), g: base.g.slice(), tx: null };\n  const pidx = new Map(R.p.map((p, i) => [String(p[2]), i])), bidx = new Map(R.b.map((b, i) => [String(b), i])), gidx = new Map(R.g.map((g, i) => [String(g), i])), add = [];\n  rows.forEach(r => {\n    const ts = Math.floor(Date.parse(r['Date and Time']) / 1000); if (!isFinite(ts)) return;\n    const a = String(r['Asset Id']).trim();\n    if (!pidx.has(a)) { pidx.set(a, R.p.length); R.p.push([String(r['Asset Name']).replace(/^ORNA\\s*\\|?\\s*/, '').trim(), r['Asset Type'], Number(a)]); }\n    const b = String(r['Buyer User Id']).trim(); if (!bidx.has(b)) { bidx.set(b, R.b.length); R.b.push(Number(b)); }\n    const loc = r['Location'] === 'Website' ? 0 : 1; let g = -1;\n    if (loc) { const gid = String(r['Location Id']).trim(); if (!gidx.has(gid)) { gidx.set(gid, R.g.length); R.g.push(gid); } g = gidx.get(gid); }\n    add.push([ts, bidx.get(b), pidx.get(a), loc, g, Math.round(parseFloat(r['Revenue']) || 0), Math.round(parseFloat(r['Price']) || 0)]);\n  });\n  if (!add.length) return { raw: base, fresh: 0, count: 0 };\n  add.sort((x, y) => x[0] - y[0]);\n  const mn = add[0][0], mx = add[add.length - 1][0], key = t => t.join(',');\n  const had = new Set(base.tx.filter(t => t[0] >= mn && t[0] <= mx).map(key)), fresh = add.filter(t => !had.has(key(t))).length;\n  R.tx = base.tx.filter(t => t[0] < mn || t[0] > mx).concat(add).sort((x, y) => x[0] - y[0]);\n  return { raw: R, fresh: fresh, count: add.length };\n}\nfunction salesFile_(create) {\n  const props = PropertiesService.getScriptProperties(), id = props.getProperty('salesFileId');\n  if (id) { try { return DriveApp.getFileById(id); } catch (e) {} }\n  if (!create) return null;\n  const parent = DriveApp.getFileById(SpreadsheetApp.getActiveSpreadsheet().getId()).getParents();\n  const folder = parent.hasNext() ? parent.next() : DriveApp.getRootFolder();\n  const f = folder.createFile(FILE_SALES, '', 'application/json'); props.setProperty('salesFileId', f.getId()); return f;\n}\nfunction log_(judul, isi) {\n  const ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName('Info') || ss.insertSheet('Info');\n  sh.getRange('A5:C5').setValues([['Log otomatis', '', '']]);\n  sh.insertRowAfter(5); sh.getRange('A6:C6').setValues([[Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd HH:mm'), judul, isi]]);\n  if (sh.getLastRow() > 40) sh.deleteRows(41, sh.getLastRow() - 40);\n}\n\n// ---------- postingan TikTok otomatis (Apify) ----------\n// Eksternal: kreator di tab Postingan Eksternal, hanya postingan yang menyebut ORNA KUY / ornakuy.\n// Internal: semua postingan akun di tab Akun Internal. Statistik postingan lama ikut diperbarui.\nconst TT_ACTOR = 'clockworks~tiktok-scraper';\nconst TT_JUMLAH = 10;          // postingan terakhir yang dicek per akun\nconst TT_JAM = [8, 20];        // jam cek otomatis (zona waktu Apps Script)\nconst TT_MENTION = /orna\\s*kuy|ornakuy/i;\nconst TT_ZONA = 'Asia/Jakarta';\n\n// Dipanggil sekali dari pasangOtomatis: cek TikTok tiap hari di jam TT_JAM.\nfunction pasangTikTok_() {\n  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'cekPostinganTikTok').forEach(t => ScriptApp.deleteTrigger(t));\n  TT_JAM.forEach(h => ScriptApp.newTrigger('cekPostinganTikTok').timeBased().everyDays(1).atHour(h).create());\n}\nfunction apifyToken_(baru) {\n  const props = PropertiesService.getScriptProperties();\n  if (baru && /^apify_api_/.test(baru) && props.getProperty('apifyToken') !== baru) props.setProperty('apifyToken', baru);\n  return props.getProperty('apifyToken') || '';\n}\nfunction cekPostinganTikTok() {\n  const lock = LockService.getScriptLock(); if (!lock.tryLock(20000)) return { ok: true, info: 'Pengecekan TikTok sedang berjalan' };\n  try {\n    const tok = apifyToken_(), ss = SpreadsheetApp.getActiveSpreadsheet();\n    if (!tok) return { ok: false, error: 'Token Apify belum ada. Tekan \"Cari postingan baru\" di dashboard sekali supaya token tersimpan.' };\n    const shE = ss.getSheetByName('Postingan Eksternal'), shI = ss.getSheetByName('Postingan Internal'), shA = ss.getSheetByName('Akun Internal');\n    const E = shE ? shE.getDataRange().getValues() : [], I = shI ? shI.getDataRange().getValues() : [], A = shA ? shA.getDataRange().getValues() : [];\n    const user = s => String(s || '').trim().replace(/^@/, '').toLowerCase();\n    const kreator = [...new Set(E.slice(1).map(r => user(r[1])).filter(Boolean))];\n    const akun = A.slice(1).map(r => user(r[0])).filter(Boolean);\n    const semua = [...new Set(kreator.concat(akun))];\n    if (!semua.length) return { ok: true, info: 'Belum ada kreator/akun di spreadsheet' };\n\n    const items = apifyProfil_(tok, semua);\n    if (items.error) { log_('TikTok otomatis', 'Gagal: ' + items.error); return { ok: false, error: items.error }; }\n    const now = Utilities.formatDate(new Date(), TT_ZONA, 'yyyy-MM-dd HH:mm');\n    const pid = u => (String(u || '').match(/(\\d{15,})/) || [])[1] || '';\n    const stat = it => { const v = +it.playCount || 0, l = +it.diggCount || 0, c = +it.commentCount || 0, s = +it.shareCount || 0, sv = +it.collectCount || 0; return [v, l, c, s, sv, v ? (l + c + s + sv) / v : 0]; };\n    const link = it => { const u = String(it.webVideoUrl || '').split('?')[0]; return it.isSlideshow ? u.replace('/video/', '/photo/') : u; };\n    const sebut = it => TT_MENTION.test(String(it.text || '')) || (it.mentions || []).some(m => TT_MENTION.test(m)) || (it.detailedMentions || []).some(m => TT_MENTION.test(JSON.stringify(m)));\n    const kreatorSet = new Set(kreator), akunSet = new Set(akun);\n    const hasil = { ok: true, akun: semua.length, postingan: items.length, eksternalBaru: [], internalBaru: [], diperbarui: 0 };\n\n    // --- eksternal ---\n    if (shE && E.length) {\n      const idx = new Map(E.slice(1).map((r, i) => [pid(r[3]), i + 1]));\n      items.forEach(it => {\n        const u = user(it.authorMeta && it.authorMeta.name), id = String(it.id || pid(it.webVideoUrl)), S = stat(it);\n        if (idx.has(id)) { const r = E[idx.get(id)]; r.splice(4, 6, ...S); r[10] = now; hasil.diperbarui++; return; }\n        if (!kreatorSet.has(u) || !sebut(it)) return;\n        const tgl = Utilities.formatDate(new Date((+it.createTime || 0) * 1000), TT_ZONA, 'yyyy-MM-dd');\n        E.push([tgl, '@' + u, it.isSlideshow ? 'Foto slide' : 'Video', link(it)].concat(S, [now, it.isSlideshow ? 'Endorse · foto slide' : 'Endorse · video']));\n        idx.set(id, E.length - 1); hasil.eksternalBaru.push('@' + u + ' ' + tgl);\n      });\n      tulisUrut_(shE, E, [1, 3], (a, b) => key_(a[0]).localeCompare(key_(b[0])));\n    }\n    // --- internal ---\n    if (shI && I.length) {\n      const negara = new Map(A.slice(1).map(r => [user(r[0]), r[1]]));\n      const idx = new Map(I.slice(1).map((r, i) => [pid(r[4]), i + 1]));\n      items.forEach(it => {\n        const u = user(it.authorMeta && it.authorMeta.name), id = String(it.id || pid(it.webVideoUrl)), S = stat(it);\n        if (idx.has(id)) { const r = I[idx.get(id)]; r.splice(6, 6, ...S); r[12] = now; hasil.diperbarui++; return; }\n        if (!akunSet.has(u)) return;\n        const wkt = Utilities.formatDate(new Date((+it.createTime || 0) * 1000), TT_ZONA, 'yyyy-MM-dd HH:mm');\n        I.push([wkt, '@' + u, negara.get(u) || '', it.isSlideshow ? 'Foto slide' : 'Video', link(it), String(it.text || '').slice(0, 60)].concat(S, [now]));\n        idx.set(id, I.length - 1); hasil.internalBaru.push('@' + u + ' ' + wkt);\n      });\n      tulisUrut_(shI, I, [1, 4, 5], (a, b) => key_(b[0]).localeCompare(key_(a[0])));\n    }\n    // --- profil akun internal ---\n    if (shA && A.length) {\n      const meta = new Map(); items.forEach(it => { const m = it.authorMeta || {}; if (m.name) meta.set(user(m.name), m); });\n      A.slice(1).forEach(r => { const m = meta.get(user(r[0])); if (!m) return; r[3] = +m.fans || 0; r[4] = +m.heart || 0; r[5] = +m.video || 0; r[6] = now; });\n      shA.getRange(1, 1, A.length, A[0].length).setValues(A);\n    }\n    setStamp_(ss, Date.now(), 'TikTok otomatis');\n    log_('TikTok otomatis', hasil.eksternalBaru.length + ' eksternal baru, ' + hasil.internalBaru.length + ' internal baru, ' + hasil.diperbarui + ' statistik diperbarui');\n    return hasil;\n  } finally { lock.releaseLock(); }\n}\nfunction key_(v) { return v instanceof Date ? Utilities.formatDate(v, TT_ZONA, 'yyyy-MM-dd HH:mm') : String(v || ''); }\nfunction tulisUrut_(sh, data, teks, urut) {\n  const head = data[0], rows = data.slice(1).sort(urut), w = head.length;\n  rows.forEach(r => { while (r.length < w) r.push(''); r.length = w; });\n  if (sh.getMaxRows() < rows.length + 1) sh.insertRowsAfter(sh.getMaxRows(), rows.length + 1 - sh.getMaxRows());\n  teks.forEach(c => sh.getRange(1, c + 1, rows.length + 1, 1).setNumberFormat('@'));\n  sh.getRange(1, 1, rows.length + 1, w).setValues([head].concat(rows));\n}\n// Jalankan actor Apify lalu tunggu hasilnya (maks ±5 menit). Kalau belum selesai, run disimpan dan dipakai di pengecekan berikutnya.\nfunction apifyProfil_(tok, users) {\n  const props = PropertiesService.getScriptProperties(), api = 'https://api.apify.com/v2', h = { Authorization: 'Bearer ' + tok };\n  const get = u => { const r = UrlFetchApp.fetch(u, { headers: h, muteHttpExceptions: true }); return { code: r.getResponseCode(), j: JSON.parse(r.getContentText() || '{}') }; };\n  let runId = props.getProperty('ttRun');\n  if (runId) { const r = get(api + '/actor-runs/' + runId); if (r.code >= 400 || /FAILED|ABORTED|TIMED-OUT/.test(r.j.data && r.j.data.status)) runId = null; }\n  if (!runId) {\n    const res = UrlFetchApp.fetch(api + '/acts/' + TT_ACTOR + '/runs', { method: 'post', contentType: 'application/json', headers: h, muteHttpExceptions: true,\n      payload: JSON.stringify({ profiles: users, resultsPerPage: TT_JUMLAH, profileScrapeSections: ['videos'], profileSorting: 'latest', excludePinnedPosts: true,\n        shouldDownloadVideos: false, shouldDownloadCovers: false, shouldDownloadSubtitles: false, shouldDownloadSlideshowImages: false, shouldDownloadAvatars: false }) });\n    const code = res.getResponseCode();\n    if (code === 401 || code === 403) return { error: 'Token Apify ditolak (' + code + ')' };\n    if (code >= 400) return { error: 'Apify ' + code + ': ' + res.getContentText().slice(0, 150) };\n    runId = JSON.parse(res.getContentText()).data.id; props.setProperty('ttRun', runId);\n  }\n  let run = null;\n  for (let i = 0; i < 6; i++) { run = get(api + '/actor-runs/' + runId + '?waitForFinish=45').j.data; if (!/READY|RUNNING/.test(run.status)) break; }\n  if (/READY|RUNNING/.test(run.status)) return { error: 'Apify masih memproses. Coba lagi beberapa menit lagi (hasilnya tidak hilang).' };\n  props.deleteProperty('ttRun');\n  if (run.status !== 'SUCCEEDED') return { error: 'Apify berhenti dengan status ' + run.status };\n  const d = get(api + '/datasets/' + run.defaultDatasetId + '/items?clean=true&format=json');\n  return Array.isArray(d.j) ? d.j.filter(it => it && it.id && it.webVideoUrl) : [];\n}\n\n// ---------- spreadsheet ----------\n// Edit manual di spreadsheet ikut dicatat, supaya dashboard tahu ada data baru.\nfunction onEdit(e) {\n  try { if (e.range.getSheet().getName() !== 'Info') setStamp_(e.source, Date.now(), 'edit manual'); } catch (err) {}\n}\nfunction stamp_(ss) { const sh = ss.getSheetByName('Info'); return sh ? Number(sh.getRange('B1').getValue()) || 0 : 0; }\nfunction setStamp_(ss, st, by) {\n  const sh = ss.getSheetByName('Info') || ss.insertSheet('Info');\n  sh.getRange('A1:B3').setValues([['updatedAt', st], ['diperbarui', Utilities.formatDate(new Date(st), ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd HH:mm:ss')], ['oleh', by]]);\n}\nfunction fmtDate_(d, tz) { const hm = Utilities.formatDate(d, tz, 'HH:mm'); return Utilities.formatDate(d, tz, hm === '00:00' ? 'yyyy-MM-dd' : 'yyyy-MM-dd HH:mm'); }\nfunction out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }\n";
 function shCfg(){ try{ return JSON.parse(localStorage.getItem('ornakuy-sheet')||'null')||{}; }catch(e){ return {}; } }
 function SHEET_ON(){ const c=shCfg(); return !window.claude&&!!(c.url&&c.key); }
 function shDot(cls,title){ const d=$('shDot'); if(d){ d.className='sh-dot '+(cls||''); d.parentElement.title=title||''; } }
@@ -3457,6 +3749,8 @@ function shBuildRecs(){
       rows:sh.rows.map(r=>r.map((v,i)=>v===''||v==null?'':sh.cols[i][2]==='t'?wibStr(v):v))};
   out['Pending']={header:['ID','Tanggal','Kategori','Keterangan','Pemasukan (Rp)','Pengeluaran (Rp)','Rutin'],text:[0,3],rows:PEND().map(p=>[p.id,p.d,p.cat,p.note,p.in||'',p.out||'',p.recur?'Ya, bulanan':''])};
   out['Planning']={header:['Kunci','Isi (JSON) · ubah lewat dashboard'],text:[1],rows:[['plan',RECS.plan?JSON.stringify(RECS.plan):'']]};
+  out['Rebate Item']={header:['Asset Id','Nama item','Batas rebate (R$)'],text:[0,1],rows:Object.entries(RECS.rebCap||{}).map(([id,c])=>{ const p=RAW.p.find(x=>String(x[2])===id); return [id,p?p[0]:'',c]; })};
+  out['Saldo Robux']={header:['Waktu (WIB)','Saldo / Community Funds (R$)','Pending (R$)','Rate (Rp per R$)','Catatan','Publishing Advance Rebates kumulatif (R$)','Community Revenue Payouts kumulatif (R$)'],text:[0,4],rows:RBX().map(x=>[x.t,x.s,x.p,x.rate,x.note||'',x.rb==null?'':x.rb,x.po==null?'':x.po])};
   return out;
 }
 function shParse(j){
@@ -3465,12 +3759,14 @@ function shParse(j){
       out.book.pending=(S['Pending']||[]).slice(1).map(r=>({id:String(r[0]||'')||uid(),d:toDateStr(r[1]),cat:String(r[2]||''),note:String(r[3]||''),in:money(r[4]),out:money(r[5]),recur:/ya|bulan/i.test(String(r[6]||''))?'bulanan':'',created:Date.now()})).filter(p=>p.d&&(p.in||p.out));
     }catch(e){ out.err='Tab Transaksi: '+(e.message||e); } }
   const mk=sheetsToMarketing(S); if(mk.mk) out.mk=mk.mk; if(mk.int) out.int=mk.int;
+  if(Array.isArray(S['Rebate Item'])){ out.rebCap={}; S['Rebate Item'].slice(1).forEach(r=>{ const id=String(r[0]||'').trim(), c=money(r[2]); if(id&&c) out.rebCap[id]=c; }); }
+  if(Array.isArray(S['Saldo Robux'])) out.robux=S['Saldo Robux'].slice(1).map(r=>({t:String(r[0]||'').replace('T',' ').slice(0,16),s:money(r[1]),p:money(r[2]),rate:money(r[3])||125,note:String(r[4]||''),rb:r[5]===''||r[5]==null?null:money(r[5]),po:r[6]===''||r[6]==null?null:Math.abs(money(r[6]))})).filter(x=>/^\d{4}-\d\d-\d\d \d\d:\d\d$/.test(x.t));
   if(Array.isArray(S['Planning'])){ const row=S['Planning'].slice(1).find(r=>r[0]==='plan'); if(row){ try{ out.plan=row[1]?JSON.parse(row[1]):null; }catch(e){} } }
   out.empty=!out.book&&!out.mk; return out;
 }
 function shCacheGet(){ try{ return JSON.parse(localStorage.getItem('ornakuy-sheet-cache')||'null')||{}; }catch(e){ return {}; } }
 function shSaveCache(extra){ try{ const o=shCacheGet(); localStorage.setItem('ornakuy-sheet-cache',JSON.stringify({...o,stamp:SHC_STATE.stamp,recs:{...RECS,book:BOOK},...(extra||{})})); }catch(e){ setSaveSt('Salinan lokal spreadsheet terlalu besar untuk browser ini','err'); } }
-async function shCall(params){ const c=shCfg(); const r=await fetch(c.url+(c.url.includes('?')?'&':'?')+new URLSearchParams({...params,key:c.key})); const j=await r.json(); if(!j.ok) throw new Error(j.error||'gagal'); return j; }
+async function shCall(params){ const c=shCfg(); const r=await fetch(c.url+(c.url.includes('?')?'&':'?')+new URLSearchParams({...params,key:c.key})); const t=await r.text(); let j; try{ j=JSON.parse(t); }catch(e){ const m=t.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,160); throw new Error('Apps Script error: '+(m||'respon kosong')+'. Biasanya karena izin Gmail/Drive belum diberikan: jalankan pasangOtomatis sekali dari editor.'); } if(!j.ok) throw new Error(j.error||'gagal'); return j; }
 let shQueue=Promise.resolve();
 function shPush(sheets,force){
   const c=shCfg(); shDot('wait','Menyimpan ke spreadsheet…'); setSaveSt('Menyimpan ke spreadsheet…');
@@ -3492,7 +3788,7 @@ async function shSalesLoad(){ const j=await shCall({action:'sales'}); if(j.sales
 async function shLoad(reload){
   const j=await shCall({action:'read'}), P=shParse(j);
   if(P.empty) return {empty:true};
-  const recs={v:1,updatedAt:j.stamp||Date.now(),mk:P.mk||RECS.mk,fin:[],int:P.int||RECS.int,plan:'plan' in P?P.plan:RECS.plan,media:RECS.media,book:P.book||BOOK};
+  const recs={v:1,updatedAt:j.stamp||Date.now(),mk:P.mk||RECS.mk,fin:[],int:P.int||RECS.int,plan:'plan' in P?P.plan:RECS.plan,robux:P.robux||RECS.robux||[],rebCap:P.rebCap||RECS.rebCap||{},media:RECS.media,book:P.book||BOOK};
   SHC_STATE.stamp=j.stamp||0;
   localStorage.setItem('ornakuy-sheet-cache',JSON.stringify({...shCacheGet(),stamp:SHC_STATE.stamp,recs}));
   if(reload) location.reload(); return {ok:true,err:P.err};
@@ -3521,7 +3817,7 @@ function shModal(){
     <ol><li>Buka spreadsheet → Extensions → Apps Script. Hapus isi Code.gs, lalu tempel script (tombol <b>Salin script</b>).</li>
       <li>Ganti <code>GANTI_DENGAN_KUNCI_RAHASIA</code> dengan kata sandi buatanmu, lalu simpan.</li>
       <li>Deploy → New deployment → Web app → Execute as: <b>Me</b> → Who has access: <b>Anyone</b> → Deploy, lalu izinkan aksesnya.</li>
-      <li>Di toolbar Apps Script pilih fungsi <b>pasangOtomatis</b> lalu klik <b>Run</b> sekali (izinkan Gmail &amp; Drive). Sales dari email Roblox akan diambil otomatis tiap 30 menit.</li>
+      <li>Di toolbar Apps Script pilih fungsi <b>pasangOtomatis</b> lalu klik <b>Run</b> sekali (izinkan Gmail &amp; Drive). Sales dari email Roblox diambil otomatis tiap 30 menit, postingan TikTok baru dicek tiap hari jam 08.00 &amp; 20.00.</li>
       <li>Tempel Web app URL dan kata sandinya di bawah, klik <b>Simpan &amp; tes</b>. Spreadsheet baru: klik <b>Kirim semua data</b> sekali.</li></ol>
     <label>Web app URL<input id="shUrl" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(c.url||'https://script.google.com/macros/s/AKfycbxMBlaPr26jCvTvnl-BM6d8PI6PKo0A5j3ueLraeUunlmWhh-Ywfcc3Ld6sRLwz8YgFwg/exec')}"${inArt?' disabled':''}></label>
     <label>Kata sandi (kunci)<input id="shKey" type="password" autocomplete="off" value="${esc(c.key||'')}"${inArt?' disabled':''}></label>
