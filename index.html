@@ -602,6 +602,10 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
 .upd-st{font-size:12px;color:var(--muted)} .upd-st.ok{color:var(--good)} .upd-st.err{color:var(--bad)}
 #apifyModal label{display:flex;flex-direction:column;gap:5px;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
 #view-plan>section:first-child{padding-top:28px}
+#roiTable tr.roi-row{cursor:pointer} #roiTable tr.roi-row:hover td{background:var(--accent-soft)} .roi-car{display:inline-block;transition:transform .15s;color:var(--muted)} tr.roi-row.open .roi-car{transform:rotate(90deg)}
+#roiTable tr.roi-det>td{background:var(--bg);padding:12px 14px} .roi-sum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:10px}
+.roi-sum>div{display:flex;flex-direction:column;gap:3px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);text-align:left} .roi-sum b{font-size:16px} .roi-sum .muted{font-size:11px}
+table.roi-sub{width:100%;margin-top:8px} table.roi-sub th{font-size:10px} @media(max-width:700px){.roi-sum{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
   <header>
     <div class="eyebrow">Dashboard brand UGC · Group 950136185</div>
@@ -873,7 +877,7 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
     </section>
     <section data-mt="dash" id="roiSec">
       <div class="sec-head"><div><div class="eyebrow">ROI endorse</div><h2>Biaya per save, per kreator</h2>
-        <p>Save dipakai sebagai ukuran minat: orang yang menyimpan postingan berarti tertarik dengan outfit-nya. Biaya = payment Endorse di Keuangan yang menyebut @kreator; save = total save semua postingannya. Makin kecil biaya per save, makin efektif. Mengikuti rentang tanggal di atas.</p></div></div>
+        <p>Save dipakai sebagai ukuran minat: orang yang menyimpan postingan berarti tertarik dengan outfit-nya. Biaya = payment Endorse di Keuangan yang menyebut @kreator; save = total save semua postingannya. Biaya dihitung dari konten yang sudah tayang (ratecard × postingan), jadi paket yang belum selesai tayang tidak bikin mahal. Target: biaya per save <b>di bawah Rp50</b>. Klik baris kreator untuk melihat biaya per video dan ratecard per paket. Mengikuti rentang tanggal di atas.</p></div></div>
       <div class="kpis" id="roiKpis"></div>
       <div class="panel"><div class="tbl-wrap" style="max-height:none;margin-top:0;border-top:0"><table id="roiTable"></table></div></div>
     </section>
@@ -1788,24 +1792,49 @@ const MK_CATS=['Endorse','Iklan TikTok','Jasa Konten','Akun TikTok','Cloudphone'
 const handleKey=u=>String(u||'').toLowerCase().replace(/^@/,'').replace(/[^a-z0-9]/g,'');
 function sameHandle(a,b){ if(!a||!b) return false; if(a===b||a.startsWith(b)||b.startsWith(a)) return true;
   if(Math.abs(a.length-b.length)>2) return false; const d=[...Array(b.length+1).keys()]; for(let i=1;i<=a.length;i++){ let p=d[0]; d[0]=i; for(let j=1;j<=b.length;j++){ const t=d[j]; d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1)); p=t; } } return d[b.length]<=2; }
+const ROI_GOOD=50; // biaya per save yang dianggap bagus (Rp)
+// jumlah konten dalam satu payment: "30 foto slide", "2 video + 1 foto slide"; tanpa angka = 1 konten
+function roiPaket(note){ const t=String(note||''); let v=0,f=0; t.replace(/(\d+)\s*(video|vid)\b/gi,(_,n)=>{v+=+n;}); t.replace(/(\d+)\s*(foto\s*slide|foto|slide|photo)/gi,(_,n)=>{f+=+n;});
+  if(!v&&!f){ if(/foto|slide|photo/i.test(t)) f=1; else v=1; } return {v,f,n:v+f}; }
+function roiDetail(x){
+  const pays=x.P.map(r=>({...r,pk:roiPaket(r.note)})), order=pays.reduce((s,r)=>s+r.pk.n,0), rate=order?x.cost/order:0, perPost=x.n?x.cost/x.n:0;
+  const pk=k=>[k.v?k.v+' video':'',k.f?k.f+' foto slide':''].filter(Boolean).join(' + ');
+  const posts=[...x.Q].sort((a,b)=>(a.d||'').localeCompare(b.d||''));
+  const box=(a,b,c)=>`<div><span class="eyebrow">${a}</span><b>${b}</b><span class="muted">${c}</span></div>`;
+  return `<div class="roi-box"><div class="roi-sum">
+      ${box('Ratecard per konten',order?Rp(rate):'–',`${Rp(x.cost)} ÷ ${fmt(order)} konten dipesan`)}
+      ${box('Biaya konten tayang',Rp(x.used),x.used<x.cost?`${fmt(x.n)} tayang × ${Rp(rate)} · sisa ${Rp(x.cost-x.used)} untuk konten berikutnya`:`${Rp(x.cost)} ÷ ${fmt(x.n)} postingan = ${Rp(perPost)} per video`)}
+      ${box('Konten tayang',`${fmt(x.n)} / ${fmt(order)}`,order>x.n?`sisa ${fmt(order-x.n)} belum tayang`:order&&x.n>=order?'semua sudah tayang':'')}
+      ${box('Save per konten',x.n?fmt(Math.round(x.sv/x.n)):'–',x.sv?`biaya per save ${Rp(x.used/x.sv)} (target < Rp${ROI_GOOD})`:'')}</div>
+    <table class="roi-sub"><thead><tr><th style="text-align:left">Payment</th><th style="text-align:left">Paket</th><th>Biaya</th><th>Ratecard / konten</th></tr></thead><tbody>
+      ${pays.map(r=>`<tr><td class="txt" style="text-align:left">${dLabel(r.d)} · ${esc(r.note||'')}</td><td style="text-align:left">${pk(r.pk)}</td><td>${Rp(r.out)}</td><td><b>${Rp(r.out/r.pk.n)}</b></td></tr>`).join('')}</tbody></table>
+    ${posts.length?`<table class="roi-sub"><thead><tr><th style="text-align:left">Postingan</th><th>Views</th><th>Save</th><th>Nilai (ratecard)</th><th>Biaya per save</th></tr></thead><tbody>
+      ${posts.map(p=>{ const c=p.sv?rate/p.sv:0; return `<tr><td class="txt" style="text-align:left">${dLabel(p.d)} · ${/photo/.test(p.url||'')?'foto slide':'video'}${p.url?` · <a href="${esc(p.url)}" target="_blank" rel="noopener">buka</a>`:''}</td><td>${fmt(p.v||0)}</td><td>${fmt(p.sv||0)}</td><td>${Rp(rate)}</td><td><b style="color:var(--${!p.sv?'muted':c<ROI_GOOD?'good':c>ROI_GOOD*2?'bad':'fg'})">${p.sv?Rp(c):'–'}</b></td></tr>`; }).join('')}</tbody></table>`:'<p class="muted" style="margin:8px 0 0">Belum ada postingan tercatat.</p>'}
+  </div>`;
+}
+document.addEventListener('click',e=>{ const tr=e.target.closest&&e.target.closest('#roiTable tr.roi-row'); if(!tr||e.target.closest('a')) return; roiToggle(tr); });
+document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('#roiTable tr.roi-row')){ e.preventDefault(); roiToggle(e.target); } });
+function roiToggle(tr){ const d=$('roiTable').querySelector(`tr[data-roid="${tr.dataset.roi}"]`); if(!d) return; d.hidden=!d.hidden; tr.classList.toggle('open',!d.hidden); }
 function renderRoi(){
   if(!$('roiTable')) return;
   const posts=RECS.mk.filter(p=>inRange(p.d)), pays=bookRows().filter(r=>r.cat==='Endorse'&&r.out&&inRange(r.d));
-  const C=new Map(), get=k=>{ if(!C.has(k)) C.set(k,{u:'',cost:0,pay:0,n:0,v:0,sv:0,l:0,c:0,s:0}); return C.get(k); };
-  for(const p of posts){ const k=handleKey(p.u); const key=[...C.keys()].find(x=>sameHandle(x,k))||k; const x=get(key); x.u=x.u||p.u; x.n++; x.v+=p.v||0; x.sv+=p.sv||0; x.l+=p.l||0; x.c+=p.c||0; x.s+=p.s||0; }
-  for(const r of pays){ const m=String(r.note||'').match(/@([\w.]+)/); if(!m) continue; const k=handleKey(m[1]); const key=[...C.keys()].find(x=>sameHandle(x,k))||k; const x=get(key); x.u=x.u||'@'+m[1]; x.cost+=r.out; x.pay++; }
-  const rows=[...C.values()].filter(x=>x.cost>0), withSv=rows.filter(x=>x.sv>0).sort((a,b)=>a.cost/a.sv-b.cost/b.sv);
-  const T=rows.reduce((a,x)=>({cost:a.cost+x.cost,sv:a.sv+x.sv,v:a.v+x.v}),{cost:0,sv:0,v:0}), avg=T.sv?T.cost/T.sv:0;
+  const C=new Map(), get=k=>{ if(!C.has(k)) C.set(k,{u:'',cost:0,pay:0,n:0,v:0,sv:0,l:0,c:0,s:0,P:[],Q:[]}); return C.get(k); };
+  for(const p of posts){ const k=handleKey(p.u); const key=[...C.keys()].find(x=>sameHandle(x,k))||k; const x=get(key); x.u=x.u||p.u; x.n++; x.v+=p.v||0; x.sv+=p.sv||0; x.l+=p.l||0; x.c+=p.c||0; x.s+=p.s||0; x.Q.push(p); }
+  for(const r of pays){ const m=String(r.note||'').match(/@([\w.]+)/); if(!m) continue; const k=handleKey(m[1]); const key=[...C.keys()].find(x=>sameHandle(x,k))||k; const x=get(key); x.u=x.u||'@'+m[1]; x.cost+=r.out; x.pay++; x.P.push(r); }
+  const rows=[...C.values()].filter(x=>x.cost>0); rows.forEach(x=>{ x.ord=x.P.reduce((s,r)=>s+roiPaket(r.note).n,0); x.rate=x.ord?x.cost/x.ord:0; x.used=x.ord&&x.n<x.ord?x.rate*x.n:x.cost; });
+  const withSv=rows.filter(x=>x.sv>0).sort((a,b)=>a.used/a.sv-b.used/b.sv);
+  const T=rows.reduce((a,x)=>({cost:a.cost+x.cost,used:a.used+(x.sv?x.used:0),sv:a.sv+x.sv,v:a.v+x.v}),{cost:0,used:0,sv:0,v:0}), avg=T.sv?T.used/T.sv:0;
   const best=withSv[0], worst=withSv[withSv.length-1];
-  $('roiKpis').innerHTML=[['Rata-rata biaya per save',T.sv?Rp(avg):'–',`${fmt(T.sv)} save dari ${Rp(T.cost)} biaya`],
-    ['Paling efektif',best?esc(best.u):'–',best?`${Rp(best.cost/best.sv)} per save`:'belum ada data'],
-    ['Paling mahal',worst&&withSv.length>1?esc(worst.u):'–',worst&&withSv.length>1?`${Rp(worst.cost/worst.sv)} per save`:''],
+  $('roiKpis').innerHTML=[['Rata-rata biaya per save',T.sv?Rp(avg):'–',`${fmt(T.sv)} save dari ${Rp(T.used)} biaya konten tayang · target < Rp${ROI_GOOD}`],
+    ['Paling efektif',best?esc(best.u):'–',best?`${Rp(best.used/best.sv)} per save`:'belum ada data'],
+    ['Paling mahal',worst&&withSv.length>1?esc(worst.u):'–',worst&&withSv.length>1?`${Rp(worst.used/worst.sv)} per save`:''],
     ['Belum ada save',fmt(rows.filter(x=>!x.sv).length)+' kreator','sudah dibayar, postingan belum ada / belum ada data save']]
     .map(k=>`<div class="kpi"><span class="eyebrow">${k[0]}</span><span class="v">${k[1]}</span><span class="s">${k[2]}</span></div>`).join('');
-  const verdict=x=>{ if(!x.sv) return '<span class="muted">belum ada save</span>'; const r=(x.cost/x.sv)/avg; return r<=0.7?'✓ efektif, layak lanjut':r<=1.3?'sesuai rata-rata':'⚠ mahal, evaluasi harga'; };
+  const verdict=x=>{ if(!x.sv) return '<span class="muted">belum ada save</span>'; const c=x.used/x.sv; return c<ROI_GOOD?'✓ bagus, layak lanjut':c<=ROI_GOOD*2?'cukup, di atas Rp'+ROI_GOOD:'⚠ mahal, evaluasi harga'; };
+  const cps=x=>x.sv?`<b style="color:var(--${x.used/x.sv<ROI_GOOD?'good':x.used/x.sv>ROI_GOOD*2?'bad':'fg'})">${Rp(x.used/x.sv)}</b>`:'<b>–</b>';
   const list=[...withSv,...rows.filter(x=>!x.sv).sort((a,b)=>b.cost-a.cost)];
   $('roiTable').innerHTML=`<thead><tr><th style="text-align:left">Kreator</th><th>Biaya</th><th>Postingan</th><th>Views</th><th>Save</th><th>Biaya per save</th><th>Save per Rp10rb</th><th>Save/views</th><th style="text-align:left">Penilaian</th></tr></thead><tbody>`+
-    (list.length?list.map(x=>`<tr><td class="txt" style="text-align:left">${esc(x.u)}</td><td>${Rp(x.cost)}<br><span class="muted">${x.pay} payment</span></td><td>${fmt(x.n)}</td><td>${fmt(x.v)}</td><td><b>${fmt(x.sv)}</b></td><td><b>${x.sv?Rp(x.cost/x.sv):'–'}</b></td><td>${x.sv?(x.sv/x.cost*10000).toFixed(1).replace('.',','):'–'}</td><td>${x.v?(x.sv/x.v*100).toFixed(1).replace('.',',')+'%':'–'}</td><td style="text-align:left;font-family:var(--body)">${verdict(x)}</td></tr>`).join('')
+    (list.length?list.map((x,i)=>`<tr class="roi-row" data-roi="${i}" tabindex="0" title="Klik untuk rincian biaya per video"><td class="txt" style="text-align:left"><span class="roi-car">▸</span> ${esc(x.u)}</td><td>${Rp(x.used)}<br><span class="muted">${x.used<x.cost?'dari '+Rp(x.cost)+' · '+fmt(x.n)+'/'+fmt(x.ord)+' tayang':x.pay+' payment'}</span></td><td>${fmt(x.n)}</td><td>${fmt(x.v)}</td><td><b>${fmt(x.sv)}</b></td><td>${cps(x)}</td><td>${x.sv?(x.sv/x.used*10000).toFixed(1).replace('.',','):'–'}</td><td>${x.v?(x.sv/x.v*100).toFixed(1).replace('.',',')+'%':'–'}</td><td style="text-align:left;font-family:var(--body)">${verdict(x)}</td></tr><tr class="end-sub roi-det" data-roid="${i}" hidden><td colspan="9">${roiDetail(x)}</td></tr>`).join('')
       :'<tr><td colspan="9" class="muted">Belum ada payment Endorse dengan @kreator di rentang ini.</td></tr>')+'</tbody>';
 }
 function renderMkCost(views){
@@ -3130,7 +3159,7 @@ const TT=(function(){
         const v=numIn(f.v); if(isNaN(v)||k.n===null||k.n===-Infinity) return false;
         return f.op==='>='?k.n>=v:f.op==='<='?k.n<=v:f.op==='>'?k.n>v:f.op==='<'?k.n<v:k.n===v; });
       u.el.hidden=!ok; if(ok) shown++;
-      if(u.el.tagName==='TR'){ let n=u.el.nextElementSibling; while(n&&n.classList.contains('end-sub')){ n.hidden=!ok; n=n.nextElementSibling; } } });
+      if(u.el.tagName==='TR'){ let n=u.el.nextElementSibling; while(n&&n.classList.contains('end-sub')){ n.hidden=!ok||(n.classList.contains('roi-det')&&!u.el.classList.contains('open')); n=n.nextElementSibling; } } });
     const bar=document.querySelector(`.tfilter[data-for="${table.id}"]`);
     if(bar){ const c=bar.querySelector('.tf-count'); c.textContent=F.length?`${fmt(shown)} dari ${fmt(U.length)} baris · total di bawah tabel belum ikut filter`:''; }
   }
