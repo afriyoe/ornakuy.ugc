@@ -306,6 +306,8 @@ table thead th[data-sort="asc"]::after{content:' ▲'}
 .tf-row select,.tf-row input{font:500 12px var(--body);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:3px 5px;min-height:26px}
 .tf-row .tf-x{border:0;padding:3px 6px}
 .tf-count{font-size:12px;color:var(--muted)}
+.tfilter .tf-q{font:13px var(--body);padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);width:220px;max-width:100%}
+.tfilter .tf-q:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
 dialog.post-dlg{margin:0 0 0 auto;height:100vh;max-height:100vh;width:min(360px,100vw);padding:16px;border:0;border-left:1px solid var(--line);background:var(--panel);color:var(--fg);box-shadow:-20px 0 60px -30px rgba(0,0,0,.6)}
 dialog.post-dlg::backdrop{background:rgba(10,8,14,.45)}
 dialog.post-dlg .end-prev{position:static}
@@ -3119,7 +3121,7 @@ document.getElementById('prodHead').addEventListener('click',function(e){
 const FILTER_TABLES=['endTable','intAccTable','intTable','mkTable','mkUserTable','finTable','topTable','adsTable'];
 const TT=(function(){
   const MON={jan:1,feb:2,mar:3,apr:4,mei:5,may:5,jun:6,jul:7,agu:8,aug:8,sep:9,okt:10,oct:10,nov:11,des:12,dec:12,januari:1,februari:2,maret:3,april:4,juni:6,juli:7,agustus:8,september:9,oktober:10,november:11,desember:12};
-  const sortSt=new WeakMap(), filt={}; let busy=false;
+  const sortSt=new WeakMap(), filt={}, srch={}; let busy=false;
   function key(cell){
     const t=(cell?cell.innerText:'').trim();
     if(!t||/^[–-]$/.test(t)) return {n:-Infinity,t:''};
@@ -3153,15 +3155,15 @@ const TT=(function(){
     let n=m[1]; n=/,\d{1,2}$/.test(n)||(!/\./.test(n)&&/,/.test(n))?n.replace(/\./g,'').replace(',','.'):(/\.\d{3}(\.|$)/.test(n)?n.replace(/\./g,''):n);
     return parseFloat(n)*({k:1e3,rb:1e3,ribu:1e3,jt:1e6,juta:1e6,m:1e6}[m[2]]||1); };
   function applyFilter(table){
-    const F=(filt[table.id]||[]).filter(f=>f.v!==''&&f.col); const U=units(table);
+    const F=(filt[table.id]||[]).filter(f=>f.v!==''&&f.col); const U=units(table), Q=String(srch[table.id]||'').toLowerCase().split(/\s+/).filter(Boolean);
     let shown=0; U.forEach(u=>{ const ok=F.every(f=>{ const th=thBy(table,f.col); if(!th) return true; const k=key(cellAt(u.row,colIndex(th)));
         if(f.op==='has') return (k.t||'').toLowerCase().includes(String(f.v).toLowerCase());
         const v=numIn(f.v); if(isNaN(v)||k.n===null||k.n===-Infinity) return false;
-        return f.op==='>='?k.n>=v:f.op==='<='?k.n<=v:f.op==='>'?k.n>v:f.op==='<'?k.n<v:k.n===v; });
+        return f.op==='>='?k.n>=v:f.op==='<='?k.n<=v:f.op==='>'?k.n>v:f.op==='<'?k.n<v:k.n===v; })&&(!Q.length||(t=>Q.every(w=>t.includes(w)))(u.row.textContent.toLowerCase().replace(/\s+/g,' ')));
       u.el.hidden=!ok; if(ok) shown++;
       if(u.el.tagName==='TR'){ let n=u.el.nextElementSibling; while(n&&n.classList.contains('end-sub')){ n.hidden=!ok||(n.classList.contains('roi-det')&&!u.el.classList.contains('open')); n=n.nextElementSibling; } } });
     const bar=document.querySelector(`.tfilter[data-for="${table.id}"]`);
-    if(bar){ const c=bar.querySelector('.tf-count'); c.textContent=F.length?`${fmt(shown)} dari ${fmt(U.length)} baris · total di bawah tabel belum ikut filter`:''; }
+    if(bar){ const c=bar.querySelector('.tf-count'); c.textContent=F.length||Q.length?`${fmt(shown)} dari ${fmt(U.length)} baris · total di bawah tabel belum ikut filter`:''; }
   }
   function restore(table){ busy=true; try{ heads(table).forEach(c=>c.removeAttribute('data-sort')); const U=units(table); if(!U.length) return;
       U.sort((a,b)=>(a.el.__ord??1e9)-(b.el.__ord??1e9)); const parent=U[0].el.parentNode, anchor=table.tBodies.length>1?(table.tFoot||null):null;
@@ -3194,12 +3196,12 @@ const TT=(function(){
         if(t.closest('.tf-x')){ filt[id].splice(+t.closest('.tf-row').dataset.i,1); drawBar(id); refresh(table); }
         if(t.closest('.tf-clear')){ filt[id]=[]; drawBar(id); refresh(table); }
         if(t.closest('.tf-edit')) finEditStart(); if(t.closest('.tf-save')) finEditSave(); if(t.closest('.tf-cancel')) finEditCancel(); });
-      bar.addEventListener('input',e=>{ const r=e.target.closest('.tf-row'); if(!r) return; const f=filt[id][+r.dataset.i];
+      bar.addEventListener('input',e=>{ if(e.target.classList.contains('tf-q')){ srch[id]=e.target.value; needAll(table); refresh(table); return; } const r=e.target.closest('.tf-row'); if(!r) return; const f=filt[id][+r.dataset.i];
         if(e.target.classList.contains('tf-col')){ f.col=e.target.value; const c=colsOf(table).find(x=>x.label===f.col); f.op=c&&c.num?(f.op==='has'?'>=':f.op):'has'; drawBar(id); }
         else if(e.target.classList.contains('tf-op')) f.op=e.target.value; else if(e.target.classList.contains('tf-v')) f.v=e.target.value;
         refresh(table); }); }
     const F=filt[id]||[], C=colsOf(table);
-    bar.innerHTML=`<button type="button" class="tf-add">＋ Filter</button>`+F.map((f,i)=>{ const c=C.find(x=>x.label===f.col)||{num:true};
+    bar.innerHTML=(id==='finTable'?`<input type="search" class="tf-q" placeholder="🔎 Cari transaksi…" aria-label="Cari transaksi" value="${esc(srch[id]||'')}">`:'')+`<button type="button" class="tf-add">＋ Filter</button>`+F.map((f,i)=>{ const c=C.find(x=>x.label===f.col)||{num:true};
       return `<span class="tf-row" data-i="${i}"><select class="tf-col" aria-label="Kolom">${C.map(x=>`<option${x.label===f.col?' selected':''}>${esc(x.label)}</option>`).join('')}</select>
         <select class="tf-op" aria-label="Kondisi">${(c.num?[['>=','≥'],['<=','≤'],['>','>'],['<','<'],['=','=']]:[['has','berisi']]).map(o=>`<option value="${o[0]}"${o[0]===f.op?' selected':''}>${o[1]}</option>`).join('')}</select>
         <input class="tf-v" value="${esc(f.v)}" placeholder="${c.num?'mis. 10k':'teks'}" aria-label="Nilai" size="7"><button type="button" class="tf-x" aria-label="Hapus filter">✕</button></span>`; }).join('')+
