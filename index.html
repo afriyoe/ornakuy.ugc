@@ -445,6 +445,11 @@ a.ulink:hover{text-decoration:underline}
 .info-q:hover,.info-q[aria-expanded="true"]{color:var(--fg);border-color:var(--fg-2);background:var(--panel-2)}
 .info-q:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .info-q.info-inline{margin:2px 0}
+.sh-q{all:unset;box-sizing:border-box;cursor:pointer;display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font:600 11px/1 var(--mono);margin-left:8px;vertical-align:2px}
+.sh-q:hover,.sh-q[aria-expanded="true"]{color:var(--fg);border-color:var(--fg-2);background:var(--panel-2)}
+.sh-key{margin:0 0 12px;color:var(--fg-2);font-size:14px}
+body:not(.show-src) .datapanel{display:none}
+#srcBtn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
 .info-pop{position:fixed;z-index:60;width:max-content;max-width:min(440px,calc(100vw - 32px));background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font:13px/1.55 var(--body);color:var(--fg-2);box-shadow:0 14px 40px -16px rgba(0,0,0,.6);text-transform:none;letter-spacing:0;font-weight:400}
 .info-pop p{margin:0 0 6px} .info-pop p:last-child{margin:0}
 #finChat .fc-row .tag.pend{background:rgba(242,201,76,.18);color:#d7a51c}
@@ -616,7 +621,7 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
       <button role="tab" data-m="mk" aria-selected="false">Marketing</button>
       <button role="tab" data-m="fin" aria-selected="false">Keuangan</button>
       <button role="tab" data-m="plan" aria-selected="false">Planning</button>
-      <div class="mn-right"><span class="save-st" id="saveSt" role="status" aria-live="polite"></span><button class="btn" id="shBtn" type="button"><span class="sh-dot" id="shDot"></span>Spreadsheet</button><button class="btn" id="xlsxBtn" type="button">Export Spreadsheet (.xlsx)</button></div>
+      <div class="mn-right"><span class="save-st" id="saveSt" role="status" aria-live="polite"></span><button class="btn" id="shBtn" type="button"><span class="sh-dot" id="shDot"></span>Spreadsheet</button><button class="btn" id="xlsxBtn" type="button">Export Spreadsheet (.xlsx)</button><button class="btn" id="srcBtn" type="button" aria-pressed="false" title="Tampilkan sumber data dan tombol upload">Sumber data</button></div>
     </nav>
   </header>
   <div class="dropzone" id="dropzone" hidden=""><div>Lepaskan file ekspor SalesV2 (.csv atau .zip) di sini</div></div>
@@ -1462,7 +1467,7 @@ async function readUpload(file){
   return [{name:file.name,text:await file.text()}];
 }
 const wibLabel = ts => { const w=new Date((ts+7*3600)*1000); return `${dLabelY(w.toISOString().slice(0,10))} ${w.toISOString().slice(11,16)}`; };
-function dpMsg(t,cls){ const m=$('dpMsg'); m.className='dp-msg '+(cls||''); m.innerHTML=t; }
+function dpMsg(t,cls){ const m=$('dpMsg'); m.className='dp-msg '+(cls||''); m.innerHTML=t; if(t&&cls==='err'){ document.body.classList.add('show-src'); const b=document.getElementById('srcBtn'); if(b) b.setAttribute('aria-pressed','true'); } }
 let PENDING=null;
 async function handleFiles(files){
   files=[...files].filter(f=>/\.(csv|zip)$/i.test(f.name)); if(!files.length){ dpMsg('Pilih file .csv atau .zip hasil ekspor SalesV2.','err'); return; }
@@ -2819,6 +2824,9 @@ function showFinTab(t){ if(!['book','rbx'].includes(t)) t='book';
 $('finTabs').addEventListener('click',e=>{ const b=e.target.closest('button[data-t]'); if(b) showFinTab(b.dataset.t); });
 (function(){ let t=null; try{ t=localStorage.getItem('ornakuy-fintab'); }catch(e){} showFinTab(t||'book'); })();
 
+// ---------- tombol Sumber data: panel sumber data & upload disembunyikan sampai diklik ----------
+$('srcBtn').addEventListener('click',()=>{ const on=!document.body.classList.contains('show-src'); document.body.classList.toggle('show-src',on); $('srcBtn').setAttribute('aria-pressed',String(on)); if(on){ const v=document.querySelector('.view:not([hidden]) .datapanel'); if(v) v.scrollIntoView({block:'nearest',behavior:'smooth'}); } });
+
 // ---------- view tabs ----------
 const VIEWS=['ring','time','prod','color','buyer'];
 function showView(v,scroll){
@@ -3922,9 +3930,10 @@ async function shLoad(reload){
 })();
 function shModal(){
   const c=shCfg(), inArt=!!window.claude, m=document.createElement('div'); m.className='cmodal';
-  m.innerHTML=`<div class="am-box sh-box" role="dialog" aria-modal="true" aria-label="Spreadsheet"><h3>Google Sheets sebagai master data</h3>
+  m.innerHTML=`<div class="am-box sh-box" role="dialog" aria-modal="true" aria-label="Spreadsheet"><h3>Google Sheets sebagai master data<button class="sh-q" type="button" aria-expanded="false" aria-controls="shSteps" aria-label="Tampilkan langkah pemasangan">?</button></h3>
+    <p class="sh-key">${SHEET_ON()?'Tersambung: semua data dibaca dan disimpan ke spreadsheet. Sales dari email Roblox masuk otomatis tiap 30 menit.':'Isi Web app URL dan kata sandi, lalu klik <b>Simpan &amp; tes</b> untuk menyambungkan spreadsheet.'}</p>
     ${inArt?`<p class="sh-st err">Sinkron spreadsheet hanya jalan di versi GitHub. Artefak Claude memblokir koneksi ke Google.</p>`:''}
-    <ol><li>Buka spreadsheet → Extensions → Apps Script. Hapus isi Code.gs, lalu tempel script (tombol <b>Salin script</b>).</li>
+    <ol id="shSteps" hidden><li>Buka spreadsheet → Extensions → Apps Script. Hapus isi Code.gs, lalu tempel script (tombol <b>Salin script</b>).</li>
       <li>Ganti <code>GANTI_DENGAN_KUNCI_RAHASIA</code> dengan kata sandi buatanmu, lalu simpan.</li>
       <li>Deploy → New deployment → Web app → Execute as: <b>Me</b> → Who has access: <b>Anyone</b> → Deploy, lalu izinkan aksesnya.</li>
       <li>Di toolbar Apps Script pilih fungsi <b>pasangOtomatis</b> lalu klik <b>Run</b> sekali (izinkan Gmail &amp; Drive). Sales dari email Roblox diambil otomatis tiap 30 menit, postingan TikTok baru dicek tiap hari jam 08.00 &amp; 20.00.</li>
@@ -3936,7 +3945,8 @@ function shModal(){
     <textarea id="shCode" readonly hidden aria-label="Script Apps Script"></textarea></div>`;
   document.body.appendChild(m);
   const st=(t,cl)=>{ const e=$('shSt'); e.className='sh-st '+(cl||''); e.textContent=t; };
-  m.addEventListener('click',async e=>{ const b=e.target.closest('[data-sh]'); if(!b){ if(e.target===m) m.remove(); return; } const a=b.dataset.sh;
+  m.addEventListener('click',async e=>{ const q=e.target.closest('.sh-q'); if(q){ const o=$('shSteps'); o.hidden=!o.hidden; q.setAttribute('aria-expanded',String(!o.hidden)); return; }
+    const b=e.target.closest('[data-sh]'); if(!b){ if(e.target===m) m.remove(); return; } const a=b.dataset.sh;
     if(a==='close'){ m.remove(); return; }
     if(a==='copy'){ const ta=$('shCode'); ta.value=SH_CODE; try{ await navigator.clipboard.writeText(SH_CODE); st('Script tersalin. Tempel di Apps Script.','ok'); }catch(err){ ta.hidden=false; ta.select(); st('Salin manual script di bawah ini (sudah terpilih).',''); } return; }
     if(a==='off'){ if(!await confirmBox('Putuskan spreadsheet?','Dashboard berhenti membaca dan menulis ke spreadsheet di browser ini. Data di spreadsheet tidak dihapus.','Putuskan')) return; try{ localStorage.removeItem('ornakuy-sheet'); localStorage.removeItem('ornakuy-sheet-cache'); }catch(err){} location.reload(); return; }
