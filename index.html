@@ -601,6 +601,7 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
 .pname{color:var(--accent);font-weight:600;cursor:pointer}
 .upd-st{font-size:12px;color:var(--muted)} .upd-st.ok{color:var(--good)} .upd-st.err{color:var(--bad)}
 #apifyModal label{display:flex;flex-direction:column;gap:5px;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+#view-plan>section:first-child{padding-top:28px}
 </style>
   <header>
     <div class="eyebrow">Dashboard brand UGC · Group 950136185</div>
@@ -2761,8 +2762,9 @@ const PROJ=()=>{ const p=RECS.proj||{}, n=(v,d)=>v==null||v===''||!isFinite(+v)?
 let PUB=null;
 function pubData(){ if(PUB) return PUB; const first=new Map(); for(const r of TX) if(!first.has(r.p)) first.set(r.p,r.d);
   const day=new Map(); first.forEach((d,p)=>{ const a=day.get(d)||[]; a.push(p); day.set(d,a); }); PUB={first,day}; return PUB; }
+function pubRobux(a,P){ return a.reduce((s,p)=>s+P.pubFee+rebCapOf(p),0); }
 function pubWarnDays(){ const P=PROJ(), {day}=pubData(); return [addDays(MAX,-1),MAX].map(d=>[d,(day.get(d)||[]).length]).filter(x=>x[1]>P.pubMax); }
-function renderPubWarn(){ const w=pubWarnDays(), el=$('pubWarn'), P=PROJ(); if(el){ el.hidden=!w.length; el.innerHTML=w.length?`⚠ <b>Publish melebihi batas ${P.pubMax} produk/hari:</b> `+w.map(([d,n])=>`${dLabel(d)} terdeteksi ${n} produk baru (modal ${R(n*(P.pubAdv+P.pubFee))})`).join(' · ')+'. Detail di tabel Publish produk baru.':''; }
+function renderPubWarn(){ const w=pubWarnDays(), el=$('pubWarn'), P=PROJ(); if(el){ el.hidden=!w.length; el.innerHTML=w.length?`⚠ <b>Publish melebihi batas ${P.pubMax} produk/hari:</b> `+w.map(([d,n])=>`${dLabel(d)} terdeteksi ${n} produk baru (biaya ${R(pubRobux(pubData().day.get(d)||[],P))})`).join(' · ')+'. Detail di tabel Publish produk baru.':''; }
   const b=document.querySelector('#finTabs [data-t=rbx]'); if(b) b.innerHTML='Robux &amp; proyeksi'+(w.length?' <span class="nav-badge" title="Publish melebihi batas">!</span>':''); }
 const mLabel=m=>`${BULAN_L[+m.slice(5)-1]} ${m.slice(0,4)}`;
 const nextM=m=>{ const [y,mm]=m.split('-').map(Number); return mm===12?`${y+1}-01`:`${y}-${String(mm+1).padStart(2,'0')}`; };
@@ -2786,16 +2788,17 @@ function renderBiz(){
   // rasio marketing dari data: 30 hari terakhir
   const from30=addDays(MAX,-29); let rev30=0, mk30=0; for(const r of TX) if(r.d>=from30) rev30+=r.rev; for(const r of bookRows()) if(BIZ_MK.includes(r.cat)&&r.d&&r.d>=from30&&r.d<=MAX) mk30+=r.out||0;
   const ratioData=rev30?mk30/(rev30*rate):0, ratio=P.mk==='pct'?P.mkPct/100:ratioData;
-  const base=bizAvg(7), rows=[], {day:PD}=pubData(), pubM=new Map(); PD.forEach((a,d)=>pubM.set(d.slice(0,7),(pubM.get(d.slice(0,7))||0)+a.length));
-  const pubCost=n=>n*P.pubFee*rate; // bersih: publishing advance (600) kembali lewat rebates, yang hilang biaya upload (80)
+  const base=bizAvg(7), rows=[], {day:PD}=pubData(), pubM=new Map(); pubRM=new Map(), unitR=P.pubFee+P.pubAdv;
+  PD.forEach((a,d)=>{ const m=d.slice(0,7); pubM.set(m,(pubM.get(m)||0)+a.length); pubRM.set(m,(pubRM.get(m)||0)+pubRobux(a,P)); });
+  const pubCost=r=>r.pubR*rate; // biaya publish penuh: (upload R$80 + rebates per item, bawaan 600 / hasil edit) × rate
   for(const m of months){ const x=A.get(m), k=MK.get(m)||{endorse:0,iklan:0}, mk=k.endorse+k.iklan;
-    rows.push({m,act:true,part:m===curM||x.days.size<daysIn(m),days:x.days.size,pcs:x.pcs,price:x.price,rev:x.rev,end:k.endorse,ikl:k.iklan,mk,pub:pubM.get(m)||0}); }
+    rows.push({m,act:true,part:m===curM||x.days.size<daysIn(m),days:x.days.size,pcs:x.pcs,price:x.price,rev:x.rev,end:k.endorse,ikl:k.iklan,mk,pub:pubM.get(m)||0,pubR:pubRM.get(m)||0}); }
   // bulan berjalan: aktual + sisa hari, lalu bulan-bulan berikutnya dengan growth per bulan
   const proj=[]; { const x=A.get(curM)||{pcs:0,price:0,rev:0,days:new Set()}, k=MK.get(curM)||{endorse:0,iklan:0}, rest=daysIn(curM)-(+MAX.slice(8));
-    const rev=x.rev+base.rev*rest; proj.push({m:curM,est:true,pcs:x.pcs+base.pcs*rest,price:x.price+base.price*rest,rev,mk:Math.max(k.endorse+k.iklan,rev*rate*ratio),pub:(pubM.get(curM)||0)+P.pubMax*rest}); }
-  let m=curM; for(let i=1;i<=P.months;i++){ m=nextM(m); const f=Math.pow(1+g,i), d=daysIn(m), rev=base.rev*d*f; proj.push({m,est:true,pcs:base.pcs*d*f,price:base.price*d*f,rev,mk:rev*rate*ratio,pub:P.pubMax*d}); }
-  const tr=(r,cls)=>{ const rp=r.rev*rate, pct=rp?r.mk/rp:0; return `<tr class="${cls||''}"><td class="txt" style="text-align:left">${mLabel(r.m)}${r.act?(r.part?` <span class="muted">· ${r.days} hari</span>`:''):' <span class="muted">· proyeksi</span>'}</td><td>${fmt(r.pcs)}</td><td>${R(r.price)}</td><td><b>${Rp(rp)}</b><br><span class="muted">${R(r.rev)}</span></td><td>${Rp(r.mk)}${r.act&&r.mk?`<br><span class="muted">endorse ${Rp(r.end)} · iklan ${Rp(r.ikl)}</span>`:''}</td><td>${rp?(pct*100).toFixed(1).replace('.',',')+'%':'–'}</td><td>${fmt(r.pub)} produk<br><span class="muted" title="Modal awal ${fmt(r.pub)} × R$${fmt(P.pubAdv+P.pubFee)} × ${fmt(rate)}; bersih setelah rebates ${fmt(r.pub)} × R$${fmt(P.pubFee)} × ${fmt(rate)}">modal ${Rp(r.pub*(P.pubAdv+P.pubFee)*rate)} · bersih ${Rp(pubCost(r.pub))}</span></td><td><b>${Rp(rp-r.mk-pubCost(r.pub))}</b></td></tr>`; };
-  const tot=proj.slice(1).reduce((a,r)=>({rev:a.rev+r.rev*rate,mk:a.mk+r.mk,pub:a.pub+pubCost(r.pub),n:a.n+r.pub}),{rev:0,mk:0,pub:0,n:0});
+    const rev=x.rev+base.rev*rest; proj.push({m:curM,est:true,pcs:x.pcs+base.pcs*rest,price:x.price+base.price*rest,rev,mk:Math.max(k.endorse+k.iklan,rev*rate*ratio),pub:(pubM.get(curM)||0)+P.pubMax*rest,pubR:(pubRM.get(curM)||0)+P.pubMax*rest*unitR}); }
+  let m=curM; for(let i=1;i<=P.months;i++){ m=nextM(m); const f=Math.pow(1+g,i), d=daysIn(m), rev=base.rev*d*f; proj.push({m,est:true,pcs:base.pcs*d*f,price:base.price*d*f,rev,mk:rev*rate*ratio,pub:P.pubMax*d,pubR:P.pubMax*d*unitR}); }
+  const tr=(r,cls)=>{ const rp=r.rev*rate, pct=rp?r.mk/rp:0; return `<tr class="${cls||''}"><td class="txt" style="text-align:left">${mLabel(r.m)}${r.act?(r.part?` <span class="muted">· ${r.days} hari</span>`:''):' <span class="muted">· proyeksi</span>'}</td><td>${fmt(r.pcs)}</td><td>${R(r.price)}</td><td><b>${Rp(rp)}</b><br><span class="muted">${R(r.rev)}</span></td><td>${Rp(r.mk)}${r.act&&r.mk?`<br><span class="muted">endorse ${Rp(r.end)} · iklan ${Rp(r.ikl)}</span>`:''}</td><td>${rp?(pct*100).toFixed(1).replace('.',',')+'%':'–'}</td><td><b>${Rp(pubCost(r))}</b><br><span class="muted" title="${r.act?'Tiap produk: upload R$'+fmt(P.pubFee)+' + rebates sesuai data (bawaan R$'+fmt(P.pubAdv)+', atau hasil edit)':'Proyeksi: '+fmt(r.pub)+' produk × R$'+fmt(unitR)} × rate ${fmt(rate)}">${fmt(r.pub)} produk · ${R(r.pubR)}</span></td><td><b>${Rp(rp-r.mk-pubCost(r))}</b></td></tr>`; };
+  const tot=proj.slice(1).reduce((a,r)=>({rev:a.rev+r.rev*rate,mk:a.mk+r.mk,pub:a.pub+pubCost(r),pr:a.pr+r.pubR,n:a.n+r.pub}),{rev:0,mk:0,pub:0,pr:0,n:0});
   // ---------- kalender arus kas harian ----------
   const CASH=(()=>{ const salesEnd=TX[TX.length-1].ts, nowT=salesEnd, snap=L.length?L[L.length-1]:null;
     const withPo=L.filter(x=>x.po!=null); let poDay=0; if(withPo.length>=2){ const A=withPo[0],B=withPo[withPo.length-1]; poDay=(B.po-A.po)/Math.max((wibTs(B.t)-wibTs(A.t))/86400,1/24); } else if(withPo.length===1){ poDay=withPo[0].po/Math.max((wibTs(withPo[0].t)-TX[0].ts)/86400,1); }
@@ -2827,8 +2830,8 @@ function renderBiz(){
   const last14=[...Array(14).keys()].map(i=>addDays(MAX,-i)), nameOf=pi=>RAW.p[pi][0];
   const pubHtml=`<div class="panel" style="margin-top:14px"><h3 style="color:var(--fg)">Publish produk baru (14 hari terakhir)</h3>
     <p class="note" style="margin:4px 0 0">Batas ${P.pubMax} produk/hari = modal ${R(P.pubMax*(P.pubAdv+P.pubFee))}/hari (${fmt(P.pubMax)} × (R$${fmt(P.pubAdv)} + R$${fmt(P.pubFee)})). Produk baru terdeteksi saat pertama kali terjual di file download Roblox, jadi produk yang belum laku belum terhitung.</p>
-    <div class="tbl-wrap" style="max-height:none"><table id="pubTable"><thead><tr><th style="text-align:left">Tanggal</th><th>Produk baru</th><th>Modal publish</th><th>Bersih (setelah rebates)</th><th style="text-align:left">Status</th></tr></thead><tbody>
-    ${last14.map(d=>{ const a=PD.get(d)||[], n=a.length, over=n>P.pubMax; return `<tr${over?' class="biz-proj"':''}><td class="txt" style="text-align:left">${dLabelY(d)}${d===MAX?' <span class="muted">· data s/d '+LAST_HM+'</span>':''}</td><td title="${esc(a.map(nameOf).join('\n'))}"><b>${n}</b></td><td>${R(n*(P.pubAdv+P.pubFee))}</td><td>${R(n*P.pubFee)}</td><td style="text-align:left;font-family:var(--body)">${n?over?`⚠ lebih ${n-P.pubMax} dari batas`:'✓ sesuai batas':'–'}</td></tr>`; }).join('')}
+    <div class="tbl-wrap" style="max-height:none"><table id="pubTable"><thead><tr><th style="text-align:left">Tanggal</th><th>Produk baru</th><th>Biaya publish (R$)</th><th>Biaya publish (Rp)</th><th style="text-align:left">Status</th></tr></thead><tbody>
+    ${last14.map(d=>{ const a=PD.get(d)||[], n=a.length, over=n>P.pubMax; return `<tr${over?' class="biz-proj"':''}><td class="txt" style="text-align:left">${dLabelY(d)}${d===MAX?' <span class="muted">· data s/d '+LAST_HM+'</span>':''}</td><td title="${esc(a.map(nameOf).join('\n'))}"><b>${n}</b></td><td title="upload R$${fmt(P.pubFee)} + rebates per item">${R(pubRobux(a,P))}</td><td>${Rp(pubRobux(a,P)*rate)}</td><td style="text-align:left;font-family:var(--body)">${n?over?`⚠ lebih ${n-P.pubMax} dari batas`:'✓ sesuai batas':'–'}</td></tr>`; }).join('')}
     </tbody></table></div></div>`;
   el.innerHTML=pubHtml+cashHtml+`<div class="panel" style="margin-top:14px"><div class="sec-head" style="margin:0"><div><h3 style="color:var(--fg)">Proyeksi bisnis: sales, revenue &amp; marketing</h3>
       <p class="note" style="margin:4px 0 0">Dasar: rata-rata 7 hari terakhir (${fmt(base.pcs)} pcs, ${R(base.rev)} revenue per hari), growth ${(g*100).toFixed(1).replace('.',',')}% per bulan${P.growth==null?' (dari data: revenue per hari '+(gm?mLabel(gm[1])+' vs '+mLabel(gm[0]):'–')+')':' (diatur manual)'}. Biaya marketing = Endorse + Iklan TikTok dari Semua transaksi, ${P.mk==='pct'?`diatur ${fmt(P.mkPct)}% dari revenue`:`mengikuti data 30 hari terakhir (${(ratioData*100).toFixed(1).replace('.',',')}% dari revenue)`}. Rate ${fmt(rate)}.</p></div>
@@ -2848,14 +2851,14 @@ function renderBiz(){
     <div class="kpis biz-kpis" style="margin-top:12px">
       <div class="kpi"><span class="eyebrow">Revenue ${P.months} bulan ke depan</span><span class="v">${Rp(tot.rev)}</span><span class="s">${R(tot.rev/rate)}</span></div>
       <div class="kpi"><span class="eyebrow">Biaya marketing</span><span class="v">${Rp(tot.mk)}</span><span class="s">${tot.rev?(tot.mk/tot.rev*100).toFixed(1).replace('.',','):0}% dari revenue</span></div>
-      <div class="kpi"><span class="eyebrow">Biaya publish (bersih)</span><span class="v">${Rp(tot.pub)}</span><span class="s">${fmt(tot.n)} produk × R$${fmt(P.pubFee)} · modal ${R(P.pubMax*(P.pubAdv+P.pubFee))}/hari</span></div>
+      <div class="kpi"><span class="eyebrow">Biaya publish</span><span class="v">${Rp(tot.pub)}</span><span class="s">${fmt(tot.n)} produk × R$${fmt(unitR)} × ${fmt(rate)} · ${R(tot.pr)}</span></div>
       <div class="kpi hl"><span class="eyebrow">Sisa setelah marketing &amp; publish</span><span class="v">${Rp(tot.rev-tot.mk-tot.pub)}</span><span class="s">belum dikurangi biaya lain</span></div>
       <div class="kpi"><span class="eyebrow">Growth dipakai</span><span class="v">${(g*100).toFixed(1).replace('.',',')}%</span><span class="s">per bulan · ${P.growth==null?'otomatis dari data':'manual'}</span></div>
     </div>
     <div class="tbl-wrap" style="max-height:none"><table id="bizTable"><thead><tr><th style="text-align:left">Bulan</th><th>Sales (pcs)</th><th>Penjualan</th><th>Revenue</th><th>Biaya marketing</th><th>% revenue</th><th>Publish</th><th>Sisa</th></tr></thead><tbody>
       ${rows.map(r=>tr(r)).join('')}${proj.map(r=>tr(r,'biz-proj')).join('')}
     </tbody></table></div>
-    <p class="note" style="margin:6px 0 0">Baris berwarna = proyeksi. ${mLabel(curM)} (proyeksi) = aktual sampai ${dLabel(MAX)} + sisa hari dengan rata-rata 7 hari terakhir. Penjualan = harga yang dibayar pembeli; revenue = yang masuk ke grup. Publish = produk baru (aktual: terdeteksi dari data sales; proyeksi: batas ${P.pubMax}/hari) × biaya upload R$${fmt(P.pubFee)}, karena publishing advance R$${fmt(P.pubAdv)} kembali lewat rebates. Sisa = revenue − marketing − publish.</p>
+    <p class="note" style="margin:6px 0 0">Baris berwarna = proyeksi. ${mLabel(curM)} (proyeksi) = aktual sampai ${dLabel(MAX)} + sisa hari dengan rata-rata 7 hari terakhir. Penjualan = harga yang dibayar pembeli; revenue = yang masuk ke grup. Publish = produk baru (aktual: terdeteksi dari data sales; proyeksi: batas ${P.pubMax}/hari) × (upload R$${fmt(P.pubFee)} + rebates per item: bawaan R$${fmt(P.pubAdv)}, atau nilai hasil edit seperti R$3.000) × rate ${fmt(rate)}. Proyeksi memakai R$${fmt(unitR)} per produk. Sisa = revenue − marketing − publish.</p>
     <div class="rbx-chart"><canvas id="bizChart" aria-label="Grafik revenue dan biaya marketing per bulan"></canvas></div></div>`;
   if(bizC) bizC.destroy();
   const all=[...rows.filter(r=>r.m!==curM),...proj], acc=css('--accent'), mut=css('--muted');
