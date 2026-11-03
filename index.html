@@ -532,6 +532,7 @@ body:not(.show-src) .datapanel{display:none}
 #finTable tr.fe-del td{opacity:.45}
 #finTable tr.fe-del .fe{text-decoration:line-through}
 #finTable .fe-delbtn{all:unset;cursor:pointer;font:600 11px var(--mono);padding:5px 8px;border-radius:4px;border:1px solid var(--bad);color:var(--bad);white-space:nowrap}
+.cmodal .am-box.ads-box.bank-box{max-width:920px} .bank-tbl input{width:100%;min-width:0;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font:13px var(--body)} .bank-tbl input[type=date]{width:140px} .bank-tbl .bk-on{width:16px;height:16px} .bank-tbl td{vertical-align:middle} .bank-err{color:var(--bad);font-size:13px;margin:8px 0 0}
 .cmodal .am-box.ads-box{max-width:640px;max-height:calc(100vh - 32px);overflow:auto}
 .ads-box table{width:100%;border-collapse:collapse;font-size:13px}.ads-box td,.ads-box th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
 .ads-box td.n{text-align:right;font-family:var(--mono)}.ads-box tr.dup{opacity:.45}
@@ -545,15 +546,18 @@ body:not(.show-src) .datapanel{display:none}
 .rbx-chart{height:260px;margin-top:10px}
 @media (max-width:700px){.rbx-form{grid-template-columns:1fr 1fr}.rbx-hint{grid-column:1/-1}}
 #view-fin[data-fintab="rbx"]>:not(#finTabs):not(#robuxSec),#view-fin:not([data-fintab="rbx"])>#robuxSec{display:none!important}
-.kpis.rbx-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
-.kpis.biz-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
+.kpis.rbx-kpis{grid-template-columns:repeat(4,minmax(0,1fr))} .kpis.rbx-kpis.k5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.kpis.biz-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media (max-width:1000px){.kpis.biz-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:700px){.kpis.rbx-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:700px){.kpis.rbx-kpis,.kpis.rbx-kpis.k5{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.cost-grp{grid-column:1/-1;border-top:1px solid var(--line);padding-top:10px} .cg-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 12px;margin-top:6px}
+.biz-set label.cg{flex-direction:row;align-items:center;justify-content:space-between;gap:8px;text-transform:none;letter-spacing:0;font:13px var(--body);color:var(--fg)} .biz-set label.cg select{width:auto;min-width:120px}
 .biz-set{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px;align-items:end;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel-2)}
 .biz-set label{display:flex;flex-direction:column;gap:5px;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .biz-set input,.biz-set select{padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--fg);font:14px var(--body);min-width:0}
 .biz-set .note{grid-column:1/-1;margin:0}
-tr.biz-proj td{background:var(--accent-soft)}
+tr.biz-proj td{background:var(--accent-soft)} #realTable th,#realTable td{padding-left:7px;padding-right:7px}
+#bizTable th,#bizTable td{padding-left:7px;padding-right:7px} #bizTable th{white-space:normal}
 @media (max-width:700px){.biz-set{grid-template-columns:1fr 1fr}}
 .lockscr{position:fixed;inset:0;z-index:10000;background:var(--bg);display:grid;place-items:center;padding:16px}
 .lock-box{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:24px;display:flex;flex-direction:column;gap:12px}
@@ -715,6 +719,12 @@ table.roi-sub{width:100%;margin-top:8px} table.roi-sub th{font-size:10px} table.
     <div class="panel"><h3 style="margin-bottom:8px">Per kategori</h3><div class="tbl-wrap" style="max-height:none;margin-top:0"><table id="launchCat"></table></div></div>
     <div class="panel" style="margin-top:14px"><h3 style="margin-bottom:8px">Per warna</h3><div class="tbl-wrap" style="margin-top:0"><table id="launchCol"></table></div></div>
     <details class="more"><summary>Per model (info saja, tidak jadi acuan)</summary><div class="panel"><div class="tbl-wrap" style="max-height:none;margin-top:0"><table id="launchMod"></table></div></div></details>
+  </section>
+  <section id="bepSec" data-tab="prod">
+    <div class="sec-head"><div><div class="eyebrow">Balik modal per produk</div><h2>Produk mana yang sudah menutup biaya publish</h2>
+      <p>Modal tiap produk = biaya upload + rebates per item (bawaan R$80 + R$600, atau sesuai rebates hasil edit). Revenue dihitung sejak produk pertama kali terjual di data sales. Perkiraan hari lagi memakai rata-rata revenue produk itu 7 hari terakhir.</p></div></div>
+    <div class="kpis" id="bepKpis"></div>
+    <div class="panel"><div class="tbl-wrap" style="margin-top:0;border-top:0"><table id="bepTable"></table></div></div>
   </section>
 
   <section id="pembeli" data-tab="buyer">
@@ -879,7 +889,7 @@ table.roi-sub{width:100%;margin-top:8px} table.roi-sub th{font-size:10px} table.
     </section>
     <section data-mt="dash" id="roiSec">
       <div class="sec-head"><div><div class="eyebrow">ROI endorse</div><h2>Biaya per save, per kreator</h2>
-        <p>Save dipakai sebagai ukuran minat: orang yang menyimpan postingan berarti tertarik dengan outfit-nya. Biaya = payment Endorse di Keuangan yang menyebut @kreator; save = total save semua postingannya. Biaya dihitung dari konten yang sudah tayang (ratecard × postingan), jadi paket yang belum selesai tayang tidak bikin mahal. Target: biaya per save <b>di bawah Rp50</b>. Klik baris kreator untuk melihat biaya per video dan ratecard per paket. Mengikuti rentang tanggal di atas.</p></div></div>
+        <p>Save dipakai sebagai ukuran minat: orang yang menyimpan postingan berarti tertarik dengan outfit-nya. Biaya = payment Endorse di Keuangan yang menyebut @kreator; save = total save semua postingannya. Efek sales = penjualan 1–3 hari setelah posting dibanding 3 hari sebelumnya; hijau berarti di atas kenaikan hari biasa (penjualan sedang tumbuh, jadi naik sedikit itu normal). Kalau beberapa postingan tayang berdekatan, efeknya bercampur. Biaya dihitung dari konten yang sudah tayang (ratecard × postingan), jadi paket yang belum selesai tayang tidak bikin mahal. Target: biaya per save <b>di bawah Rp50</b>. Klik baris kreator untuk melihat biaya per video dan ratecard per paket. Mengikuti rentang tanggal di atas.</p></div></div>
       <div class="kpis" id="roiKpis"></div>
       <div class="panel"><div class="tbl-wrap" style="max-height:none;margin-top:0;border-top:0"><table id="roiTable"></table></div></div>
     </section>
@@ -981,7 +991,8 @@ table.roi-sub{width:100%;margin-top:8px} table.roi-sub th{font-size:10px} table.
     </section>
     <section>
       <div class="sec-head"><div><div class="eyebrow">Transaksi</div><h2 id="finTxTitle">Semua transaksi</h2>
-        <p>Terbaru di atas. Saldo dihitung dari semua transaksi sampai baris itu, termasuk yang tidak tampil karena filter.</p></div></div>
+        <p>Terbaru di atas. Saldo dihitung dari semua transaksi sampai baris itu, termasuk yang tidak tampil karena filter. Mutasi rekening bisa ditambah dari screenshot halaman Transaksi aplikasi bank (boleh beberapa sekaligus, urut dari yang terbaru); transaksi yang tanggal dan nominalnya sudah ada otomatis dilewati.</p></div>
+        <div class="controls"><span class="upd-st" id="bankShotSt" role="status" aria-live="polite"></span><label class="btn primary" for="bankShotIn" style="cursor:pointer">📷 Tambah dari screenshot mutasi</label><input type="file" id="bankShotIn" accept="image/*" multiple hidden></div></div>
       <div class="panel"><div class="tbl-wrap" style="max-height:620px;margin-top:0;border-top:0"><table id="finTable"></table></div><datalist id="feCats"></datalist></div>
     </section>
     <section>
@@ -1403,6 +1414,23 @@ function launchTable(id,items,keysOf,labelOf,avgAll,cost){
   $(id).innerHTML=`<thead><tr><th style="text-align:left">${id==='launchCat'?'Kategori':id==='launchCol'?'Warna':'Model'}</th><th>Produk</th><th>Pcs/produk</th><th>Revenue/produk</th><th>Median</th><th>Balik modal</th><th>Indeks</th></tr></thead><tbody>`+
     rows.map(r=>{ const ix=avgAll?Math.round(r.rev/avgAll*100):0; return `<tr${r.n<3?' style="opacity:.55" title="Kurang dari 3 produk: belum bisa jadi acuan"':''}><td class="txt" style="text-align:left">${labelOf(r.k)}</td><td>${r.n}</td><td>${fmt(r.pcs)}</td><td><b>${R(r.rev)}</b></td><td>${R(r.med)}</td><td>${Math.round(r.bm*100)}%</td><td><b style="color:${ix>=120?'var(--good,#1a9e55)':ix<=80?'var(--bad,#d23)':'inherit'}">${ix}</b></td></tr>`; }).join('')+'</tbody>';
   return rows; }
+function bepData(){ const P=typeof PROJ==='function'?PROJ():{pubAdv:600,pubFee:80}, it=new Map(), end=MAX, from7=addDays(MAX,-7);
+  for(const r of TX){ let x=it.get(r.p); if(!x){ x={pi:r.p,d0:r.d,rev:0,r7:0,bep:null,cost:P.pubFee+rebCapOf(r.p)}; it.set(r.p,x); }
+    x.rev+=r.rev; if(r.d>=from7&&r.d<end) x.r7+=r.rev; if(x.bep==null&&x.rev>=x.cost) x.bep=r.d; }
+  const dd=(a,b)=>Math.round((Date.parse(b)-Date.parse(a))/864e5);
+  return [...it.values()].map(x=>({...x,age:dd(x.d0,MAX),days:x.bep?dd(x.d0,x.bep):null,perDay:x.r7/7,left:x.bep?0:x.cost-x.rev,eta:x.bep?0:(x.r7>0?Math.ceil((x.cost-x.rev)/(x.r7/7)):null)})); }
+function renderBep(){ if(!$('bepTable')) return; const L=bepData(), rate=(typeof RBX==='function'&&RBX().length?RBX().slice(-1)[0].rate:0)||125; if(!L.length){ $('bepKpis').innerHTML=''; $('bepTable').innerHTML=''; return; }
+  const ok=L.filter(x=>x.bep), no=L.filter(x=>!x.bep), ds=ok.map(x=>x.days).sort((a,b)=>a-b), med=ds.length?ds[Math.floor(ds.length/2)]:null;
+  const old=no.filter(x=>x.age>=30), stuck=no.reduce((s,x)=>s+x.left,0), w7=L.filter(x=>x.age>=7), ok7=w7.filter(x=>x.bep&&x.days<=7).length;
+  const k=(a,b,c,cl)=>`<div class="kpi ${cl||''}"><span class="eyebrow">${a}</span><span class="v">${b}</span><span class="s">${c}</span></div>`;
+  $('bepKpis').innerHTML=[k('Sudah balik modal',`${fmt(ok.length)} / ${fmt(L.length)}`,`${pct(ok.length,L.length)} produk`,'hl'),
+    k('Median waktu balik modal',med==null?'–':med+' hari',`${pct(ok7,w7.length)} produk berumur ≥7 hari balik modal dalam 7 hari`),
+    k('Belum balik modal ≥30 hari',fmt(old.length)+' produk',old.length?'pertimbangkan perbaiki atau jangan diulang modelnya':'semua produk lama sudah balik modal'),
+    k('Modal masih tertahan',R(stuck),`${Rp(stuck*rate)} · ${fmt(no.length)} produk belum balik modal`)].join('');
+  const st=x=>x.bep?`<span class="chip in">✓ ${x.days} hari</span>`:x.age>=30?`<span class="chip out">⚠ ${x.age} hari, belum</span>`:x.eta!=null?`<span class="chip">± ${x.eta} hari lagi</span>`:`<span class="chip out">tidak laku 7 hari terakhir</span>`;
+  const rows=[...no.sort((a,b)=>b.age-a.age),...ok.sort((a,b)=>a.days-b.days)];
+  $('bepTable').innerHTML=`<thead><tr><th style="text-align:left">Produk</th><th style="text-align:left">Kategori</th><th>Pertama terjual</th><th>Umur</th><th>Modal</th><th>Revenue</th><th>Tertutup</th><th>Revenue/hari (7h)</th><th style="text-align:left">Status</th></tr></thead><tbody>`+
+    rows.map(x=>{ const pr=RAW.p[x.pi]; return `<tr><td class="txt" style="text-align:left">${esc(pr[0])}</td><td style="text-align:left">${esc(tname(pr[1]))}</td><td>${dLabelY(x.d0)}</td><td>${x.age} hari</td><td>${R(x.cost)}</td><td><b>${R(x.rev)}</b></td><td>${Math.min(999,Math.round(x.rev/x.cost*100))}%</td><td>${R(x.perDay)}</td><td style="text-align:left;font-family:var(--body)">${st(x)}</td></tr>`; }).join('')+'</tbody>'; }
 function renderLaunch(){
   if(!$('launchCat')) return; const items=launchData(); if(!items.length){ $('launchIns').innerHTML='<div class="ins"><span class="tag">Belum cukup data</span><p>Butuh produk yang sudah berumur minimal 7 hari.</p></div>'; return; }
   const P=typeof PROJ==='function'?PROJ():{pubAdv:600,pubFee:80}, cost=P.pubAdv+P.pubFee, avgAll=items.reduce((s,x)=>s+x.rev7,0)/items.length;
@@ -1794,6 +1822,15 @@ const MK_CATS=['Endorse','Iklan TikTok','Jasa Konten','Akun TikTok','Cloudphone'
 const handleKey=u=>String(u||'').toLowerCase().replace(/^@/,'').replace(/[^a-z0-9]/g,'');
 function sameHandle(a,b){ if(!a||!b) return false; if(a===b||a.startsWith(b)||b.startsWith(a)) return true;
   if(Math.abs(a.length-b.length)>2) return false; const d=[...Array(b.length+1).keys()]; for(let i=1;i<=a.length;i++){ let p=d[0]; d[0]=i; for(let j=1;j<=b.length;j++){ const t=d[j]; d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1)); p=t; } } return d[b.length]<=2; }
+let DAYREV=null; const dayRev=()=>{ if(!DAYREV){ DAYREV=new Map(); for(const r of TX) DAYREV.set(r.d,(DAYREV.get(r.d)||0)+r.rev); } return DAYREV; };
+// penjualan 1–3 hari setelah posting vs 3 hari sebelum posting (hari terakhir data belum lengkap, tidak dipakai)
+function salesLift(d){ if(!d||!TX.length) return null; const D=dayRev(), first=TX[0].d;
+  const sum=(a,b)=>{ let r=0,n=0; for(let i=a;i<=b;i++){ const k=addDays(d,i); if(k>=first&&k<MAX){ r+=D.get(k)||0; n++; } } return {r,n}; };
+  const af=sum(1,3), bf=sum(-3,-1); if(af.n<1||bf.n<3||!bf.r) return null;   // per hari, jadi postingan baru (1–2 hari data) tetap bisa dinilai sementara
+  const a=af.r/af.n, b=bf.r/bf.n; return {after:a,before:b,lift:a/b-1,n:af.n}; }
+// "normal": rata-rata perubahan 3 hari vs 3 hari sebelumnya di semua hari (tren pertumbuhan biasa)
+let LIFT0=null; const liftBase=()=>{ if(LIFT0==null){ const a=[]; for(const d of dayRev().keys()){ const x=salesLift(d); if(x) a.push(x.lift); } a.sort((x,y)=>x-y); LIFT0=a.length?a[Math.floor(a.length/2)]:0; } return LIFT0; };
+const pctS=v=>(v>=0?'+':'')+(v*100).toFixed(0)+'%';
 const ROI_GOOD=50; // biaya per save yang dianggap bagus (Rp)
 // jumlah konten dalam satu payment: "30 foto slide", "2 video + 1 foto slide"; tanpa angka = 1 konten
 function roiPaket(note){ const t=String(note||''); let v=0,f=0; t.replace(/(\d+)\s*(video|vid)\b/gi,(_,n)=>{v+=+n;}); t.replace(/(\d+)\s*(foto\s*slide|foto|slide|photo)/gi,(_,n)=>{f+=+n;});
@@ -1813,10 +1850,10 @@ function roiDetail(x){
       ${box('Biaya konten tayang',Rp(x.used),x.used<x.cost?`${fmt(x.n)} tayang, sesuai ratecard payment masing-masing · sisa ${Rp(x.cost-x.used)} untuk konten berikutnya`:`${Rp(x.cost)} ÷ ${fmt(x.n)} postingan = ${Rp(perPost)} per video`)}
       ${box('Konten tayang',`${fmt(x.n)} / ${fmt(order)}`,order>x.n?`sisa ${fmt(order-x.n)} belum tayang`:order&&x.n>=order?'semua sudah tayang':'')}
       ${box('Save per konten',x.n?fmt(Math.round(x.sv/x.n)):'–',x.sv?`biaya per save ${Rp(x.used/x.sv)} (target < Rp${ROI_GOOD})`:'')}</div>
-    <table class="roi-sub"><thead><tr><th style="text-align:left">Tanggal</th><th style="text-align:left">Jenis</th><th style="text-align:left">Keterangan</th><th>Biaya / nilai</th><th>Views</th><th>Save</th><th>Biaya per save</th></tr></thead><tbody>
+    <table class="roi-sub"><thead><tr><th style="text-align:left">Tanggal</th><th style="text-align:left">Jenis</th><th style="text-align:left">Keterangan</th><th>Biaya / nilai</th><th>Views</th><th>Save</th><th>Biaya per save</th><th title="Penjualan 1–3 hari setelah posting vs 3 hari sebelumnya">Sales 1–3 hari</th></tr></thead><tbody>
       ${[...pays.map(r=>({d:r.d||'',k:0,r})),...posts.map(q=>({d:q.p.d||'',k:1,q}))].sort((a,b)=>a.d.localeCompare(b.d)||a.k-b.k).map(x=>{
-        if(!x.k){ const r=x.r; return `<tr class="roi-pay"><td class="txt" style="text-align:left">${dLabel(r.d)}</td><td style="text-align:left"><span class="chip pay">Payment</span></td><td class="txt" style="text-align:left">${esc(pk(r.pk))}<br><span class="muted">${esc(r.note||'')}</span></td><td><b>${Rp(r.out)}</b><br><span class="muted">${Rp(r.out/r.pk.n)} / konten</span></td><td>–</td><td>–</td><td>–</td></tr>`; }
-        const p=x.q.p, val=x.q.val, c=p.sv?val/p.sv:0; return `<tr><td class="txt" style="text-align:left">${dLabel(p.d)}</td><td style="text-align:left"><span class="chip in">Postingan</span></td><td class="txt" style="text-align:left">${/photo/.test(p.url||'')?'Foto slide':'Video'}${p.url?` · <a href="${esc(p.url)}" target="_blank" rel="noopener">buka</a>`:''}</td><td>${Rp(val)}<br><span class="muted">${x.q.from?'ratecard payment '+dLabel(x.q.from.d):'di luar paket'}</span></td><td>${fmt(p.v||0)}</td><td>${fmt(p.sv||0)}</td><td><b style="color:var(--${!p.sv?'muted':c<ROI_GOOD?'good':c>ROI_GOOD*2?'bad':'fg'})">${p.sv?Rp(c):'–'}</b></td></tr>`; }).join('')}</tbody></table>
+        if(!x.k){ const r=x.r; return `<tr class="roi-pay"><td class="txt" style="text-align:left">${dLabel(r.d)}</td><td style="text-align:left"><span class="chip pay">Payment</span></td><td class="txt" style="text-align:left">${esc(pk(r.pk))}<br><span class="muted">${esc(r.note||'')}</span></td><td><b>${Rp(r.out)}</b><br><span class="muted">${Rp(r.out/r.pk.n)} / konten</span></td><td>–</td><td>–</td><td>–</td><td>–</td></tr>`; }
+        const p=x.q.p, val=x.q.val, c=p.sv?val/p.sv:0; return `<tr><td class="txt" style="text-align:left">${dLabel(p.d)}</td><td style="text-align:left"><span class="chip in">Postingan</span></td><td class="txt" style="text-align:left">${/photo/.test(p.url||'')?'Foto slide':'Video'}${p.url?` · <a href="${esc(p.url)}" target="_blank" rel="noopener">buka</a>`:''}</td><td>${Rp(val)}<br><span class="muted">${x.q.from?'ratecard payment '+dLabel(x.q.from.d):'di luar paket'}</span></td><td>${fmt(p.v||0)}</td><td>${fmt(p.sv||0)}</td><td><b style="color:var(--${!p.sv?'muted':c<ROI_GOOD?'good':c>ROI_GOOD*2?'bad':'fg'})">${p.sv?Rp(c):'–'}</b></td><td>${(l=>l?`<b style="color:var(--${l.lift-liftBase()>0.05?'good':l.lift-liftBase()<-0.05?'bad':'fg'})">${pctS(l.lift)}</b><br><span class="muted">${R(l.before)} → ${R(l.after)} /hari${l.n<3?` · baru ${l.n} hari`:''}</span>`:'<span class="muted">belum cukup data</span>')(salesLift(p.d))}</td></tr>`; }).join('')}</tbody></table>
     ${posts.length?'':'<p class="muted" style="margin:8px 0 0">Belum ada postingan tercatat.</p>'}
   </div>`;
 }
@@ -1829,21 +1866,24 @@ function renderRoi(){
   const C=new Map(), get=k=>{ if(!C.has(k)) C.set(k,{u:'',cost:0,pay:0,n:0,v:0,sv:0,l:0,c:0,s:0,P:[],Q:[]}); return C.get(k); };
   for(const p of posts){ const k=handleKey(p.u); const key=[...C.keys()].find(x=>sameHandle(x,k))||k; const x=get(key); x.u=x.u||p.u; x.n++; x.v+=p.v||0; x.sv+=p.sv||0; x.l+=p.l||0; x.c+=p.c||0; x.s+=p.s||0; x.Q.push(p); }
   for(const r of pays){ const m=String(r.note||'').match(/@([\w.]+)/); if(!m) continue; const k=handleKey(m[1]); const key=[...C.keys()].find(x=>sameHandle(x,k))||k; const x=get(key); x.u=x.u||'@'+m[1]; x.cost+=r.out; x.pay++; x.P.push(r); }
-  const rows=[...C.values()].filter(x=>x.cost>0); rows.forEach(x=>{ x.ord=x.P.reduce((s,r)=>s+roiPaket(r.note).n,0); x.rate=x.ord?x.cost/x.ord:0; x.A=roiAlloc(x); x.used=x.n>=x.ord?x.cost:x.A.used; });
+  const rows=[...C.values()].filter(x=>x.cost>0); rows.forEach(x=>{ x.ord=x.P.reduce((s,r)=>s+roiPaket(r.note).n,0); x.rate=x.ord?x.cost/x.ord:0; x.A=roiAlloc(x); x.used=x.n>=x.ord?x.cost:x.A.used;
+    const L=x.Q.map(p=>salesLift(p.d)).filter(Boolean); x.lift=L.length?L.reduce((s,l)=>s+l.lift,0)/L.length:null; x.liftN=L.length; x.liftR=L.reduce((s,l)=>s+(l.after-l.before)*l.n,0); });
   const withSv=rows.filter(x=>x.sv>0).sort((a,b)=>a.used/a.sv-b.used/b.sv);
   const T=rows.reduce((a,x)=>({cost:a.cost+x.cost,used:a.used+(x.sv?x.used:0),sv:a.sv+x.sv,v:a.v+x.v}),{cost:0,used:0,sv:0,v:0}), avg=T.sv?T.used/T.sv:0;
   const best=withSv[0], worst=withSv[withSv.length-1];
   $('roiKpis').innerHTML=[['Rata-rata biaya per save',T.sv?Rp(avg):'–',`${fmt(T.sv)} save dari ${Rp(T.used)} biaya konten tayang · target < Rp${ROI_GOOD}`],
     ['Paling efektif',best?esc(best.u):'–',best?`${Rp(best.used/best.sv)} per save`:'belum ada data'],
     ['Paling mahal',worst&&withSv.length>1?esc(worst.u):'–',worst&&withSv.length>1?`${Rp(worst.used/worst.sv)} per save`:''],
-    ['Belum ada save',fmt(rows.filter(x=>!x.sv).length)+' kreator','sudah dibayar, postingan belum ada / belum ada data save']]
+    ['Belum ada save',fmt(rows.filter(x=>!x.sv).length)+' kreator','sudah dibayar, postingan belum ada / belum ada data save'],
+    (()=>{ const L=posts.map(p=>salesLift(p.d)).filter(Boolean), b=liftBase(), avgL=L.length?L.reduce((s,l)=>s+l.lift,0)/L.length:null;
+      return ['Efek ke penjualan',avgL==null?'–':pctS(avgL),avgL==null?'belum cukup data':`rata-rata 1–3 hari setelah posting vs 3 hari sebelum · hari biasa ${pctS(b)} · ${fmt(L.length)} postingan`]; })()]
     .map(k=>`<div class="kpi"><span class="eyebrow">${k[0]}</span><span class="v">${k[1]}</span><span class="s">${k[2]}</span></div>`).join('');
   const verdict=x=>{ if(!x.sv) return '<span class="muted">belum ada save</span>'; const c=x.used/x.sv; return c<ROI_GOOD?'✓ bagus, layak lanjut':c<=ROI_GOOD*2?'cukup, di atas Rp'+ROI_GOOD:'⚠ mahal, evaluasi harga'; };
   const cps=x=>x.sv?`<b style="color:var(--${x.used/x.sv<ROI_GOOD?'good':x.used/x.sv>ROI_GOOD*2?'bad':'fg'})">${Rp(x.used/x.sv)}</b>`:'<b>–</b>';
   const list=[...withSv,...rows.filter(x=>!x.sv).sort((a,b)=>b.cost-a.cost)];
-  $('roiTable').innerHTML=`<thead><tr><th style="text-align:left">Kreator</th><th>Biaya</th><th>Postingan</th><th>Views</th><th>Save</th><th>Biaya per save</th><th>Save per Rp10rb</th><th>Save/views</th><th style="text-align:left">Penilaian</th></tr></thead><tbody>`+
-    (list.length?list.map((x,i)=>`<tr class="roi-row" data-roi="${i}" tabindex="0" title="Klik untuk rincian biaya per video"><td class="txt" style="text-align:left"><span class="roi-car">▸</span> ${esc(x.u)}</td><td>${Rp(x.used)}<br><span class="muted">${x.used<x.cost?'dari '+Rp(x.cost)+' · '+fmt(x.n)+'/'+fmt(x.ord)+' tayang':x.pay+' payment'}</span></td><td>${fmt(x.n)}</td><td>${fmt(x.v)}</td><td><b>${fmt(x.sv)}</b></td><td>${cps(x)}</td><td>${x.sv?(x.sv/x.used*10000).toFixed(1).replace('.',','):'–'}</td><td>${x.v?(x.sv/x.v*100).toFixed(1).replace('.',',')+'%':'–'}</td><td style="text-align:left;font-family:var(--body)">${verdict(x)}</td></tr><tr class="end-sub roi-det" data-roid="${i}" hidden><td colspan="9">${roiDetail(x)}</td></tr>`).join('')
-      :'<tr><td colspan="9" class="muted">Belum ada payment Endorse dengan @kreator di rentang ini.</td></tr>')+'</tbody>';
+  $('roiTable').innerHTML=`<thead><tr><th style="text-align:left">Kreator</th><th>Biaya</th><th>Postingan</th><th>Views</th><th>Save</th><th>Biaya per save</th><th>Save per Rp10rb</th><th>Save/views</th><th title="Penjualan 1–3 hari setelah posting dibanding 3 hari sebelum posting">Efek sales 1–3 hari</th><th style="text-align:left">Penilaian</th></tr></thead><tbody>`+
+    (list.length?list.map((x,i)=>`<tr class="roi-row" data-roi="${i}" tabindex="0" title="Klik untuk rincian biaya per video"><td class="txt" style="text-align:left"><span class="roi-car">▸</span> ${esc(x.u)}</td><td>${Rp(x.used)}<br><span class="muted">${x.used<x.cost?'dari '+Rp(x.cost)+' · '+fmt(x.n)+'/'+fmt(x.ord)+' tayang':x.pay+' payment'}</span></td><td>${fmt(x.n)}</td><td>${fmt(x.v)}</td><td><b>${fmt(x.sv)}</b></td><td>${cps(x)}</td><td>${x.sv?(x.sv/x.used*10000).toFixed(1).replace('.',','):'–'}</td><td>${x.v?(x.sv/x.v*100).toFixed(1).replace('.',',')+'%':'–'}</td><td>${x.lift==null?'<span class="muted">–</span>':`<b style="color:var(--${x.lift-liftBase()>0.05?'good':x.lift-liftBase()<-0.05?'bad':'fg'})">${pctS(x.lift)}</b><br><span class="muted">${x.liftR>=0?'+':''}${R(x.liftR)}</span>`}</td><td style="text-align:left;font-family:var(--body)">${verdict(x)}</td></tr><tr class="end-sub roi-det" data-roid="${i}" hidden><td colspan="10">${roiDetail(x)}</td></tr>`).join('')
+      :'<tr><td colspan="10" class="muted">Belum ada payment Endorse dengan @kreator di rentang ini.</td></tr>')+'</tbody>';
 }
 function renderMkCost(views){
   const rows=bookRows().filter(r=>r.out&&inRange(r.d)&&MK_CATS.includes(r.cat)), tot=rows.reduce((s,r)=>s+r.out,0);
@@ -2452,6 +2492,72 @@ $('adsShotIn').addEventListener('change',async e=>{
   }catch(err){ say('Gagal: '+(err.message||err),'err'); }
   finally{ if(worker) worker.terminate(); }
 });
+// ===== impor mutasi rekening dari screenshot aplikasi bank =====
+const BANK_MON={jan:1,feb:2,mar:3,apr:4,mei:5,may:5,jun:6,jul:7,agu:8,agt:8,aug:8,sep:9,okt:10,oct:10,nov:11,des:12,dec:12};
+const BANK_TITLE=/(Bayar\s*\/\s*Top-?up|QR Bayar|Transfer Rupiah|Tarik Tunai|Setor Tunai|Top-?up|Bunga|Pajak|Biaya|Lainnya|Pembelian|Pembayaran)/i;
+const bankFix=t=>t.replace(/\bAl\b/g,'AI').replace(/\bBl\b/g,'BI').replace(/AJIAFRIYO/g,'AJI AFRIYO');
+function bankParseShot(text,lastDate,prev){
+  const L=String(text).split(/\n+/).map(l=>l.trim()).filter(Boolean), out=[]; let d=lastDate||'', cur=null, head=false;
+  const reD=/^[^\dA-Za-z]{0,3}(\d{1,2})\s*([A-Za-z0]{3})[a-z]*\.?\s+(20\d\d)\s*$/;
+  const reA=/^(.*?)\s*([+\-−–~])\s*I\s*D\s*R\s*(\d{1,3}(?:[.,]\d{3})+|\d{1,3})/i;
+  for(const l of L){
+    const md=l.match(reD); if(md) md[2]=md[2].replace(/0/g,'o'); if(md&&BANK_MON[md[2].toLowerCase()]){ head=true; d=`${md[3]}-${String(BANK_MON[md[2].toLowerCase()]).padStart(2,'0')}-${md[1].padStart(2,'0')}`; cur=null; continue; }
+    const ma=l.match(reA); if(ma){ const amt=+ma[3].replace(/[.,]/g,''); if(!amt) continue;
+      const tm=ma[1].match(BANK_TITLE), title=tm?tm[1].replace(/\s*\/\s*/,'/'):ma[1].replace(/^[^A-Za-z]+/,'').trim(), sign=/\+/.test(ma[2])?1:-1;
+      cur={d,sign,amt,title,desc:[],top:!head};
+      // baris di atas judul tanggal pertama = lanjutan screenshot sebelumnya: ambil tanggal dari transaksi yang sama di screenshot sebelumnya
+      if(!head&&prev){ const q=prev.find(x=>!x.__m&&x.sign===sign&&x.amt===amt&&(!tm||x.title.toLowerCase()===title.toLowerCase())); if(q){ q.__m=1; cur.d=q.d; } }
+      out.push(cur); continue; }
+    if(cur&&cur.desc.length<4&&/[A-Za-z]{3}/.test(l)&&!/poin\b/i.test(l)&&!/^(transaksi|e-statement)$/i.test(l)) cur.desc.push(bankFix(l.replace(/^[^A-Za-z0-9]+/,'')));
+  }
+  return {rows:out,lastDate:d};
+}
+function bankGuess(x){ const t=(x.title+' '+x.desc.join(' ')).toLowerCase(), cats=(BOOK.cats||[]).map(c=>c[0]);
+  const has=c=>cats.includes(c)?c:null;
+  if(/tripo/.test(t)) return 'Tripo'; if(/tiktok/.test(t)) return 'Iklan TikTok'; if(/chatgpt|openai/.test(t)) return has('ChatGPT')||'ChatGPT';
+  if(/cloudphone|cloud phone|vmos|ugphone|redfinger/.test(t)) return has('Cloudphone')||'Cloudphone';
+  if(/^biaya|biaya (saldo|administrasi|admin|transfer)/.test(t)) return 'Biaya bank';
+  if(/\b(ovo|gopay|dana|shopeepay|linkaja)\b/.test(t)&&x.sign<0) return 'Top-up e-wallet';
+  if(/transfer/.test(t)&&x.sign>0) return 'Modal pemilik'; if(/transfer/.test(t)&&x.sign<0) return 'Tarik ke pemilik';
+  if(/bunga|interest|cashback/.test(t)&&x.sign>0) return 'Pemasukan Lain';
+  return x.sign>0?'Pemasukan Lain':'Lainnya'; }
+const bankNote=x=>{ const d=x.desc.filter(s=>!/^(transaksi e-commerce|pembayaran qr|transfer bi ?fast)$/i.test(s)&&!/^\d{6,}$/.test(s)&&!/^[A-Z ]+\d{6,}$/.test(s)); return bankFix([x.title,...d.slice(0,2)].filter(Boolean).join(' · ')).slice(0,90); };
+const bankKey=r=>`${r.d}|${r.sign}|${r.amt}`;
+async function bankShotImport(files){
+  const st=$('bankShotSt'), say=(t,c)=>{ st.className='upd-st '+(c||''); st.textContent=t; }; let worker=null;
+  try{ say('Menyiapkan pembaca gambar… (pertama kali agak lama)'); await adsLoadOcr(); worker=await Tesseract.createWorker('eng');
+    const per=[]; let last='', i=0;
+    for(const f of files){ i++; say(`Membaca screenshot ${i}/${files.length}…`); const {data}=await worker.recognize(f); const r=bankParseShot(data.text,last,per[per.length-1]); last=r.lastDate; per.push(r.rows); }
+    // screenshot yang tumpang tindih: transaksi sama (tanggal, arah, nominal) dihitung sekali per jumlah terbanyak di satu screenshot
+    const need=new Map(), sample=new Map();
+    per.forEach(list=>{ const c=new Map(); list.forEach(a=>{ const k=bankKey(a)+'|'+a.title.toLowerCase().slice(0,12); c.set(k,(c.get(k)||0)+1); if(!sample.has(k)||(!sample.get(k).d&&a.d)||sample.get(k).desc.length<a.desc.length) sample.set(k,a); }); c.forEach((v,k)=>need.set(k,Math.max(need.get(k)||0,v))); });
+    const have=new Map(); for(const t of BOOK.tx){ if(!t) continue; const k=`${t[0]}|${t[3]?1:-1}|${Math.round(t[3]||t[4]||0)}`; have.set(k,(have.get(k)||0)+1); }
+    const used=new Map(), rows=[];
+    need.forEach((v,k)=>{ const a=sample.get(k), bk=bankKey(a); for(let x=0;x<v;x++){ const u=used.get(bk)||0, dup=u<(have.get(bk)||0); used.set(bk,u+1); rows.push({...a,dup,cat:bankGuess(a),note:bankNote(a)}); } });
+    // toleransi pembulatan sen: Rp1.513.990,68 tercatat 1.513.990 atau 1.513.991
+    rows.forEach(r=>{ if(r.dup||!r.d) return; for(const dlt of [-1,1]){ const k=`${r.d}|${r.sign}|${r.amt+dlt}`; if((have.get(k)||0)>(used.get(k)||0)){ r.dup=true; used.set(k,(used.get(k)||0)+1); break; } } });
+    rows.sort((a,b)=>(b.d||'').localeCompare(a.d||''));
+    if(!rows.length){ say('Tidak ada transaksi terbaca. Pastikan screenshot dari halaman Transaksi aplikasi bank.','err'); return; }
+    const fresh=rows.filter(r=>!r.dup).length; say(`${rows.length} transaksi terbaca · ${fresh} baru`,fresh?'ok':''); bankReview(rows);
+  }catch(err){ say('Gagal: '+(err.message||err),'err'); } finally{ if(worker) worker.terminate(); } }
+function bankReview(rows){
+  const m=document.createElement('div'); m.className='cmodal'; const fresh=rows.filter(r=>!r.dup).length, cats=[...new Set([...(BOOK.cats||[]).map(c=>c[0]),'Biaya bank','Modal pemilik','Tarik ke pemilik','Top-up e-wallet'])];
+  m.innerHTML=`<div class="am-box ads-box bank-box" role="dialog" aria-modal="true" aria-label="Tambah mutasi rekening"><h3>Mutasi rekening dari screenshot</h3>
+    <p class="note" style="margin:0 0 10px">${fresh?`<b>${fresh} transaksi baru</b> siap ditambahkan ke Semua transaksi. `:'<b>Semua transaksi sudah ada.</b> '}${rows.length-fresh?`${rows.length-fresh} sudah ada (tanggal &amp; nominal sama, abu-abu, dilewati). `:''}Cek kategori dan keterangan sebelum menyimpan; semua bisa diubah. Isi saldo e-wallet (OVO, GoPay, dll.) tidak dicentang, karena pemakaiannya biasanya sudah dicatat sendiri.</p>
+    <datalist id="bankCats">${cats.map(c=>`<option value="${esc(c)}">`).join('')}</datalist>
+    <div class="tbl-wrap" style="max-height:56vh;margin:0"><table class="bank-tbl"><thead><tr><th></th><th>Tanggal</th><th style="text-align:left">Kategori</th><th style="text-align:left">Keterangan</th><th style="text-align:right">Masuk</th><th style="text-align:right">Keluar</th></tr></thead><tbody>
+    ${rows.map((r,i)=>`<tr class="${r.dup?'dup':''}" data-i="${i}"><td>${r.dup?'✓':`<input type="checkbox" class="bk-on" ${r.cat==='Top-up e-wallet'?'':'checked'} aria-label="Tambahkan" title="${r.cat==='Top-up e-wallet'?'Isi saldo e-wallet: biasanya pemakaiannya (mis. bayar iklan TikTok) sudah dicatat sendiri, jadi tidak dicentang supaya tidak dobel':''}">`}</td><td><input type="date" class="bk-d" value="${r.d||''}" ${r.dup?'disabled':''}></td><td><input class="bk-c" list="bankCats" value="${esc(r.cat)}" ${r.dup?'disabled':''}></td><td><input class="bk-n" value="${esc(r.note)}" ${r.dup?'disabled':''}></td><td class="pos">${r.sign>0?Rp(r.amt):''}</td><td class="neg">${r.sign<0?Rp(r.amt):''}</td></tr>`).join('')}</tbody></table></div>
+    <p class="bank-err" role="alert"></p>
+    <div class="am-actions" style="margin-top:12px"><button class="btn ghost" type="button" data-x="0">Batal</button>${fresh?'<button class="btn primary" type="button" data-x="1">Tambahkan ke Semua transaksi</button>':''}</div></div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click',async e=>{ const b=e.target.closest('[data-x]'); if(!b){ if(e.target===m) m.remove(); return; } if(b.dataset.x==='0'){ m.remove(); return; }
+    const pick=[...m.querySelectorAll('tr[data-i]')].filter(tr=>tr.querySelector('.bk-on')?.checked).map(tr=>{ const r=rows[+tr.dataset.i]; return {...r,d:tr.querySelector('.bk-d').value,cat:tr.querySelector('.bk-c').value.trim()||(r.sign>0?'Pemasukan Lain':'Lainnya'),note:tr.querySelector('.bk-n').value.trim()}; });
+    if(pick.some(p=>!/^\d{4}-\d\d-\d\d$/.test(p.d))){ m.querySelector('.bank-err').textContent='Ada transaksi tanpa tanggal. Isi tanggalnya dulu (lihat di aplikasi bank).'; return; }
+    m.remove(); if(!pick.length) return;
+    for(const p of pick){ if(!BOOK.cats.some(c=>c[0]===p.cat)) BOOK.cats.push([p.cat,p.sign>0?'in':'out']); BOOK.tx.push([p.d,p.cat,p.note,p.sign>0?p.amt:0,p.sign<0?p.amt:0]); }
+    BOOK.src={...(BOOK.src||{}),at:Date.now()}; RECS.book=BOOK; renderFin(); $('bankShotSt').className='upd-st ok'; $('bankShotSt').textContent=`✓ ${pick.length} transaksi ditambahkan`; await saveRecords(); });
+}
+$('bankShotIn').addEventListener('change',e=>{ const f=[...e.target.files]; e.target.value=''; if(f.length) bankShotImport(f); });
 function adsShotReview(rows){
   const m=document.createElement('div'); m.className='cmodal'; const fresh=rows.filter(r=>!r.dup).length;
   m.innerHTML=`<div class="am-box ads-box" role="dialog" aria-modal="true" aria-label="Tambah transaksi TikTok Ads"><h3>Transaksi dari screenshot</h3>
@@ -2794,7 +2900,18 @@ function renderRobux(){
 const BIZ_MK=['Endorse','Iklan TikTok'];
 let bizC=null, bizSetOpen=false;
 const PROJ=()=>{ const p=RECS.proj||{}, n=(v,d)=>v==null||v===''||!isFinite(+v)?d:+v; return {growth:p.growth==null||p.growth===''?null:+p.growth, mk:p.mk==='pct'?'pct':'data', mkPct:n(p.mkPct,30), months:[3,6,12].includes(+p.months)?+p.months:3,
-  pubMax:n(p.pubMax,5), pubAdv:n(p.pubAdv,600), pubFee:n(p.pubFee,80), cash0:n(p.cash0,0), sellDay:p.sellDay==null||p.sellDay===''?null:+p.sellDay, cashDays:[30,60,90].includes(+p.cashDays)?+p.cashDays:30}; };
+  pubMax:n(p.pubMax,5), pubAdv:n(p.pubAdv,600), pubFee:n(p.pubFee,80), cash0:p.cash0==null||p.cash0===''||!isFinite(+p.cash0)||+p.cash0===0&&!p.cash0At?null:+p.cash0, cash0At:String(p.cash0At||''), sellDay:p.sellDay==null||p.sellDay===''?null:+p.sellDay, cashDays:[30,60,90].includes(+p.cashDays)?+p.cashDays:30,
+  opFix:p.opFix==null||p.opFix===''||!isFinite(+p.opFix)?null:+p.opFix, asetMode:p.asetMode==='sebar'?'sebar':'utuh', asetMonths:Math.max(1,Math.round(n(p.asetMonths,12))),
+  snap:(()=>{ try{ const g=typeof p.snap==='string'?JSON.parse(p.snap||'{}'):(p.snap||{}); return g&&typeof g==='object'?g:{}; }catch(e){ return {}; } })(),
+  grp:(()=>{ try{ const g=typeof p.costGrp==='string'?JSON.parse(p.costGrp||'{}'):(p.costGrp||{}); return g&&typeof g==='object'?g:{}; }catch(e){ return {}; } })()}; };
+// kelompok biaya: marketing (tetap: Endorse, Iklan TikTok), operasional, aset, atau tidak dihitung
+// saldo rekening sekarang: dari saldo Semua transaksi, atau saldo yang kamu isi (per tanggal) + transaksi sesudahnya
+function cashNow(P){ const B=bookRows(); if(P.cash0==null){ return {v:B.length?B[B.length-1].bal:0,src:'otomatis dari saldo Semua transaksi',auto:true}; }
+  let v=P.cash0, n=0; for(const r of B) if(r.d&&P.cash0At&&r.d>P.cash0At){ v+=(r.in||0)-(r.out||0); n++; }
+  return {v,src:`${Rp(P.cash0)} per ${P.cash0At?dLabelY(P.cash0At):'–'}${n?` + ${n} transaksi sesudahnya`:''}`,auto:false}; }
+const COST_GRP={op:'Operasional',aset:'Aset',skip:'Tidak dihitung'};
+function costGrpOf(cat,P){ if(BIZ_MK.includes(cat)) return 'mk'; const g=(P||PROJ()).grp[cat]; if(g&&COST_GRP[g]) return g; if(/tarik ke pemilik|prive|top-up e-wallet|modal pemilik/i.test(cat||'')) return 'skip'; return /aset|asset|script|laptop|hardware|peralatan|komputer/i.test(cat||'')?'aset':'op'; }
+function costCats(){ const s=new Map(); for(const r of bookRows()) if(r.out&&r.cat&&!BIZ_MK.includes(r.cat)) s.set(r.cat,(s.get(r.cat)||0)+r.out); return [...s].sort((a,b)=>b[1]-a[1]); }
 // produk baru per hari = produk yang pertama kali muncul di data sales (dari file download Roblox) pada hari itu
 let PUB=null;
 function pubData(){ if(PUB) return PUB; const first=new Map(); for(const r of TX) if(!first.has(r.p)) first.set(r.p,r.d);
@@ -2809,13 +2926,28 @@ const daysIn=m=>new Date(Date.UTC(+m.slice(0,4),+m.slice(5),0)).getUTCDate();
 function bizData(){
   const A=new Map(); for(const r of TX){ const m=r.d.slice(0,7); const x=A.get(m)||{pcs:0,price:0,rev:0,days:new Set()}; x.pcs++; x.price+=r.price; x.rev+=r.rev; x.days.add(r.d); A.set(m,x); }
   const MK=new Map(); for(const r of bookRows()) if(BIZ_MK.includes(r.cat)&&r.d){ const x=MK.get(r.m)||{endorse:0,iklan:0}; x[r.cat==='Endorse'?'endorse':'iklan']+=r.out||0; MK.set(r.m,x); }
-  return {A,MK}; }
+  const P=PROJ(), OP=new Map(), AS=new Map(), ASC=new Map(), opCat=new Map();
+  for(const r of bookRows()){ if(!r.out||!r.d) continue; const g=costGrpOf(r.cat,P);
+    if(g==='op'){ OP.set(r.m,(OP.get(r.m)||0)+r.out); const c=opCat.get(r.m)||new Map(); c.set(r.cat,(c.get(r.cat)||0)+r.out); opCat.set(r.m,c); }
+    else if(g==='aset'){ AS.set(r.m,(AS.get(r.m)||0)+r.out);
+      if(P.asetMode==='sebar'){ let m=r.m; for(let i=0;i<P.asetMonths;i++){ ASC.set(m,(ASC.get(m)||0)+r.out/P.asetMonths); m=nextM(m); } } else ASC.set(r.m,(ASC.get(r.m)||0)+r.out); } }
+  return {A,MK,OP,AS,ASC,opCat}; }
 // rata-rata harian n hari penuh terakhir (hari terakhir data dianggap belum lengkap)
 function bizAvg(n){ const m=new Map(); for(const r of TX){ const x=m.get(r.d)||{pcs:0,price:0,rev:0}; x.pcs++; x.price+=r.price; x.rev+=r.rev; m.set(r.d,x); }
   const end=addDays(MAX,-1), o={pcs:0,price:0,rev:0}; for(let i=0;i<n;i++){ const x=m.get(addDays(end,-i)); if(x){ o.pcs+=x.pcs; o.price+=x.price; o.rev+=x.rev; } } return {pcs:o.pcs/n,price:o.price/n,rev:o.rev/n}; }
+// proyeksi bulan m seperti dihitung di awal bulan itu (pakai data sampai akhir bulan sebelumnya)
+function bizBack(m,rate,P,A){ const start=m+'-01'; if(!TX.length||TX[0].d>addDays(start,-7)) return null; const D=dayRev();
+  let r7=0; for(let i=1;i<=7;i++) r7+=D.get(addDays(start,-i))||0; r7/=7;
+  const m1=(()=>{ const d=new Date(start+'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth()-1); return d.toISOString().slice(0,7); })(), m2=(()=>{ const d=new Date(start+'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth()-2); return d.toISOString().slice(0,7); })();
+  const full=x=>x&&x.days.size>=daysIn([...x.days][0].slice(0,7))-1, a1=A.get(m1), a2=A.get(m2);
+  const g=P.growth!=null?P.growth/100:(full(a1)&&full(a2)?(a1.rev/a1.days.size)/(a2.rev/a2.days.size)-1:0);
+  const from=addDays(start,-30), to=addDays(start,-1); let r30=0,mk30=0,op30=0; for(const [d,v] of D) if(d>=from&&d<=to) r30+=v;
+  for(const r of bookRows()) if(r.out&&r.d&&r.d>=from&&r.d<=to){ const k=costGrpOf(r.cat,P); if(k==='mk') mk30+=r.out; else if(k==='op') op30+=r.out; }
+  const days=daysIn(m), rev=r7*days*(1+g), ratio=P.mk==='pct'?P.mkPct/100:(r30?mk30/(r30*rate):0);
+  return {rev,mk:rev*rate*ratio,op:P.opFix!=null?P.opFix*days/30:op30*days/30,pubR:P.pubMax*days*(P.pubFee+P.pubAdv),aset:0,src:'dihitung ulang dari data sebelum '+dLabel(start)}; }
 function renderBiz(){
   const el=$('bizBody'); if(!el||$('view-fin').dataset.fintab!=='rbx'||!TX.length) return;
-  const P=PROJ(), {A,MK}=bizData(), L=RBX(), rate=(L.length?L[L.length-1].rate:0)||125;
+  const P=PROJ(), {A,MK,OP,AS,ASC,opCat}=bizData(), L=RBX(), rate=(L.length?L[L.length-1].rate:0)||125;
   const curM=MAX.slice(0,7), months=[...A.keys()].sort();
   // growth dari data: revenue per hari bulan penuh terakhir vs bulan sebelumnya
   const full=months.filter(m=>m<curM), gm=full.length>=2?full.slice(-2):null;
@@ -2825,17 +2957,20 @@ function renderBiz(){
   // rasio marketing dari data: 30 hari terakhir
   const from30=addDays(MAX,-29); let rev30=0, mk30=0; for(const r of TX) if(r.d>=from30) rev30+=r.rev; for(const r of bookRows()) if(BIZ_MK.includes(r.cat)&&r.d&&r.d>=from30&&r.d<=MAX) mk30+=r.out||0;
   const ratioData=rev30?mk30/(rev30*rate):0, ratio=P.mk==='pct'?P.mkPct/100:ratioData;
+  let op30=0; for(const r of bookRows()) if(r.out&&r.d&&r.d>=from30&&r.d<=MAX&&costGrpOf(r.cat,P)==='op') op30+=r.out;
+  const opMonth=P.opFix!=null?P.opFix:op30, opOf=m=>opMonth*daysIn(m)/30, ascOf=m=>ASC.get(m)||0;
   const base=bizAvg(7), rows=[], {day:PD}=pubData(), pubM=new Map(); pubRM=new Map(), unitR=P.pubFee+P.pubAdv;
   PD.forEach((a,d)=>{ const m=d.slice(0,7); pubM.set(m,(pubM.get(m)||0)+a.length); pubRM.set(m,(pubRM.get(m)||0)+pubRobux(a,P)); });
   const pubCost=r=>r.pubR*rate; // biaya publish penuh: (upload R$80 + rebates per item, bawaan 600 / hasil edit) × rate
   for(const m of months){ const x=A.get(m), k=MK.get(m)||{endorse:0,iklan:0}, mk=k.endorse+k.iklan;
-    rows.push({m,act:true,part:m===curM||x.days.size<daysIn(m),days:x.days.size,pcs:x.pcs,price:x.price,rev:x.rev,end:k.endorse,ikl:k.iklan,mk,pub:pubM.get(m)||0,pubR:pubRM.get(m)||0}); }
+    rows.push({m,act:true,part:m===curM||x.days.size<daysIn(m),days:x.days.size,pcs:x.pcs,price:x.price,rev:x.rev,end:k.endorse,ikl:k.iklan,mk,pub:pubM.get(m)||0,pubR:pubRM.get(m)||0,op:OP.get(m)||0,aset:ascOf(m),asetBuy:AS.get(m)||0,opc:opCat.get(m)}); }
   // bulan berjalan: aktual + sisa hari, lalu bulan-bulan berikutnya dengan growth per bulan
   const proj=[]; { const x=A.get(curM)||{pcs:0,price:0,rev:0,days:new Set()}, k=MK.get(curM)||{endorse:0,iklan:0}, rest=daysIn(curM)-(+MAX.slice(8));
-    const rev=x.rev+base.rev*rest; proj.push({m:curM,est:true,pcs:x.pcs+base.pcs*rest,price:x.price+base.price*rest,rev,mk:Math.max(k.endorse+k.iklan,rev*rate*ratio),pub:(pubM.get(curM)||0)+P.pubMax*rest,pubR:(pubRM.get(curM)||0)+P.pubMax*rest*unitR}); }
-  let m=curM; for(let i=1;i<=P.months;i++){ m=nextM(m); const f=Math.pow(1+g,i), d=daysIn(m), rev=base.rev*d*f; proj.push({m,est:true,pcs:base.pcs*d*f,price:base.price*d*f,rev,mk:rev*rate*ratio,pub:P.pubMax*d,pubR:P.pubMax*d*unitR}); }
-  const tr=(r,cls)=>{ const rp=r.rev*rate, pct=rp?r.mk/rp:0; return `<tr class="${cls||''}"><td class="txt" style="text-align:left">${mLabel(r.m)}${r.act?(r.part?` <span class="muted">· ${r.days} hari</span>`:''):' <span class="muted">· proyeksi</span>'}</td><td>${fmt(r.pcs)}</td><td>${R(r.price)}</td><td><b>${Rp(rp)}</b><br><span class="muted">${R(r.rev)}</span></td><td>${Rp(r.mk)}${r.act&&r.mk?`<br><span class="muted">endorse ${Rp(r.end)} · iklan ${Rp(r.ikl)}</span>`:''}</td><td>${rp?(pct*100).toFixed(1).replace('.',',')+'%':'–'}</td><td><b>${Rp(pubCost(r))}</b><br><span class="muted" title="${r.act?'Tiap produk: upload R$'+fmt(P.pubFee)+' + rebates sesuai data (bawaan R$'+fmt(P.pubAdv)+', atau hasil edit)':'Proyeksi: '+fmt(r.pub)+' produk × R$'+fmt(unitR)} × rate ${fmt(rate)}">${fmt(r.pub)} produk · ${R(r.pubR)}</span></td><td><b>${Rp(rp-r.mk-pubCost(r))}</b></td></tr>`; };
-  const tot=proj.slice(1).reduce((a,r)=>({rev:a.rev+r.rev*rate,mk:a.mk+r.mk,pub:a.pub+pubCost(r),pr:a.pr+r.pubR,n:a.n+r.pub}),{rev:0,mk:0,pub:0,pr:0,n:0});
+    const rev=x.rev+base.rev*rest; proj.push({m:curM,est:true,pcs:x.pcs+base.pcs*rest,price:x.price+base.price*rest,rev,mk:Math.max(k.endorse+k.iklan,rev*rate*ratio),pub:(pubM.get(curM)||0)+P.pubMax*rest,pubR:(pubRM.get(curM)||0)+P.pubMax*rest*unitR,op:Math.max(OP.get(curM)||0,opOf(curM)),aset:ascOf(curM),asetBuy:AS.get(curM)||0}); }
+  let m=curM; for(let i=1;i<=P.months;i++){ m=nextM(m); const f=Math.pow(1+g,i), d=daysIn(m), rev=base.rev*d*f; proj.push({m,est:true,pcs:base.pcs*d*f,price:base.price*d*f,rev,mk:rev*rate*ratio,pub:P.pubMax*d,pubR:P.pubMax*d*unitR,op:opOf(m),aset:ascOf(m),asetBuy:0}); }
+  const tr=(r,cls)=>{ const rp=r.rev*rate, pct=rp?r.mk/rp:0; return `<tr class="${cls||''}"><td class="txt" style="text-align:left">${mLabel(r.m)}${r.act?(r.part?` <span class="muted">· ${r.days} hari</span>`:''):' <span class="muted">· proyeksi</span>'}</td><td>${fmt(r.pcs)}</td><td>${R(r.price)}</td><td><b>${Rp(rp)}</b><br><span class="muted">${R(r.rev)}</span></td><td>${Rp(r.mk)}${r.act&&r.mk?`<br><span class="muted">endorse ${Rp(r.end)}<br>iklan ${Rp(r.ikl)}</span>`:''}</td><td>${rp?(pct*100).toFixed(1).replace('.',',')+'%':'–'}</td><td><b>${Rp(pubCost(r))}</b><br><span class="muted" title="${r.act?'Tiap produk: upload R$'+fmt(P.pubFee)+' + rebates sesuai data (bawaan R$'+fmt(P.pubAdv)+', atau hasil edit)':'Proyeksi: '+fmt(r.pub)+' produk × R$'+fmt(unitR)} × rate ${fmt(rate)}">${fmt(r.pub)} produk<br>${R(r.pubR)}</span></td><td>${Rp(r.op)}${r.act&&r.opc?`<br><span class="muted" title="${esc([...r.opc].sort((a,b)=>b[1]-a[1]).map(([c,v])=>c+': '+Rp(v)).join('\n'))}">${fmt(r.opc.size)} kategori ⓘ</span>`:''}</td><td>${r.aset?Rp(r.aset):'–'}${r.asetBuy&&P.asetMode==='sebar'?`<br><span class="muted">beli ${Rp(r.asetBuy)}</span>`:''}</td><td><b class="${rp-r.mk-pubCost(r)-r.op-r.aset<0?'neg':''}">${Rp(rp-r.mk-pubCost(r)-r.op-r.aset)}</b></td></tr>`; };
+  const tot=proj.slice(1).reduce((a,r)=>({rev:a.rev+r.rev*rate,mk:a.mk+r.mk,pub:a.pub+pubCost(r),pr:a.pr+r.pubR,n:a.n+r.pub,op:a.op+r.op,aset:a.aset+r.aset}),{rev:0,mk:0,pub:0,pr:0,n:0,op:0,aset:0});
+  const CN=cashNow(P);
   // ---------- kalender arus kas harian ----------
   const CASH=(()=>{ const salesEnd=TX[TX.length-1].ts, nowT=salesEnd, snap=L.length?L[L.length-1]:null;
     const withPo=L.filter(x=>x.po!=null); let poDay=0; if(withPo.length>=2){ const A=withPo[0],B=withPo[withPo.length-1]; poDay=(B.po-A.po)/Math.max((wibTs(B.t)-wibTs(A.t))/86400,1/24); } else if(withPo.length===1){ poDay=withPo[0].po/Math.max((wibTs(withPo[0].t)-TX[0].ts)/86400,1); }
@@ -2846,7 +2981,7 @@ function renderBiz(){
     // tagihan pending (yang rutin bulanan diulang)
     const bills=new Map(), addB=(d,v,n)=>{ const a=bills.get(d)||[]; a.push([v,n]); bills.set(d,a); }, end=addDays(todayWIB(),P.cashDays);
     for(const p of PEND()){ let d=p.d, k=0; while(d<=end&&k<6){ if(d>=todayWIB()) addB(d,(p.in||0)-(p.out||0),p.note||p.cat); if(!p.recur) break; d=addMonthsDay(p.d,++k); } }
-    const rows=[]; let rbx=funds, rp=P.cash0;
+    const rows=[]; let rbx=funds, rp=CN.v;
     for(let i=0;i<P.cashDays;i++){ const d=addDays(todayWIB(),i), t0=nowT+i*86400, cair=revBetween(t0-HOLD,t0-HOLD+86400), reb=Math.min(rbLeft,rbAcc); rbLeft-=reb;
       const bl=bills.get(d)||[], billV=bl.reduce((s,b)=>s+b[0],0), sold=sell;
       if(rbx!=null) rbx+=cair+reb-pubDay-sold;
@@ -2854,8 +2989,9 @@ function renderBiz(){
     return {rows,sell,sellAuto,funds,mkDay,pubDay,snap}; })();
   const minRp=CASH.rows.reduce((m,r)=>r.rp<m.rp?r:m,CASH.rows[0]), minRb=CASH.funds!=null?CASH.rows.reduce((m,r)=>r.rbx<m.rbx?r:m,CASH.rows[0]):null;
   const cashHtml=`<div class="panel" style="margin-top:14px"><h3 style="color:var(--fg)">Kalender arus kas (${P.cashDays} hari)</h3>
-    <p class="note" style="margin:4px 0 0">Per hari: Robux cair dari pending (pasti, dari data sales) + rebates − modal publish ${R(CASH.pubDay)} (${P.pubMax} produk) − Robux dijual ${R(CASH.sell)}${P.sellDay==null?' (otomatis = rata-rata payout)':''}. Rupiah: hasil jual Robux × ${fmt(rate)} + tagihan/pemasukan pending − marketing ${Rp(CASH.mkDay)}/hari. Saldo rekening awal ${Rp(P.cash0)}${P.cash0?'':' (isi di ⚙ Atur proyeksi)'}.${CASH.snap?'':' Saldo Robux belum diketahui: catat saldo Robux dulu.'}</p>
-    <div class="kpis rbx-kpis" style="margin-top:10px">
+    <p class="note" style="margin:4px 0 0">Per hari: Robux cair dari pending (pasti, dari data sales) + rebates − modal publish ${R(CASH.pubDay)} (${P.pubMax} produk) − Robux dijual ${R(CASH.sell)}${P.sellDay==null?' (otomatis = rata-rata payout)':''}. Rupiah: hasil jual Robux × ${fmt(rate)} + tagihan/pemasukan pending − marketing ${Rp(CASH.mkDay)}/hari. Saldo rekening awal ${Rp(CN.v)} (${CN.src}).${CASH.snap?'':' Saldo Robux belum diketahui: catat saldo Robux dulu.'}</p>
+    <div class="kpis rbx-kpis k5" style="margin-top:10px">
+      <div class="kpi"><span class="eyebrow">Saldo rekening sekarang</span><span class="v ${CN.v<0?'neg':''}">${Rp(CN.v)}</span><span class="s">${esc(CN.src)}</span></div>
       <div class="kpi ${minRp.rp<0?'warn':''}"><span class="eyebrow">Saldo Rp terendah</span><span class="v" style="${minRp.rp<0?'color:var(--bad,#d23)':''}">${Rp(minRp.rp)}</span><span class="s">${dLabelY(minRp.d)}${minRp.rp<0?' · ⚠ kurang, siapkan dana':''}</span></div>
       <div class="kpi"><span class="eyebrow">Saldo Rp akhir</span><span class="v">${Rp(CASH.rows[CASH.rows.length-1].rp)}</span><span class="s">${dLabelY(CASH.rows[CASH.rows.length-1].d)}</span></div>
       <div class="kpi"><span class="eyebrow">Saldo Robux terendah</span><span class="v">${minRb?R(minRb.rbx):'–'}</span><span class="s">${minRb?dLabelY(minRb.d)+(minRb.rbx<0?' · ⚠ tidak cukup untuk publish & jual':''):'catat saldo Robux dulu'}</span></div>
@@ -2870,6 +3006,19 @@ function renderBiz(){
     <div class="tbl-wrap" style="max-height:none"><table id="pubTable"><thead><tr><th style="text-align:left">Tanggal</th><th>Produk baru</th><th>Biaya publish (R$)</th><th>Biaya publish (Rp)</th><th style="text-align:left">Status</th></tr></thead><tbody>
     ${last14.map(d=>{ const a=PD.get(d)||[], n=a.length, over=n>P.pubMax; return `<tr${over?' class="biz-proj"':''}><td class="txt" style="text-align:left">${dLabelY(d)}${d===MAX?' <span class="muted">· data s/d '+LAST_HM+'</span>':''}</td><td title="${esc(a.map(nameOf).join('\n'))}"><b>${n}</b></td><td title="upload R$${fmt(P.pubFee)} + rebates per item">${R(pubRobux(a,P))}</td><td>${Rp(pubRobux(a,P)*rate)}</td><td style="text-align:left;font-family:var(--body)">${n?over?`⚠ lebih ${n-P.pubMax} dari batas`:'✓ sesuai batas':'–'}</td></tr>`; }).join('')}
     </tbody></table></div></div>`;
+  // simpan proyeksi pertama tiap bulan (untuk dibandingkan dengan realisasi nanti)
+  { const S={...P.snap}; let ch=false; for(const r of proj) if(!S[r.m]){ S[r.m]={rev:Math.round(r.rev),mk:Math.round(r.mk),op:Math.round(r.op),pubR:Math.round(r.pubR),aset:Math.round(r.aset),at:todayWIB()}; ch=true; }
+    if(ch){ RECS.proj={...(RECS.proj||{}),snap:JSON.stringify(S)}; P.snap=S; clearTimeout(bizSaveT); bizSaveT=setTimeout(()=>saveRecords(),1500); } }
+  const realRows=rows.filter(r=>r.m<=curM).map(r=>{ const sn=P.snap[r.m], useSnap=sn&&sn.at<=r.m+'-03', pr=useSnap?{...sn,src:'tersimpan '+dLabel(sn.at)}:bizBack(r.m,rate,P,A); if(!pr) return null;
+      const part=r.m===curM, k=part?r.days/daysIn(r.m):1, q=v=>v*k, act={rev:r.rev*rate,mk:r.mk,pub:r.pubR*rate,op:r.op,aset:r.aset};
+      const pj={rev:q(pr.rev*rate),mk:q(pr.mk),pub:q(pr.pubR*rate),op:q(pr.op),aset:q(pr.aset||0)};
+      act.sisa=act.rev-act.mk-act.pub-act.op-act.aset; pj.sisa=pj.rev-pj.mk-pj.pub-pj.op-pj.aset; return {m:r.m,part,days:r.days,src:pr.src,act,pj}; }).filter(Boolean);
+  const cmp=(a,b,good)=>{ const d=b?a/b-1:0, c=!b?'fg':(good==='up'?(d>=0?'good':'bad'):(d<=0?'good':'bad')); return `<b>${Rp(a)}</b>${b?` <span style="color:var(--${c});font-size:12px">${pctS(d)}</span>`:''}<br><span class="muted">proy. ${Rp(b)}</span>`; };
+  const realHtml=`<div class="panel" style="margin-top:14px"><h3 style="color:var(--fg)">Realisasi vs proyeksi</h3>
+    <p class="note" style="margin:4px 0 0">Angka aktual dibandingkan dengan proyeksi bulan itu. Bulan yang sudah lewat dihitung ulang dengan aturan proyeksi yang sama memakai data sebelum bulan itu dimulai; mulai sekarang proyeksi pertama tiap bulan juga disimpan otomatis. Bulan berjalan dibandingkan sampai hari ini (proyeksi dipotong sesuai jumlah hari). Hijau = lebih baik dari proyeksi.</p>
+    ${realRows.length?`<div class="tbl-wrap" style="max-height:none"><table id="realTable"><thead><tr><th style="text-align:left">Bulan</th><th>Revenue</th><th>Marketing</th><th>Publish</th><th>Operasional</th><th>Sisa bersih</th><th>Akurasi revenue</th></tr></thead><tbody>
+      ${realRows.map(x=>`<tr><td class="txt" style="text-align:left">${mLabel(x.m)}${x.part?` <span class="muted">· berjalan ${x.days} hari</span>`:''}<br><span class="muted">${esc(x.src)}</span></td><td>${cmp(x.act.rev,x.pj.rev,'up')}</td><td>${cmp(x.act.mk,x.pj.mk,'down')}</td><td>${cmp(x.act.pub,x.pj.pub,'down')}</td><td>${cmp(x.act.op,x.pj.op,'down')}</td><td>${cmp(x.act.sisa,x.pj.sisa,'up')}</td><td><b>${x.pj.rev?Math.max(0,100-Math.abs(x.act.rev/x.pj.rev-1)*100).toFixed(0)+'%':'–'}</b></td></tr>`).join('')}
+    </tbody></table></div>`:'<p class="muted" style="margin:10px 2px">Belum cukup data: butuh minimal 7 hari penjualan sebelum awal bulan.</p>'}</div>`;
   el.innerHTML=pubHtml+cashHtml+`<div class="panel" style="margin-top:14px"><div class="sec-head" style="margin:0"><div><h3 style="color:var(--fg)">Proyeksi bisnis: sales, revenue &amp; marketing</h3>
       <p class="note" style="margin:4px 0 0">Dasar: rata-rata 7 hari terakhir (${fmt(base.pcs)} pcs, ${R(base.rev)} revenue per hari), growth ${(g*100).toFixed(1).replace('.',',')}% per bulan${P.growth==null?' (dari data: revenue per hari '+(gm?mLabel(gm[1])+' vs '+mLabel(gm[0]):'–')+')':' (diatur manual)'}. Biaya marketing = Endorse + Iklan TikTok dari Semua transaksi, ${P.mk==='pct'?`diatur ${fmt(P.mkPct)}% dari revenue`:`mengikuti data 30 hari terakhir (${(ratioData*100).toFixed(1).replace('.',',')}% dari revenue)`}. Rate ${fmt(rate)}.</p></div>
       <div class="controls"><button class="btn" type="button" id="bizSetBtn" aria-expanded="${bizSetOpen}">⚙ Atur proyeksi</button></div></div>
@@ -2880,23 +3029,31 @@ function renderBiz(){
       <label>Maks publish per hari<input name="pubMax" inputmode="numeric" value="${P.pubMax}"></label>
       <label>Publishing advance (R$)<input name="pubAdv" inputmode="numeric" value="${P.pubAdv}"></label>
       <label>Biaya upload (R$)<input name="pubFee" inputmode="numeric" value="${P.pubFee}"></label>
-      <label>Saldo rekening sekarang (Rp)<input name="cash0" inputmode="numeric" value="${P.cash0||''}" placeholder="0"></label>
+      <label>Saldo rekening (Rp)<input name="cash0" inputmode="numeric" value="${P.cash0==null?'':P.cash0}" placeholder="otomatis: ${fmt(Math.round(bookRows().slice(-1)[0]?.bal||0))}" title="Kosong = ikut saldo Semua transaksi. Isi saldo asli di aplikasi bank: dihitung per hari ini, lalu transaksi sesudahnya ditambahkan otomatis."></label>
       <label>Jual Robux per hari (R$)<input name="sellDay" inputmode="numeric" value="${P.sellDay==null?'':P.sellDay}" placeholder="otomatis: ${fmt(CASH.sellAuto)}"></label>
       <label>Kalender arus kas<select name="cashDays">${[30,60,90].map(n=>`<option value="${n}"${P.cashDays===n?' selected':''}>${n} hari</option>`).join('')}</select></label>
       <label>Jumlah bulan<select name="months">${[3,6,12].map(n=>`<option value="${n}"${P.months===n?' selected':''}>${n} bulan</option>`).join('')}</select></label>
-      <p class="note">Kosongkan growth untuk kembali ke angka otomatis dari data. Perubahan langsung dihitung ulang dan tersimpan.</p></form>
+      <label>Operasional per bulan (Rp)<input name="opFix" inputmode="numeric" value="${P.opFix==null?'':P.opFix}" placeholder="otomatis: ${fmt(Math.round(op30))}"></label>
+      <label>Biaya aset<select name="asetMode"><option value="utuh"${P.asetMode==='utuh'?' selected':''}>Utuh di bulan beli</option><option value="sebar"${P.asetMode==='sebar'?' selected':''}>Disebar per bulan</option></select></label>
+      <label>Disebar selama (bulan)<input name="asetMonths" inputmode="numeric" value="${P.asetMonths}" ${P.asetMode==='sebar'?'':'disabled'}></label>
+      <div class="cost-grp"><span class="eyebrow">Kelompok biaya per kategori</span><div class="cg-list">
+        ${BIZ_MK.map(c=>`<label class="cg"><span>${esc(c)}</span><select disabled><option>Marketing</option></select></label>`).join('')}
+        ${costCats().map(([c,v])=>`<label class="cg"><span title="${Rp(v)} total">${esc(c)}</span><select name="grp" data-cat="${esc(c)}">${Object.entries(COST_GRP).map(([k,l])=>`<option value="${k}"${costGrpOf(c,P)===k?' selected':''}>${l}</option>`).join('')}</select></label>`).join('')}</div></div>
+      <p class="note">Kosongkan growth atau operasional untuk kembali ke angka otomatis dari data. Kategori baru (mis. Listrik, Internet, Laptop) otomatis muncul di daftar setelah dicatat di Semua transaksi. Perubahan langsung dihitung ulang dan tersimpan.</p></form>
     <div class="kpis biz-kpis" style="margin-top:12px">
       <div class="kpi"><span class="eyebrow">Revenue ${P.months} bulan ke depan</span><span class="v">${Rp(tot.rev)}</span><span class="s">${R(tot.rev/rate)}</span></div>
       <div class="kpi"><span class="eyebrow">Biaya marketing</span><span class="v">${Rp(tot.mk)}</span><span class="s">${tot.rev?(tot.mk/tot.rev*100).toFixed(1).replace('.',','):0}% dari revenue</span></div>
       <div class="kpi"><span class="eyebrow">Biaya publish</span><span class="v">${Rp(tot.pub)}</span><span class="s">${fmt(tot.n)} produk × R$${fmt(unitR)} × ${fmt(rate)} · ${R(tot.pr)}</span></div>
-      <div class="kpi hl"><span class="eyebrow">Sisa setelah marketing &amp; publish</span><span class="v">${Rp(tot.rev-tot.mk-tot.pub)}</span><span class="s">belum dikurangi biaya lain</span></div>
+      <div class="kpi"><span class="eyebrow">Biaya operasional</span><span class="v">${Rp(tot.op)}</span><span class="s">${Rp(opMonth)}/bulan · ${P.opFix!=null?'diatur manual':'dari 30 hari terakhir'}</span></div>
+      <div class="kpi"><span class="eyebrow">Biaya aset</span><span class="v">${Rp(tot.aset)}</span><span class="s">${P.asetMode==='sebar'?`disebar ${P.asetMonths} bulan`:'dicatat utuh di bulan beli'}</span></div>
+      <div class="kpi hl"><span class="eyebrow">Sisa bersih</span><span class="v ${tot.rev-tot.mk-tot.pub-tot.op-tot.aset<0?'neg':''}">${Rp(tot.rev-tot.mk-tot.pub-tot.op-tot.aset)}</span><span class="s">revenue − marketing − publish − operasional − aset</span></div>
       <div class="kpi"><span class="eyebrow">Growth dipakai</span><span class="v">${(g*100).toFixed(1).replace('.',',')}%</span><span class="s">per bulan · ${P.growth==null?'otomatis dari data':'manual'}</span></div>
     </div>
-    <div class="tbl-wrap" style="max-height:none"><table id="bizTable"><thead><tr><th style="text-align:left">Bulan</th><th>Sales (pcs)</th><th>Penjualan</th><th>Revenue</th><th>Biaya marketing</th><th>% revenue</th><th>Publish</th><th>Sisa</th></tr></thead><tbody>
+    <div class="tbl-wrap" style="max-height:none"><table id="bizTable"><thead><tr><th style="text-align:left">Bulan</th><th>Sales (pcs)</th><th>Penjualan</th><th>Revenue</th><th>Biaya marketing</th><th>% revenue</th><th>Publish</th><th>Operasional</th><th>Aset</th><th>Sisa bersih</th></tr></thead><tbody>
       ${rows.map(r=>tr(r)).join('')}${proj.map(r=>tr(r,'biz-proj')).join('')}
     </tbody></table></div>
-    <p class="note" style="margin:6px 0 0">Baris berwarna = proyeksi. ${mLabel(curM)} (proyeksi) = aktual sampai ${dLabel(MAX)} + sisa hari dengan rata-rata 7 hari terakhir. Penjualan = harga yang dibayar pembeli; revenue = yang masuk ke grup. Publish = produk baru (aktual: terdeteksi dari data sales; proyeksi: batas ${P.pubMax}/hari) × (upload R$${fmt(P.pubFee)} + rebates per item: bawaan R$${fmt(P.pubAdv)}, atau nilai hasil edit seperti R$3.000) × rate ${fmt(rate)}. Proyeksi memakai R$${fmt(unitR)} per produk. Sisa = revenue − marketing − publish.</p>
-    <div class="rbx-chart"><canvas id="bizChart" aria-label="Grafik revenue dan biaya marketing per bulan"></canvas></div></div>`;
+    <p class="note" style="margin:6px 0 0">Baris berwarna = proyeksi. ${mLabel(curM)} (proyeksi) = aktual sampai ${dLabel(MAX)} + sisa hari dengan rata-rata 7 hari terakhir. Penjualan = harga yang dibayar pembeli; revenue = yang masuk ke grup. Publish = produk baru (aktual: terdeteksi dari data sales; proyeksi: batas ${P.pubMax}/hari) × (upload R$${fmt(P.pubFee)} + rebates per item: bawaan R$${fmt(P.pubAdv)}, atau nilai hasil edit seperti R$3.000) × rate ${fmt(rate)}. Proyeksi memakai R$${fmt(unitR)} per produk. Operasional = semua pengeluaran di kelompok Operasional (proyeksi: rata-rata 30 hari terakhir atau angka yang diatur). Aset = pembelian di kelompok Aset${P.asetMode==='sebar'?`, disebar ${P.asetMonths} bulan sejak bulan beli`:', dicatat utuh di bulan beli'}. Sisa bersih = revenue − marketing − publish − operasional − aset.</p>
+    <div class="rbx-chart"><canvas id="bizChart" aria-label="Grafik revenue dan biaya marketing per bulan"></canvas></div></div>`+realHtml;
   if(bizC) bizC.destroy();
   const all=[...rows.filter(r=>r.m!==curM),...proj], acc=css('--accent'), mut=css('--muted');
   bizC=new Chart($('bizChart'),{type:'bar',data:{labels:all.map(r=>mLabel(r.m)+(r.est?' *':'')),datasets:[{label:'Revenue (Rp)',data:all.map(r=>Math.round(r.rev*rate)),backgroundColor:all.map(r=>r.est?css('--accent-soft'):acc),borderColor:acc,borderWidth:1},{label:'Biaya marketing (Rp)',data:all.map(r=>Math.round(r.mk)),backgroundColor:mut}]},
@@ -2907,7 +3064,8 @@ $('bizBody').addEventListener('click',e=>{ if(e.target.closest('#bizSetBtn')){ b
 let bizSaveT=0;
 $('bizBody').addEventListener('change',e=>{ const f=e.target.closest('#bizSet'); if(!f) return;
   const num=v=>{ const t=String(v||'').trim().replace(',','.'); return t===''?null:(isFinite(+t)?+t:null); };
-  RECS.proj={growth:num(f.elements.growth.value),mk:f.elements.mk.value,mkPct:num(f.elements.mkPct.value)??30,months:+f.elements.months.value,cash0:num(String(f.elements.cash0.value).replace(/[^\d,-]/g,''))??0,sellDay:num(String(f.elements.sellDay.value).replace(/[^\d,]/g,'')),cashDays:+f.elements.cashDays.value,pubMax:num(f.elements.pubMax.value)??5,pubAdv:num(f.elements.pubAdv.value)??600,pubFee:num(f.elements.pubFee.value)??80};
+  const grp={}; f.querySelectorAll('select[name=grp]').forEach(x=>{ grp[x.dataset.cat]=x.value; });
+  RECS.proj={...(RECS.proj||{}),costGrp:JSON.stringify(grp),opFix:num(String(f.elements.opFix.value).replace(/[^\d,]/g,'')),asetMode:f.elements.asetMode.value,asetMonths:num(f.elements.asetMonths.value)??12,growth:num(f.elements.growth.value),mk:f.elements.mk.value,mkPct:num(f.elements.mkPct.value)??30,months:+f.elements.months.value,cash0:(()=>{ const v=num(String(f.elements.cash0.value).replace(/[^\d,-]/g,'')); return v; })(),cash0At:(()=>{ const v=num(String(f.elements.cash0.value).replace(/[^\d,-]/g,'')), o=RECS.proj||{}; return v==null?'':(+o.cash0===v&&o.cash0At?o.cash0At:todayWIB()); })(),sellDay:num(String(f.elements.sellDay.value).replace(/[^\d,]/g,'')),cashDays:+f.elements.cashDays.value,pubMax:num(f.elements.pubMax.value)??5,pubAdv:num(f.elements.pubAdv.value)??600,pubFee:num(f.elements.pubFee.value)??80};
   renderPubWarn();
   setTimeout(()=>{ const a=document.activeElement&&document.activeElement.name; renderBiz(); if(a){ const x=$('bizSet')&&$('bizSet').elements[a]; if(x) x.focus({preventScroll:true}); } },0); clearTimeout(bizSaveT); bizSaveT=setTimeout(()=>saveRecords(),600); });
 function fmtDur(sec){ const h=Math.round(sec/3600); return h>=48?`${Math.round(h/24)} hari`:h>=1?`${h} jam`:`${Math.max(1,Math.round(sec/60))} menit`; }
@@ -3030,7 +3188,7 @@ function renderAll(){
   const has=D.rows.length>0;
   $('content').hidden=!has; $('empty').hidden=has;
   if(!has){ $('meta').innerHTML=`<span>Rentang <b>${dLabelY(D.from)} – ${dLabelY(D.to)}</b></span>`; return; }
-  renderHeader(); renderInsights(); renderPeriod(); renderProducts(); renderLaunch(); renderTop(); renderMix(); renderHeat(); renderSmall(); renderRepeat(); renderWarna(); renderSesi();
+  renderHeader(); renderInsights(); renderPeriod(); renderProducts(); renderLaunch(); renderBep(); renderTop(); renderMix(); renderHeat(); renderSmall(); renderRepeat(); renderWarna(); renderSesi();
 }
 
 // ---------- date filter ----------
@@ -3124,7 +3282,7 @@ document.getElementById('prodHead').addEventListener('click',function(e){
 
 
 // ---------- table tools: click a column title to sort; "+ Filter" on username/post tables ----------
-const FILTER_TABLES=['endTable','intAccTable','intTable','mkTable','mkUserTable','finTable','topTable','adsTable'];
+const FILTER_TABLES=['bepTable','endTable','intAccTable','intTable','mkTable','mkUserTable','finTable','topTable','adsTable'];
 const TT=(function(){
   const MON={jan:1,feb:2,mar:3,apr:4,mei:5,may:5,jun:6,jul:7,agu:8,aug:8,sep:9,okt:10,oct:10,nov:11,des:12,dec:12,januari:1,februari:2,maret:3,april:4,juni:6,juli:7,agustus:8,september:9,oktober:10,november:11,desember:12};
   const sortSt=new WeakMap(), filt={}, srch={}; let busy=false;
@@ -3468,7 +3626,7 @@ $('mkFindBtn').addEventListener('click',()=>findPosts('mk'));
 $('intFindBtn').addEventListener('click',()=>findPosts('int'));
 
 // ===== tabel/daftar: tampil N baris, sisanya scroll =====
-const FIT={launchCol:10,cashTable:10,roiTable:10,colorBars:10,modelBars:10,comboTable:10,topTable:10,extRecap:10,extFmtTable:10,extHourTable:10,endTable:10,mkTable:10,mkUserTable:10,intAccTable:10,intTable:10,intRecap:10,intFmtTable:10,intHourTable:10,prodBars:10,finOutBars:5,finInBars:5};
+const FIT={bepTable:10,launchCol:10,cashTable:10,roiTable:10,colorBars:10,modelBars:10,comboTable:10,topTable:10,extRecap:10,extFmtTable:10,extHourTable:10,endTable:10,mkTable:10,mkUserTable:10,intAccTable:10,intTable:10,intRecap:10,intFmtTable:10,intHourTable:10,prodBars:10,finOutBars:5,finInBars:5};
 function fitRows(){
   for(const [id,n] of Object.entries(FIT)){ const el=$(id); if(!el) continue;
     const isT=el.tagName==='TABLE', host=isT?(el.closest('.tbl-wrap')||el.parentElement):el;
