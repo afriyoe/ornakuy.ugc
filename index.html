@@ -1142,7 +1142,7 @@ const HARI = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
 const HARI_L = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
 const TYPE = {JacketAccessory:'Jacket',PantsAccessory:'Pants',ShortsAccessory:'Shorts',SweaterAccessory:'Sweater',ShirtAccessory:'Shirt',TShirtAccessory:'T-Shirt',TshirtAccessory:'T-Shirt',DressSkirtAccessory:'Skirt'};
 const tname = t => TYPE[t] || t.replace('Accessory','');
-const DEVEX = 0.0038, TARGET_3M_REV = 2000000, TARGET_3M_PCS = 200000, TARGET_DAY = TARGET_3M_REV/90, TARGET_PCS_DAY = TARGET_3M_PCS/90;
+const DEVEX = 0.0038; let TARGET_3M_REV = 0, TARGET_3M_PCS = 200000, TARGET_DAY = 0, TARGET_PCS_DAY = 0, REV_PER_PCS = 0;
 
 // ---------- transactions (WIB) ----------
 const TX = RAW.tx.map(r => {
@@ -1150,6 +1150,10 @@ const TX = RAW.tx.map(r => {
   return {ts:r[0], d:w.toISOString().slice(0,10), hm:w.toISOString().slice(11,16), h:w.getUTCHours(), wd:(w.getUTCDay()+6)%7,
           b:r[1], p:r[2], loc:r[3], g:r[4], rev:r[5], price:r[6]};
 });
+// target 3 bulan: sales (pcs) dari pengaturan proyeksi (bawaan 200.000); revenue = pcs × rata-rata revenue per pcs 30 hari terakhir
+(function(){ const last=TX.length?TX[TX.length-1].d:'', from=last?new Date(Date.parse(last)-29*864e5).toISOString().slice(0,10):''; let r=0,n=0; for(const x of TX) if(x.d>=from){ r+=x.rev; n++; }
+  if(!n){ for(const x of TX){ r+=x.rev; n++; } } REV_PER_PCS=n?r/n:0;
+  const t=+((RECS&&RECS.proj&&RECS.proj.target)||0); TARGET_3M_PCS=t>0?t:200000; TARGET_3M_REV=Math.round(TARGET_3M_PCS*REV_PER_PCS); TARGET_DAY=TARGET_3M_REV/90; TARGET_PCS_DAY=TARGET_3M_PCS/90; })();
 const MIN = TX[0].d, MAX = TX[TX.length-1].d, LAST_HM = TX[TX.length-1].hm;
 const TYPE_ORDER = ['JacketAccessory','SweaterAccessory','PantsAccessory','ShortsAccessory'];
 const ALL_TYPES = [...new Set(RAW.p.map(p=>p[1]))].sort((a,b)=>{const i=TYPE_ORDER.indexOf(a),j=TYPE_ORDER.indexOf(b);return (i<0?99:i)-(j<0?99:j)||a.localeCompare(b);});
@@ -2902,7 +2906,7 @@ function renderRobux(){
 // RECS.proj = {growth:null|% per bulan, mk:'data'|'pct', mkPct:%, months:3|6|12}
 const BIZ_MK=['Endorse','Iklan TikTok'];
 let bizC=null, bizSetOpen=false;
-const PROJ=()=>{ const p=RECS.proj||{}, n=(v,d)=>v==null||v===''||!isFinite(+v)?d:+v; return {growth:p.growth==null||p.growth===''?null:+p.growth, mk:p.mk==='pct'?'pct':'data', mkPct:n(p.mkPct,30), months:[3,6,12].includes(+p.months)?+p.months:3,
+const PROJ=()=>{ const p=RECS.proj||{}, n=(v,d)=>v==null||v===''||!isFinite(+v)?d:+v; return {growth:p.growth==null||p.growth===''||!isFinite(+p.growth)?30:+p.growth, growthSet:!(p.growth==null||p.growth===''), target:+p.target>0?+p.target:200000, mk:p.mk==='pct'?'pct':'data', mkPct:n(p.mkPct,30), months:[3,6,12].includes(+p.months)?+p.months:3,
   pubMax:n(p.pubMax,5), pubAdv:n(p.pubAdv,600), pubFee:n(p.pubFee,80), cash0:p.cash0==null||p.cash0===''||!isFinite(+p.cash0)||+p.cash0===0&&!p.cash0At?null:+p.cash0, cash0At:String(p.cash0At||''), sellDay:p.sellDay==null||p.sellDay===''?null:+p.sellDay, cashDays:[30,60,90].includes(+p.cashDays)?+p.cashDays:30,
   opFix:p.opFix==null||p.opFix===''||!isFinite(+p.opFix)?null:+p.opFix, asetMode:p.asetMode==='sebar'?'sebar':'utuh', asetMonths:Math.max(1,Math.round(n(p.asetMonths,12))),
   snap:(()=>{ try{ const g=typeof p.snap==='string'?JSON.parse(p.snap||'{}'):(p.snap||{}); return g&&typeof g==='object'?g:{}; }catch(e){ return {}; } })(),
@@ -2971,6 +2975,10 @@ function renderBiz(){
   const proj=[]; { const x=A.get(curM)||{pcs:0,price:0,rev:0,days:new Set()}, k=MK.get(curM)||{endorse:0,iklan:0}, rest=daysIn(curM)-(+MAX.slice(8));
     const rev=x.rev+base.rev*rest; proj.push({m:curM,est:true,pcs:x.pcs+base.pcs*rest,price:x.price+base.price*rest,rev,mk:Math.max(k.endorse+k.iklan,rev*rate*ratio),pub:(pubM.get(curM)||0)+P.pubMax*rest,pubR:(pubRM.get(curM)||0)+P.pubMax*rest*unitR,op:Math.max(OP.get(curM)||0,opOf(curM)),aset:ascOf(curM),asetBuy:AS.get(curM)||0}); }
   let m=curM; for(let i=1;i<=P.months;i++){ m=nextM(m); const f=Math.pow(1+g,i), d=daysIn(m), rev=base.rev*d*f; proj.push({m,est:true,pcs:base.pcs*d*f,price:base.price*d*f,rev,mk:rev*rate*ratio,pub:P.pubMax*d,pubR:P.pubMax*d*unitR,op:opOf(m),aset:ascOf(m),asetBuy:0}); }
+  // target 3 bulan ke depan (3 bulan penuh setelah bulan ini, sama dengan kartu Revenue 3 bulan)
+  const TGT=(()=>{ const nx=[]; let mm=curM; for(let i=1;i<=3;i++){ mm=nextM(mm); nx.push(daysIn(mm)); } const rpp=base.pcs?base.rev/base.pcs:REV_PER_PCS;
+    const pcsAt=gg=>nx.reduce((s,d,i)=>s+base.pcs*d*Math.pow(1+gg,i+1),0); let lo=-0.9, hi=10, need=null; if(pcsAt(hi)>=P.target){ for(let k=0;k<60;k++){ const mid=(lo+hi)/2; pcsAt(mid)>=P.target?hi=mid:lo=mid; } need=hi; }
+    return {pcs:pcsAt(g),rev:pcsAt(g)*rpp,rpp,need}; })();
   const tr=(r,cls)=>{ const rp=r.rev*rate, pct=rp?r.mk/rp:0; return `<tr class="${cls||''}"><td class="txt" style="text-align:left">${mLabel(r.m)}${r.act?(r.part?` <span class="muted">· ${r.days} hari</span>`:''):' <span class="muted">· proyeksi</span>'}</td><td>${fmt(r.pcs)}</td><td>${R(r.price)}</td><td><b>${Rp(rp)}</b><br><span class="muted">${R(r.rev)}</span></td><td>${Rp(r.mk)}${r.act&&r.mk?`<br><span class="muted">endorse ${Rp(r.end)}<br>iklan ${Rp(r.ikl)}</span>`:''}</td><td>${rp?(pct*100).toFixed(1).replace('.',',')+'%':'–'}</td><td><b>${Rp(pubCost(r))}</b><br><span class="muted" title="${r.act?'Tiap produk: upload R$'+fmt(P.pubFee)+' + rebates sesuai data (bawaan R$'+fmt(P.pubAdv)+', atau hasil edit)':'Proyeksi: '+fmt(r.pub)+' produk × R$'+fmt(unitR)} × rate ${fmt(rate)}">${fmt(r.pub)} produk<br>${R(r.pubR)}</span></td><td>${Rp(r.op)}${r.act&&r.opc?`<br><span class="muted" title="${esc([...r.opc].sort((a,b)=>b[1]-a[1]).map(([c,v])=>c+': '+Rp(v)).join('\n'))}">${fmt(r.opc.size)} kategori ⓘ</span>`:''}</td><td>${r.aset?Rp(r.aset):'–'}${r.asetBuy&&P.asetMode==='sebar'?`<br><span class="muted">beli ${Rp(r.asetBuy)}</span>`:''}</td><td><b class="${rp-r.mk-pubCost(r)-r.op-r.aset<0?'neg':''}">${Rp(rp-r.mk-pubCost(r)-r.op-r.aset)}</b></td></tr>`; };
   const tot=proj.slice(1).reduce((a,r)=>({rev:a.rev+r.rev*rate,mk:a.mk+r.mk,pub:a.pub+pubCost(r),pr:a.pr+r.pubR,n:a.n+r.pub,op:a.op+r.op,aset:a.aset+r.aset}),{rev:0,mk:0,pub:0,pr:0,n:0,op:0,aset:0});
   const CN=cashNow(P);
@@ -3023,10 +3031,11 @@ function renderBiz(){
       ${realRows.map(x=>`<tr><td class="txt" style="text-align:left">${mLabel(x.m)}${x.part?` <span class="muted">· berjalan ${x.days} hari</span>`:''}<br><span class="muted">${esc(x.src)}</span></td><td>${cmp(x.act.rev,x.pj.rev,'up')}</td><td>${cmp(x.act.mk,x.pj.mk,'down')}</td><td>${cmp(x.act.pub,x.pj.pub,'down')}</td><td>${cmp(x.act.op,x.pj.op,'down')}</td><td>${cmp(x.act.sisa,x.pj.sisa,'up')}</td><td><b>${x.pj.rev?Math.max(0,100-Math.abs(x.act.rev/x.pj.rev-1)*100).toFixed(0)+'%':'–'}</b></td></tr>`).join('')}
     </tbody></table></div>`:'<p class="muted" style="margin:10px 2px">Belum cukup data: butuh minimal 7 hari penjualan sebelum awal bulan.</p>'}</div>`;
   el.innerHTML=pubHtml+cashHtml+`<div class="panel" style="margin-top:14px"><div class="sec-head" style="margin:0"><div><h3 style="color:var(--fg)">Proyeksi bisnis: sales, revenue &amp; marketing</h3>
-      <p class="note" style="margin:4px 0 0">Dasar: rata-rata 7 hari terakhir (${fmt(base.pcs)} pcs, ${R(base.rev)} revenue per hari), growth ${(g*100).toFixed(1).replace('.',',')}% per bulan${P.growth==null?' (dari data: revenue per hari '+(gm?mLabel(gm[1])+' vs '+mLabel(gm[0]):'–')+')':' (diatur manual)'}. Biaya marketing = Endorse + Iklan TikTok dari Semua transaksi, ${P.mk==='pct'?`diatur ${fmt(P.mkPct)}% dari revenue`:`mengikuti data 30 hari terakhir (${(ratioData*100).toFixed(1).replace('.',',')}% dari revenue)`}. Rate ${fmt(rate)}.</p></div>
+      <p class="note" style="margin:4px 0 0">Dasar: rata-rata 7 hari terakhir (${fmt(base.pcs)} pcs, ${R(base.rev)} revenue per hari), growth ${(g*100).toFixed(1).replace('.',',')}% per bulan${!P.growthSet?' (bawaan; dari data: revenue per hari '+(gm?mLabel(gm[1])+' vs '+mLabel(gm[0]):'–')+')':' (diatur manual)'}. Biaya marketing = Endorse + Iklan TikTok dari Semua transaksi, ${P.mk==='pct'?`diatur ${fmt(P.mkPct)}% dari revenue`:`mengikuti data 30 hari terakhir (${(ratioData*100).toFixed(1).replace('.',',')}% dari revenue)`}. Rate ${fmt(rate)}.</p></div>
       <div class="controls"><button class="btn" type="button" id="bizSetBtn" aria-expanded="${bizSetOpen}">⚙ Atur proyeksi</button></div></div>
     <form id="bizSet" class="biz-set" ${bizSetOpen?'':'hidden'} autocomplete="off">
-      <label>Growth revenue per bulan (%)<input name="growth" inputmode="decimal" placeholder="otomatis: ${(gData*100).toFixed(1).replace('.',',')}" value="${P.growth==null?'':String(P.growth).replace('.',',')}"></label>
+      <label>Growth per bulan (%)<input name="growth" inputmode="decimal" placeholder="bawaan 30 · data: ${(gData*100).toFixed(1).replace('.',',')}" value="${P.growthSet?String(P.growth).replace('.',','):''}"></label>
+      <label>Target sales 3 bulan (pcs)<input name="target" inputmode="numeric" value="${P.target}" placeholder="200000"></label>
       <label>Biaya marketing<select name="mk"><option value="data"${P.mk==='data'?' selected':''}>Ikuti data (${(ratioData*100).toFixed(1).replace('.',',')}%)</option><option value="pct"${P.mk==='pct'?' selected':''}>Persen dari revenue</option></select></label>
       <label>Persen marketing (%)<input name="mkPct" inputmode="decimal" value="${String(P.mkPct).replace('.',',')}" ${P.mk==='pct'?'':'disabled'}></label>
       <label>Maks publish per hari<input name="pubMax" inputmode="numeric" value="${P.pubMax}"></label>
@@ -3042,7 +3051,7 @@ function renderBiz(){
       <div class="cost-grp"><span class="eyebrow">Kelompok biaya per kategori</span><div class="cg-list">
         ${BIZ_MK.map(c=>`<label class="cg"><span>${esc(c)}</span><select disabled><option>Marketing</option></select></label>`).join('')}
         ${costCats().map(([c,v])=>`<label class="cg"><span title="${Rp(v)} total">${esc(c)}</span><select name="grp" data-cat="${esc(c)}">${Object.entries(COST_GRP).map(([k,l])=>`<option value="${k}"${costGrpOf(c,P)===k?' selected':''}>${l}</option>`).join('')}</select></label>`).join('')}</div></div>
-      <p class="note">Kosongkan growth atau operasional untuk kembali ke angka otomatis dari data. Kategori baru (mis. Listrik, Internet, Laptop) otomatis muncul di daftar setelah dicatat di Semua transaksi. Perubahan langsung dihitung ulang dan tersimpan.</p></form>
+      <p class="note">Kosongkan growth untuk kembali ke bawaan 30% per bulan; kosongkan operasional untuk kembali ke angka dari data. Target revenue = target sales × rata-rata revenue per pcs. Kategori baru (mis. Listrik, Internet, Laptop) otomatis muncul di daftar setelah dicatat di Semua transaksi. Perubahan langsung dihitung ulang dan tersimpan.</p></form>
     <div class="kpis biz-kpis" style="margin-top:12px">
       <div class="kpi"><span class="eyebrow">Revenue ${P.months} bulan ke depan</span><span class="v">${Rp(tot.rev)}</span><span class="s">${R(tot.rev/rate)}</span></div>
       <div class="kpi"><span class="eyebrow">Biaya marketing</span><span class="v">${Rp(tot.mk)}</span><span class="s">${tot.rev?(tot.mk/tot.rev*100).toFixed(1).replace('.',','):0}% dari revenue</span></div>
@@ -3050,7 +3059,8 @@ function renderBiz(){
       <div class="kpi"><span class="eyebrow">Biaya operasional</span><span class="v">${Rp(tot.op)}</span><span class="s">${Rp(opMonth)}/bulan · ${P.opFix!=null?'diatur manual':'dari 30 hari terakhir'}</span></div>
       <div class="kpi"><span class="eyebrow">Biaya aset</span><span class="v">${Rp(tot.aset)}</span><span class="s">${P.asetMode==='sebar'?`disebar ${P.asetMonths} bulan`:'dicatat utuh di bulan beli'}</span></div>
       <div class="kpi hl"><span class="eyebrow">Sisa bersih</span><span class="v ${tot.rev-tot.mk-tot.pub-tot.op-tot.aset<0?'neg':''}">${Rp(tot.rev-tot.mk-tot.pub-tot.op-tot.aset)}</span><span class="s">revenue − marketing − publish − operasional − aset</span></div>
-      <div class="kpi"><span class="eyebrow">Growth dipakai</span><span class="v">${(g*100).toFixed(1).replace('.',',')}%</span><span class="s">per bulan · ${P.growth==null?'otomatis dari data':'manual'}</span></div>
+      <div class="kpi"><span class="eyebrow">Growth dipakai</span><span class="v">${(g*100).toFixed(1).replace('.',',')}%</span><span class="s">per bulan · ${P.growthSet?'diatur manual':'bawaan'} · dari data ${(gData*100).toFixed(1).replace('.',',')}%</span></div>
+      <div class="kpi ${TGT.pcs>=P.target?'':'warn'}"><span class="eyebrow">Target ${fmt(P.target)} pcs / 3 bulan</span><span class="v">${pct(TGT.pcs,P.target)}</span><span class="s">proyeksi ${fmt(TGT.pcs)} pcs · ${R(TGT.rev)} (${Rp(TGT.rev*rate)}) dari target ${R(P.target*REV_PER_PCS)} (${fmt(P.target)} × rata-rata ${R(REV_PER_PCS)}/pcs 30 hari) · ${TGT.pcs>=P.target?'✓ tercapai':`butuh growth ${TGT.need==null?'–':(TGT.need*100).toFixed(0)+'%'}/bulan`}</span></div>
     </div>
     <div class="tbl-wrap" style="max-height:none"><table id="bizTable"><thead><tr><th style="text-align:left">Bulan</th><th>Sales (pcs)</th><th>Penjualan</th><th>Revenue</th><th>Biaya marketing</th><th>% revenue</th><th>Publish</th><th>Operasional</th><th>Aset</th><th>Sisa bersih</th></tr></thead><tbody>
       ${rows.map(r=>tr(r)).join('')}${proj.map(r=>tr(r,'biz-proj')).join('')}
@@ -3068,7 +3078,7 @@ let bizSaveT=0;
 $('bizBody').addEventListener('change',e=>{ const f=e.target.closest('#bizSet'); if(!f) return;
   const num=v=>{ const t=String(v||'').trim().replace(',','.'); return t===''?null:(isFinite(+t)?+t:null); };
   const grp={}; f.querySelectorAll('select[name=grp]').forEach(x=>{ grp[x.dataset.cat]=x.value; });
-  RECS.proj={...(RECS.proj||{}),costGrp:JSON.stringify(grp),opFix:num(String(f.elements.opFix.value).replace(/[^\d,]/g,'')),asetMode:f.elements.asetMode.value,asetMonths:num(f.elements.asetMonths.value)??12,growth:num(f.elements.growth.value),mk:f.elements.mk.value,mkPct:num(f.elements.mkPct.value)??30,months:+f.elements.months.value,cash0:(()=>{ const v=num(String(f.elements.cash0.value).replace(/[^\d,-]/g,'')); return v; })(),cash0At:(()=>{ const v=num(String(f.elements.cash0.value).replace(/[^\d,-]/g,'')), o=RECS.proj||{}; return v==null?'':(+o.cash0===v&&o.cash0At?o.cash0At:todayWIB()); })(),sellDay:num(String(f.elements.sellDay.value).replace(/[^\d,]/g,'')),cashDays:+f.elements.cashDays.value,pubMax:num(f.elements.pubMax.value)??5,pubAdv:num(f.elements.pubAdv.value)??600,pubFee:num(f.elements.pubFee.value)??80};
+  RECS.proj={...(RECS.proj||{}),costGrp:JSON.stringify(grp),opFix:num(String(f.elements.opFix.value).replace(/[^\d,]/g,'')),asetMode:f.elements.asetMode.value,asetMonths:num(f.elements.asetMonths.value)??12,growth:num(f.elements.growth.value),target:num(String(f.elements.target.value).replace(/[^\d]/g,''))||200000,mk:f.elements.mk.value,mkPct:num(f.elements.mkPct.value)??30,months:+f.elements.months.value,cash0:(()=>{ const v=num(String(f.elements.cash0.value).replace(/[^\d,-]/g,'')); return v; })(),cash0At:(()=>{ const v=num(String(f.elements.cash0.value).replace(/[^\d,-]/g,'')), o=RECS.proj||{}; return v==null?'':(+o.cash0===v&&o.cash0At?o.cash0At:todayWIB()); })(),sellDay:num(String(f.elements.sellDay.value).replace(/[^\d,]/g,'')),cashDays:+f.elements.cashDays.value,pubMax:num(f.elements.pubMax.value)??5,pubAdv:num(f.elements.pubAdv.value)??600,pubFee:num(f.elements.pubFee.value)??80};
   renderPubWarn();
   setTimeout(()=>{ const a=document.activeElement&&document.activeElement.name; renderBiz(); if(a){ const x=$('bizSet')&&$('bizSet').elements[a]; if(x) x.focus({preventScroll:true}); } },0); clearTimeout(bizSaveT); bizSaveT=setTimeout(()=>saveRecords(),600); });
 function fmtDur(sec){ const h=Math.round(sec/3600); return h>=48?`${Math.round(h/24)} hari`:h>=1?`${h} jam`:`${Math.max(1,Math.round(sec/60))} menit`; }
