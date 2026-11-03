@@ -607,7 +607,7 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
 #roiTable tr.roi-row{cursor:pointer} #roiTable tr.roi-row:hover td{background:var(--accent-soft)} .roi-car{display:inline-block;transition:transform .15s;color:var(--muted)} tr.roi-row.open .roi-car{transform:rotate(90deg)}
 #roiTable tr.roi-det>td{background:var(--bg);padding:12px 14px} .roi-sum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:10px}
 .roi-sum>div{display:flex;flex-direction:column;gap:3px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);text-align:left} .roi-sum b{font-size:16px} .roi-sum .muted{font-size:11px}
-table.roi-sub{width:100%;margin-top:8px} table.roi-sub th{font-size:10px} @media(max-width:700px){.roi-sum{grid-template-columns:repeat(2,minmax(0,1fr))}}
+table.roi-sub{width:100%;margin-top:8px} table.roi-sub th{font-size:10px} table.roi-sub tr.roi-pay td{background:var(--panel-2)} @media(max-width:700px){.roi-sum{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
   <header>
     <div class="eyebrow">Dashboard brand UGC · Group 950136185</div>
@@ -1808,10 +1808,11 @@ function roiDetail(x){
       ${box('Biaya konten tayang',Rp(x.used),x.used<x.cost?`${fmt(x.n)} tayang × ${Rp(rate)} · sisa ${Rp(x.cost-x.used)} untuk konten berikutnya`:`${Rp(x.cost)} ÷ ${fmt(x.n)} postingan = ${Rp(perPost)} per video`)}
       ${box('Konten tayang',`${fmt(x.n)} / ${fmt(order)}`,order>x.n?`sisa ${fmt(order-x.n)} belum tayang`:order&&x.n>=order?'semua sudah tayang':'')}
       ${box('Save per konten',x.n?fmt(Math.round(x.sv/x.n)):'–',x.sv?`biaya per save ${Rp(x.used/x.sv)} (target < Rp${ROI_GOOD})`:'')}</div>
-    <table class="roi-sub"><thead><tr><th style="text-align:left">Payment</th><th style="text-align:left">Paket</th><th>Biaya</th><th>Ratecard / konten</th></tr></thead><tbody>
-      ${pays.map(r=>`<tr><td class="txt" style="text-align:left">${dLabel(r.d)} · ${esc(r.note||'')}</td><td style="text-align:left">${pk(r.pk)}</td><td>${Rp(r.out)}</td><td><b>${Rp(r.out/r.pk.n)}</b></td></tr>`).join('')}</tbody></table>
-    ${posts.length?`<table class="roi-sub"><thead><tr><th style="text-align:left">Postingan</th><th>Views</th><th>Save</th><th>Nilai (ratecard)</th><th>Biaya per save</th></tr></thead><tbody>
-      ${posts.map(p=>{ const c=p.sv?rate/p.sv:0; return `<tr><td class="txt" style="text-align:left">${dLabel(p.d)} · ${/photo/.test(p.url||'')?'foto slide':'video'}${p.url?` · <a href="${esc(p.url)}" target="_blank" rel="noopener">buka</a>`:''}</td><td>${fmt(p.v||0)}</td><td>${fmt(p.sv||0)}</td><td>${Rp(rate)}</td><td><b style="color:var(--${!p.sv?'muted':c<ROI_GOOD?'good':c>ROI_GOOD*2?'bad':'fg'})">${p.sv?Rp(c):'–'}</b></td></tr>`; }).join('')}</tbody></table>`:'<p class="muted" style="margin:8px 0 0">Belum ada postingan tercatat.</p>'}
+    <table class="roi-sub"><thead><tr><th style="text-align:left">Tanggal</th><th style="text-align:left">Jenis</th><th style="text-align:left">Keterangan</th><th>Biaya / nilai</th><th>Views</th><th>Save</th><th>Biaya per save</th></tr></thead><tbody>
+      ${[...pays.map(r=>({d:r.d||'',k:0,r})),...posts.map(p=>({d:p.d||'',k:1,p}))].sort((a,b)=>a.d.localeCompare(b.d)||a.k-b.k).map(x=>{
+        if(!x.k){ const r=x.r; return `<tr class="roi-pay"><td class="txt" style="text-align:left">${dLabel(r.d)}</td><td style="text-align:left"><span class="chip pay">Payment</span></td><td class="txt" style="text-align:left">${esc(pk(r.pk))}<br><span class="muted">${esc(r.note||'')}</span></td><td><b>${Rp(r.out)}</b><br><span class="muted">${Rp(r.out/r.pk.n)} / konten</span></td><td>–</td><td>–</td><td>–</td></tr>`; }
+        const p=x.p, c=p.sv?rate/p.sv:0; return `<tr><td class="txt" style="text-align:left">${dLabel(p.d)}</td><td style="text-align:left"><span class="chip in">Postingan</span></td><td class="txt" style="text-align:left">${/photo/.test(p.url||'')?'Foto slide':'Video'}${p.url?` · <a href="${esc(p.url)}" target="_blank" rel="noopener">buka</a>`:''}</td><td>${Rp(rate)}<br><span class="muted">ratecard</span></td><td>${fmt(p.v||0)}</td><td>${fmt(p.sv||0)}</td><td><b style="color:var(--${!p.sv?'muted':c<ROI_GOOD?'good':c>ROI_GOOD*2?'bad':'fg'})">${p.sv?Rp(c):'–'}</b></td></tr>`; }).join('')}</tbody></table>
+    ${posts.length?'':'<p class="muted" style="margin:8px 0 0">Belum ada postingan tercatat.</p>'}
   </div>`;
 }
 document.addEventListener('click',e=>{ const tr=e.target.closest&&e.target.closest('#roiTable tr.roi-row'); if(!tr||e.target.closest('a')) return; roiToggle(tr); });
@@ -3141,15 +3142,15 @@ const TT=(function(){
   // units: rows to sort/filter (grouped tables use one tbody per group)
   const units=table=>{ const B=[...table.tBodies]; if(B.length>1) return B.filter(b=>b.rows[0]&&!b.rows[0].classList.contains('emptyrow')).map(b=>({el:b,row:b.rows[0]}));
     return B[0]?[...B[0].rows].filter(r=>!r.classList.contains('emptyrow')&&!r.classList.contains('end-sub')).map(r=>({el:r,row:r})):[]; };
+  const subsOf=el=>{ const a=[]; if(el.tagName!=='TR') return a; let n=el.nextElementSibling; while(n&&n.classList.contains('end-sub')){ a.push(n); n=n.nextElementSibling; } return a; };
   function applySort(table){
     heads(table).forEach(c=>c.removeAttribute('data-sort'));
     const s=sortSt.get(table); if(!s) return; const th=thBy(table,s.label); if(!th) return; th.setAttribute('data-sort',s.dir);
     const idx=colIndex(th), dir=s.dir==='asc'?1:-1, U=units(table); if(!U.length) return;
     U.forEach((u,i)=>{ if(u.el.__ord==null) u.el.__ord=i; });   // remember the original order for the 3rd click
-    if(table.tBodies.length===1&&[...table.tBodies[0].rows].some(r=>r.classList.contains('end-sub'))) return;
     const cmp=(a,b)=>{ const A=key(cellAt(a.row,idx)),B=key(cellAt(b.row,idx)); if(A.n!==null&&B.n!==null) return (A.n-B.n)*dir; if(A.n!==null) return -1; if(B.n!==null) return 1; return A.t.localeCompare(B.t,'id')*dir; };
-    U.sort(cmp); const parent=U[0].el.parentNode, anchor=table.tBodies.length>1?(table.tFoot||null):null;
-    U.forEach(u=>parent.insertBefore(u.el,anchor&&u.el.parentNode===table?anchor:null));
+    U.forEach(u=>{ u.subs=subsOf(u.el); }); U.sort(cmp); const parent=U[0].el.parentNode, anchor=table.tBodies.length>1?(table.tFoot||null):null;
+    U.forEach(u=>{ const at=anchor&&u.el.parentNode===table?anchor:null; parent.insertBefore(u.el,at); u.subs.forEach(x=>parent.insertBefore(x,at)); });
   }
   const numIn=v=>{ const s=String(v).trim().toLowerCase().replace(/\s/g,''); const m=s.match(/^(-?[\d.,]+)(k|rb|ribu|jt|juta|m)?%?$/); if(!m) return NaN;
     let n=m[1]; n=/,\d{1,2}$/.test(n)||(!/\./.test(n)&&/,/.test(n))?n.replace(/\./g,'').replace(',','.'):(/\.\d{3}(\.|$)/.test(n)?n.replace(/\./g,''):n);
@@ -3166,8 +3167,8 @@ const TT=(function(){
     if(bar){ const c=bar.querySelector('.tf-count'); c.textContent=F.length||Q.length?`${fmt(shown)} dari ${fmt(U.length)} baris · total di bawah tabel belum ikut filter`:''; }
   }
   function restore(table){ busy=true; try{ heads(table).forEach(c=>c.removeAttribute('data-sort')); const U=units(table); if(!U.length) return;
-      U.sort((a,b)=>(a.el.__ord??1e9)-(b.el.__ord??1e9)); const parent=U[0].el.parentNode, anchor=table.tBodies.length>1?(table.tFoot||null):null;
-      U.forEach(u=>parent.insertBefore(u.el,anchor&&u.el.parentNode===table?anchor:null)); applyFilter(table); }
+      U.forEach(u=>{ u.subs=subsOf(u.el); }); U.sort((a,b)=>(a.el.__ord??1e9)-(b.el.__ord??1e9)); const parent=U[0].el.parentNode, anchor=table.tBodies.length>1?(table.tFoot||null):null;
+      U.forEach(u=>{ const at=anchor&&u.el.parentNode===table?anchor:null; parent.insertBefore(u.el,at); u.subs.forEach(x=>parent.insertBefore(x,at)); }); applyFilter(table); }
     finally{ if(table.__obs) table.__obs.takeRecords(); busy=false; } }
   function refresh(table){ busy=true; try{ applySort(table); applyFilter(table); } finally{ if(table.__obs) table.__obs.takeRecords(); busy=false; } }
   function wire(table){
