@@ -1154,6 +1154,11 @@ const TX = RAW.tx.map(r => {
 (function(){ const last=TX.length?TX[TX.length-1].d:'', from=last?new Date(Date.parse(last)-29*864e5).toISOString().slice(0,10):''; let r=0,n=0; for(const x of TX) if(x.d>=from){ r+=x.rev; n++; }
   if(!n){ for(const x of TX){ r+=x.rev; n++; } } REV_PER_PCS=n?r/n:0;
   const t=+((RECS&&RECS.proj&&RECS.proj.target)||0); TARGET_3M_PCS=t>0?t:200000; TARGET_3M_REV=Math.round(TARGET_3M_PCS*REV_PER_PCS); TARGET_DAY=TARGET_3M_REV/90; TARGET_PCS_DAY=TARGET_3M_PCS/90; })();
+// periode target 3 bulan: mulai tanggal yang diatur (bawaan: tanggal 1 bulan saat target pertama kali dipakai) sampai 3 bulan kemudian; aktual dihitung dari data sales
+function targetWin(){ const p=(RECS&&RECS.proj)||{}, t0=new Date(Date.now()+7*3600e3).toISOString().slice(0,7)+'-01', start=/^\d{4}-\d\d-\d\d$/.test(String(p.tStart||''))?String(p.tStart):t0;
+  const [y,m,d]=start.split('-').map(Number), last=new Date(Date.UTC(y,m-1+3+1,0)).getUTCDate(), e=new Date(Date.UTC(y,m-1+3,Math.min(d,last))); e.setUTCDate(e.getUTCDate()-1); const end=e.toISOString().slice(0,10);
+  let pcs=0,rev=0; for(const r of TX) if(r.d>=start&&r.d<=end){ pcs++; rev+=r.rev; } const days=Math.round((Date.parse(end)-Date.parse(start))/864e5)+1;
+  return {start,end,days,pcs,rev,target:TARGET_3M_PCS,targetRev:TARGET_3M_REV}; }
 const MIN = TX[0].d, MAX = TX[TX.length-1].d, LAST_HM = TX[TX.length-1].hm;
 const TYPE_ORDER = ['JacketAccessory','SweaterAccessory','PantsAccessory','ShortsAccessory'];
 const ALL_TYPES = [...new Set(RAW.p.map(p=>p[1]))].sort((a,b)=>{const i=TYPE_ORDER.indexOf(a),j=TYPE_ORDER.indexOf(b);return (i<0?99:i)-(j<0?99:j)||a.localeCompare(b);});
@@ -1249,10 +1254,10 @@ function renderInsights(){
     `${dLabel(s7)}–${dLabel(end)}. Target harian dari target 3 bulan: ${R(TARGET_DAY)} dan ${fmt(TARGET_PCS_DAY)} pcs. Revenue baru ${pct(rev7,TARGET_DAY)} dari target, pcs ${pct(pcs7,TARGET_PCS_DAY)}.`+
     (pw&&pw.rev?` Dibanding ${n7} hari sebelumnya, revenue ${rev7*n7>=pw.rev?'naik':'turun'} ${pct(Math.abs(rev7*n7-pw.rev),pw.rev)} dan pcs ${pcs7*n7>=pw.pcs?'naik':'turun'} ${pct(Math.abs(pcs7*n7-pw.pcs),pw.pcs)}.`:'')]);
   // 2) progres target 3 bulan terakhir (semua kategori)
-  const g0=addDays(MAX,-89)<MIN?MIN:addDays(MAX,-89), g=sumTX(g0,MAX,false), gd=daysBetween(g0,MAX);
+  const TW=targetWin(), g0=TW.start, g={rev:TW.rev,pcs:TW.pcs}, gd=Math.max(0,daysBetween(g0,MAX<TW.end?MAX:TW.end));
   const lastFull=LAST_HM<'23:00'&&MAX>MIN?addDays(MAX,-1):MAX, a7=sumTX(addDays(lastFull,-6),lastFull,false);
   items.push([g.rev>=TARGET_3M_REV&&g.pcs>=TARGET_3M_PCS?'up':'info','Target 3 bulan',`${pct(g.rev,TARGET_3M_REV)} revenue · ${pct(g.pcs,TARGET_3M_PCS)} pcs tercapai`,
-    `${dLabelY(g0)} – ${dLabelY(MAX)}${gd<90?` (baru ${gd} hari data)`:''}: ${R(g.rev)} dari ${R(TARGET_3M_REV)} dan ${fmt(g.pcs)} dari ${fmt(TARGET_3M_PCS)} pcs. Dengan laju 7 hari terakhir, 90 hari menghasilkan sekitar ${R(a7.rev/7*90)} dan ${fmt(a7.pcs/7*90)} pcs.`]);
+    `Periode target ${dLabelY(TW.start)} – ${dLabelY(TW.end)} (${gd} dari ${TW.days} hari berjalan, data s/d ${dLabel(MAX)}): ${R(g.rev)} dari ${R(TARGET_3M_REV)} dan ${fmt(g.pcs)} dari ${fmt(TARGET_3M_PCS)} pcs. Dengan laju 7 hari terakhir, sisa periode menghasilkan sekitar ${fmt(a7.pcs/7*Math.max(0,TW.days-gd))} pcs lagi.`]);
   // 4) kategori (tetap)
   const tt=[...D.types].sort((a,b)=>b.rev-a.rev)[0];
   if(D.types.length>1) items.push(['up','Kategori',`${tname(tt.type)} penyumbang revenue terbesar`,`${pct(tt.pcs,T.pcs)} pcs dan ${pct(tt.rev,T.rev)} revenue, rata-rata ${R(tt.rev/tt.pcs)} per pcs.`]);
@@ -2906,7 +2911,7 @@ function renderRobux(){
 // RECS.proj = {growth:null|% per bulan, mk:'data'|'pct', mkPct:%, months:3|6|12}
 const BIZ_MK=['Endorse','Iklan TikTok'];
 let bizC=null, bizSetOpen=false;
-const PROJ=()=>{ const p=RECS.proj||{}, n=(v,d)=>v==null||v===''||!isFinite(+v)?d:+v; return {growth:p.growth==null||p.growth===''||!isFinite(+p.growth)?30:+p.growth, growthSet:!(p.growth==null||p.growth===''), target:+p.target>0?+p.target:200000, mk:p.mk==='pct'?'pct':'data', mkPct:n(p.mkPct,30), months:[3,6,12].includes(+p.months)?+p.months:3,
+const PROJ=()=>{ const p=RECS.proj||{}, n=(v,d)=>v==null||v===''||!isFinite(+v)?d:+v; return {growth:p.growth==null||p.growth===''||!isFinite(+p.growth)?30:+p.growth, growthSet:!(p.growth==null||p.growth===''), target:+p.target>0?+p.target:200000, tStart:/^\d{4}-\d\d-\d\d$/.test(String(p.tStart||''))?String(p.tStart):'', mk:p.mk==='pct'?'pct':'data', mkPct:n(p.mkPct,30), months:[3,6,12].includes(+p.months)?+p.months:3,
   pubMax:n(p.pubMax,5), pubAdv:n(p.pubAdv,600), pubFee:n(p.pubFee,80), cash0:p.cash0==null||p.cash0===''||!isFinite(+p.cash0)||+p.cash0===0&&!p.cash0At?null:+p.cash0, cash0At:String(p.cash0At||''), sellDay:p.sellDay==null||p.sellDay===''?null:+p.sellDay, cashDays:[30,60,90].includes(+p.cashDays)?+p.cashDays:30,
   opFix:p.opFix==null||p.opFix===''||!isFinite(+p.opFix)?null:+p.opFix, asetMode:p.asetMode==='sebar'?'sebar':'utuh', asetMonths:Math.max(1,Math.round(n(p.asetMonths,12))),
   snap:(()=>{ try{ const g=typeof p.snap==='string'?JSON.parse(p.snap||'{}'):(p.snap||{}); return g&&typeof g==='object'?g:{}; }catch(e){ return {}; } })(),
@@ -2976,9 +2981,12 @@ function renderBiz(){
     const rev=x.rev+base.rev*rest; proj.push({m:curM,est:true,pcs:x.pcs+base.pcs*rest,price:x.price+base.price*rest,rev,mk:Math.max(k.endorse+k.iklan,rev*rate*ratio),pub:(pubM.get(curM)||0)+P.pubMax*rest,pubR:(pubRM.get(curM)||0)+P.pubMax*rest*unitR,op:Math.max(OP.get(curM)||0,opOf(curM)),aset:ascOf(curM),asetBuy:AS.get(curM)||0}); }
   let m=curM; for(let i=1;i<=P.months;i++){ m=nextM(m); const f=Math.pow(1+g,i), d=daysIn(m), rev=base.rev*d*f; proj.push({m,est:true,pcs:base.pcs*d*f,price:base.price*d*f,rev,mk:rev*rate*ratio,pub:P.pubMax*d,pubR:P.pubMax*d*unitR,op:opOf(m),aset:ascOf(m),asetBuy:0}); }
   // target 3 bulan ke depan (3 bulan penuh setelah bulan ini, sama dengan kartu Revenue 3 bulan)
-  const TGT=(()=>{ const nx=[]; let mm=curM; for(let i=1;i<=3;i++){ mm=nextM(mm); nx.push(daysIn(mm)); } const rpp=base.pcs?base.rev/base.pcs:REV_PER_PCS;
-    const pcsAt=gg=>nx.reduce((s,d,i)=>s+base.pcs*d*Math.pow(1+gg,i+1),0); let lo=-0.9, hi=10, need=null; if(pcsAt(hi)>=P.target){ for(let k=0;k<60;k++){ const mid=(lo+hi)/2; pcsAt(mid)>=P.target?hi=mid:lo=mid; } need=hi; }
-    return {pcs:pcsAt(g),rev:pcsAt(g)*rpp,rpp,need}; })();
+  if(!P.tStart){ RECS.proj={...(RECS.proj||{}),tStart:todayWIB().slice(0,7)+'-01'}; P.tStart=RECS.proj.tStart; clearTimeout(bizSaveT); bizSaveT=setTimeout(()=>saveRecords(),1500); }
+  // target: aktual sejak tanggal mulai (dari data sales) + proyeksi sisa hari sampai akhir periode
+  const TGT=(()=>{ const W=targetWin(), rpp=base.pcs?base.rev/base.pcs:REV_PER_PCS, rest=[]; for(let d=addDays(MAX,1);d<=W.end;d=addDays(d,1)){ if(d<W.start) continue; const [a,b]=[curM,d.slice(0,7)]; rest.push((+b.slice(0,4)-+a.slice(0,4))*12+(+b.slice(5)-+a.slice(5))); }
+    const restAt=gg=>rest.reduce((s,i)=>s+base.pcs*Math.pow(1+gg,i),0), need0=W.target-W.pcs; let lo=-0.9, hi=10, need=null;
+    if(need0<=0) need=-1; else if(restAt(hi)>=need0){ for(let k=0;k<60;k++){ const mid=(lo+hi)/2; restAt(mid)>=need0?hi=mid:lo=mid; } need=hi; }
+    const prj=W.pcs+restAt(g); return {...W,rpp,restDays:rest.length,prj,prjRev:W.rev+restAt(g)*rpp,need,perDay:rest.length?Math.max(0,need0)/rest.length:0}; })();
   const tr=(r,cls)=>{ const rp=r.rev*rate, pct=rp?r.mk/rp:0; return `<tr class="${cls||''}"><td class="txt" style="text-align:left">${mLabel(r.m)}${r.act?(r.part?` <span class="muted">· ${r.days} hari</span>`:''):' <span class="muted">· proyeksi</span>'}</td><td>${fmt(r.pcs)}</td><td>${R(r.price)}</td><td><b>${Rp(rp)}</b><br><span class="muted">${R(r.rev)}</span></td><td>${Rp(r.mk)}${r.act&&r.mk?`<br><span class="muted">endorse ${Rp(r.end)}<br>iklan ${Rp(r.ikl)}</span>`:''}</td><td>${rp?(pct*100).toFixed(1).replace('.',',')+'%':'–'}</td><td><b>${Rp(pubCost(r))}</b><br><span class="muted" title="${r.act?'Tiap produk: upload R$'+fmt(P.pubFee)+' + rebates sesuai data (bawaan R$'+fmt(P.pubAdv)+', atau hasil edit)':'Proyeksi: '+fmt(r.pub)+' produk × R$'+fmt(unitR)} × rate ${fmt(rate)}">${fmt(r.pub)} produk<br>${R(r.pubR)}</span></td><td>${Rp(r.op)}${r.act&&r.opc?`<br><span class="muted" title="${esc([...r.opc].sort((a,b)=>b[1]-a[1]).map(([c,v])=>c+': '+Rp(v)).join('\n'))}">${fmt(r.opc.size)} kategori ⓘ</span>`:''}</td><td>${r.aset?Rp(r.aset):'–'}${r.asetBuy&&P.asetMode==='sebar'?`<br><span class="muted">beli ${Rp(r.asetBuy)}</span>`:''}</td><td><b class="${rp-r.mk-pubCost(r)-r.op-r.aset<0?'neg':''}">${Rp(rp-r.mk-pubCost(r)-r.op-r.aset)}</b></td></tr>`; };
   const tot=proj.slice(1).reduce((a,r)=>({rev:a.rev+r.rev*rate,mk:a.mk+r.mk,pub:a.pub+pubCost(r),pr:a.pr+r.pubR,n:a.n+r.pub,op:a.op+r.op,aset:a.aset+r.aset}),{rev:0,mk:0,pub:0,pr:0,n:0,op:0,aset:0});
   const CN=cashNow(P);
@@ -3036,6 +3044,7 @@ function renderBiz(){
     <form id="bizSet" class="biz-set" ${bizSetOpen?'':'hidden'} autocomplete="off">
       <label>Growth per bulan (%)<input name="growth" inputmode="decimal" placeholder="bawaan 30 · data: ${(gData*100).toFixed(1).replace('.',',')}" value="${P.growthSet?String(P.growth).replace('.',','):''}"></label>
       <label>Target sales 3 bulan (pcs)<input name="target" inputmode="numeric" value="${P.target}" placeholder="200000"></label>
+      <label>Mulai periode target<input name="tStart" type="date" value="${P.tStart}"></label>
       <label>Biaya marketing<select name="mk"><option value="data"${P.mk==='data'?' selected':''}>Ikuti data (${(ratioData*100).toFixed(1).replace('.',',')}%)</option><option value="pct"${P.mk==='pct'?' selected':''}>Persen dari revenue</option></select></label>
       <label>Persen marketing (%)<input name="mkPct" inputmode="decimal" value="${String(P.mkPct).replace('.',',')}" ${P.mk==='pct'?'':'disabled'}></label>
       <label>Maks publish per hari<input name="pubMax" inputmode="numeric" value="${P.pubMax}"></label>
@@ -3060,7 +3069,7 @@ function renderBiz(){
       <div class="kpi"><span class="eyebrow">Biaya aset</span><span class="v">${Rp(tot.aset)}</span><span class="s">${P.asetMode==='sebar'?`disebar ${P.asetMonths} bulan`:'dicatat utuh di bulan beli'}</span></div>
       <div class="kpi hl"><span class="eyebrow">Sisa bersih</span><span class="v ${tot.rev-tot.mk-tot.pub-tot.op-tot.aset<0?'neg':''}">${Rp(tot.rev-tot.mk-tot.pub-tot.op-tot.aset)}</span><span class="s">revenue − marketing − publish − operasional − aset</span></div>
       <div class="kpi"><span class="eyebrow">Growth dipakai</span><span class="v">${(g*100).toFixed(1).replace('.',',')}%</span><span class="s">per bulan · ${P.growthSet?'diatur manual':'bawaan'} · dari data ${(gData*100).toFixed(1).replace('.',',')}%</span></div>
-      <div class="kpi ${TGT.pcs>=P.target?'':'warn'}"><span class="eyebrow">Target ${fmt(P.target)} pcs / 3 bulan</span><span class="v">${pct(TGT.pcs,P.target)}</span><span class="s">proyeksi ${fmt(TGT.pcs)} pcs · ${R(TGT.rev)} (${Rp(TGT.rev*rate)}) dari target ${R(P.target*REV_PER_PCS)} (${fmt(P.target)} × rata-rata ${R(REV_PER_PCS)}/pcs 30 hari) · ${TGT.pcs>=P.target?'✓ tercapai':`butuh growth ${TGT.need==null?'–':(TGT.need*100).toFixed(0)+'%'}/bulan`}</span></div>
+      <div class="kpi ${TGT.prj>=TGT.target?'':'warn'}"><span class="eyebrow">Target ${fmt(TGT.target)} pcs · ${dLabel(TGT.start)} – ${dLabelY(TGT.end)}</span><span class="v">${fmt(TGT.pcs)} <small style="font-size:13px">pcs (${pct(TGT.pcs,TGT.target)})</small></span><span class="s">aktual s/d ${dLabel(MAX)} · ${R(TGT.rev)} dari ${R(TGT.targetRev)}<br>proyeksi akhir ${fmt(TGT.prj)} pcs (${pct(TGT.prj,TGT.target)}) · ${TGT.need===-1?'✓ target sudah tercapai':TGT.prj>=TGT.target?'✓ diperkirakan tercapai':`butuh growth ${TGT.need==null?'–':(TGT.need*100).toFixed(0)+'%'}/bulan`}${TGT.need!==-1&&TGT.restDays?` · perlu ${fmt(TGT.perDay)} pcs/hari, sisa ${TGT.restDays} hari`:''}</span></div>
     </div>
     <div class="tbl-wrap" style="max-height:none"><table id="bizTable"><thead><tr><th style="text-align:left">Bulan</th><th>Sales (pcs)</th><th>Penjualan</th><th>Revenue</th><th>Biaya marketing</th><th>% revenue</th><th>Publish</th><th>Operasional</th><th>Aset</th><th>Sisa bersih</th></tr></thead><tbody>
       ${rows.map(r=>tr(r)).join('')}${proj.map(r=>tr(r,'biz-proj')).join('')}
@@ -3078,7 +3087,7 @@ let bizSaveT=0;
 $('bizBody').addEventListener('change',e=>{ const f=e.target.closest('#bizSet'); if(!f) return;
   const num=v=>{ const t=String(v||'').trim().replace(',','.'); return t===''?null:(isFinite(+t)?+t:null); };
   const grp={}; f.querySelectorAll('select[name=grp]').forEach(x=>{ grp[x.dataset.cat]=x.value; });
-  RECS.proj={...(RECS.proj||{}),costGrp:JSON.stringify(grp),opFix:num(String(f.elements.opFix.value).replace(/[^\d,]/g,'')),asetMode:f.elements.asetMode.value,asetMonths:num(f.elements.asetMonths.value)??12,growth:num(f.elements.growth.value),target:num(String(f.elements.target.value).replace(/[^\d]/g,''))||200000,mk:f.elements.mk.value,mkPct:num(f.elements.mkPct.value)??30,months:+f.elements.months.value,cash0:(()=>{ const v=num(String(f.elements.cash0.value).replace(/[^\d,-]/g,'')); return v; })(),cash0At:(()=>{ const v=num(String(f.elements.cash0.value).replace(/[^\d,-]/g,'')), o=RECS.proj||{}; return v==null?'':(+o.cash0===v&&o.cash0At?o.cash0At:todayWIB()); })(),sellDay:num(String(f.elements.sellDay.value).replace(/[^\d,]/g,'')),cashDays:+f.elements.cashDays.value,pubMax:num(f.elements.pubMax.value)??5,pubAdv:num(f.elements.pubAdv.value)??600,pubFee:num(f.elements.pubFee.value)??80};
+  RECS.proj={...(RECS.proj||{}),costGrp:JSON.stringify(grp),opFix:num(String(f.elements.opFix.value).replace(/[^\d,]/g,'')),asetMode:f.elements.asetMode.value,asetMonths:num(f.elements.asetMonths.value)??12,growth:num(f.elements.growth.value),target:num(String(f.elements.target.value).replace(/[^\d]/g,''))||200000,tStart:f.elements.tStart.value||todayWIB().slice(0,7)+'-01',mk:f.elements.mk.value,mkPct:num(f.elements.mkPct.value)??30,months:+f.elements.months.value,cash0:(()=>{ const v=num(String(f.elements.cash0.value).replace(/[^\d,-]/g,'')); return v; })(),cash0At:(()=>{ const v=num(String(f.elements.cash0.value).replace(/[^\d,-]/g,'')), o=RECS.proj||{}; return v==null?'':(+o.cash0===v&&o.cash0At?o.cash0At:todayWIB()); })(),sellDay:num(String(f.elements.sellDay.value).replace(/[^\d,]/g,'')),cashDays:+f.elements.cashDays.value,pubMax:num(f.elements.pubMax.value)??5,pubAdv:num(f.elements.pubAdv.value)??600,pubFee:num(f.elements.pubFee.value)??80};
   renderPubWarn();
   setTimeout(()=>{ const a=document.activeElement&&document.activeElement.name; renderBiz(); if(a){ const x=$('bizSet')&&$('bizSet').elements[a]; if(x) x.focus({preventScroll:true}); } },0); clearTimeout(bizSaveT); bizSaveT=setTimeout(()=>saveRecords(),600); });
 function fmtDur(sec){ const h=Math.round(sec/3600); return h>=48?`${Math.round(h/24)} hari`:h>=1?`${h} jam`:`${Math.max(1,Math.round(sec/60))} menit`; }
@@ -4321,7 +4330,7 @@ $('shBtn').addEventListener('click',shModal);
 
 // ===== layar GOALS: muncul setiap kali dashboard dibuka =====
 (function(){
-  const end=todayWIB(), start=addDays(addMonths(end,-3),1); let rev=0,pcs=0; for(const r of TX) if(r.d>=start&&r.d<=end){ rev+=r.rev; pcs++; }
+  const W=targetWin(), start=W.start, end=W.end, rev=W.rev, pcs=W.pcs;
   const bar=(lab,v,t,f)=>{ const p=Math.min(1,v/t); return `<div class="goal-bar"><span class="l">${lab}</span><span class="v">${f(v)}<small>/ ${f(t)}</small></span><div class="tr"><div class="fl" data-w="${(p*100).toFixed(1)}"></div></div><span class="p">${pct(v,t)} tercapai · kurang ${f(Math.max(0,t-v))}</span></div>`; };
   const ov=document.createElement('div'); ov.className='goal-ov'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','Goals 3 bulan ORNA KUY Verified');
   ov.innerHTML=`<div class="goal-card goal-in">
@@ -4329,7 +4338,7 @@ $('shBtn').addEventListener('click',shModal);
     <h2 class="goal-title">Goals 3 bulan<br><span class="hl">ORNA KUY</span></h2>
     <div class="goal-dream"><span class="blue">Verified</span><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#2f9bff" d="M12 1.5l2.6 1.9 3.2-.2 1 3.1 2.6 1.9-1 3.1 1 3.1-2.6 1.9-1 3.1-3.2-.2L12 22.5l-2.6-1.9-3.2.2-1-3.1-2.6-1.9 1-3.1-1-3.1 2.6-1.9 1-3.1 3.2.2z"/><path fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M7.6 12.3l3 3 5.8-6.1"/></svg></div>
     <div class="goal-bars">${bar('Revenue 3 bulan',rev,TARGET_3M_REV,R)}${bar('Sales 3 bulan',pcs,TARGET_3M_PCS,v=>fmt(v)+' pcs')}</div>
-    <p class="goal-note">3 bulan terakhir: ${dLabelY(start)} – ${dLabelY(end)}${MAX<end?` · data sales s/d ${dLabel(MAX)} ${LAST_HM} WIB`:''}</p>
+    <p class="goal-note">Periode target: ${dLabelY(start)} – ${dLabelY(end)}${MAX<end?` · data sales s/d ${dLabel(MAX)} ${LAST_HM} WIB`:''}</p>
     <button type="button" class="goal-go" id="goalGo">Kejar pasti dapat</button></div>`;
   document.body.appendChild(ov); document.documentElement.style.overflow='hidden';
   requestAnimationFrame(()=>requestAnimationFrame(()=>ov.querySelectorAll('.fl').forEach(f=>f.style.width=f.dataset.w+'%')));
