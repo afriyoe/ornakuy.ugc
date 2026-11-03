@@ -1798,20 +1798,25 @@ const ROI_GOOD=50; // biaya per save yang dianggap bagus (Rp)
 // jumlah konten dalam satu payment: "30 foto slide", "2 video + 1 foto slide"; tanpa angka = 1 konten
 function roiPaket(note){ const t=String(note||''); let v=0,f=0; t.replace(/(\d+)\s*(video|vid)\b/gi,(_,n)=>{v+=+n;}); t.replace(/(\d+)\s*(foto\s*slide|foto|slide|photo)/gi,(_,n)=>{f+=+n;});
   if(!v&&!f){ if(/foto|slide|photo/i.test(t)) f=1; else v=1; } return {v,f,n:v+f}; }
+// tiap postingan memakai jatah konten dari payment yang paling awal (urut tanggal); nilainya = ratecard payment itu
+function roiAlloc(x){ const pays=[...x.P].sort((a,b)=>(a.d||'').localeCompare(b.d||'')), slots=[];
+  pays.forEach(r=>{ const k=roiPaket(r.note); for(let i=0;i<k.n;i++) slots.push({v:r.out/k.n,r}); });
+  const posts=[...x.Q].sort((a,b)=>(a.d||'').localeCompare(b.d||'')).map((p,i)=>({p,val:slots[i]?slots[i].v:0,from:slots[i]?slots[i].r:null}));
+  return {posts,used:posts.reduce((s,q)=>s+q.val,0),ord:slots.length}; }
 function roiDetail(x){
   const pays=x.P.map(r=>({...r,pk:roiPaket(r.note)})), order=pays.reduce((s,r)=>s+r.pk.n,0), rate=order?x.cost/order:0, perPost=x.n?x.cost/x.n:0;
   const pk=k=>[k.v?k.v+' video':'',k.f?k.f+' foto slide':''].filter(Boolean).join(' + ');
-  const posts=[...x.Q].sort((a,b)=>(a.d||'').localeCompare(b.d||''));
+  const A=x.A||roiAlloc(x), posts=A.posts;
   const box=(a,b,c)=>`<div><span class="eyebrow">${a}</span><b>${b}</b><span class="muted">${c}</span></div>`;
   return `<div class="roi-box"><div class="roi-sum">
-      ${box('Ratecard per konten',order?Rp(rate):'–',`${Rp(x.cost)} ÷ ${fmt(order)} konten dipesan`)}
-      ${box('Biaya konten tayang',Rp(x.used),x.used<x.cost?`${fmt(x.n)} tayang × ${Rp(rate)} · sisa ${Rp(x.cost-x.used)} untuk konten berikutnya`:`${Rp(x.cost)} ÷ ${fmt(x.n)} postingan = ${Rp(perPost)} per video`)}
+      ${box('Ratecard rata-rata',order?Rp(rate):'–',`${Rp(x.cost)} ÷ ${fmt(order)} konten dipesan (tiap payment dihitung sendiri)`)}
+      ${box('Biaya konten tayang',Rp(x.used),x.used<x.cost?`${fmt(x.n)} tayang, sesuai ratecard payment masing-masing · sisa ${Rp(x.cost-x.used)} untuk konten berikutnya`:`${Rp(x.cost)} ÷ ${fmt(x.n)} postingan = ${Rp(perPost)} per video`)}
       ${box('Konten tayang',`${fmt(x.n)} / ${fmt(order)}`,order>x.n?`sisa ${fmt(order-x.n)} belum tayang`:order&&x.n>=order?'semua sudah tayang':'')}
       ${box('Save per konten',x.n?fmt(Math.round(x.sv/x.n)):'–',x.sv?`biaya per save ${Rp(x.used/x.sv)} (target < Rp${ROI_GOOD})`:'')}</div>
     <table class="roi-sub"><thead><tr><th style="text-align:left">Tanggal</th><th style="text-align:left">Jenis</th><th style="text-align:left">Keterangan</th><th>Biaya / nilai</th><th>Views</th><th>Save</th><th>Biaya per save</th></tr></thead><tbody>
-      ${[...pays.map(r=>({d:r.d||'',k:0,r})),...posts.map(p=>({d:p.d||'',k:1,p}))].sort((a,b)=>a.d.localeCompare(b.d)||a.k-b.k).map(x=>{
+      ${[...pays.map(r=>({d:r.d||'',k:0,r})),...posts.map(q=>({d:q.p.d||'',k:1,q}))].sort((a,b)=>a.d.localeCompare(b.d)||a.k-b.k).map(x=>{
         if(!x.k){ const r=x.r; return `<tr class="roi-pay"><td class="txt" style="text-align:left">${dLabel(r.d)}</td><td style="text-align:left"><span class="chip pay">Payment</span></td><td class="txt" style="text-align:left">${esc(pk(r.pk))}<br><span class="muted">${esc(r.note||'')}</span></td><td><b>${Rp(r.out)}</b><br><span class="muted">${Rp(r.out/r.pk.n)} / konten</span></td><td>–</td><td>–</td><td>–</td></tr>`; }
-        const p=x.p, c=p.sv?rate/p.sv:0; return `<tr><td class="txt" style="text-align:left">${dLabel(p.d)}</td><td style="text-align:left"><span class="chip in">Postingan</span></td><td class="txt" style="text-align:left">${/photo/.test(p.url||'')?'Foto slide':'Video'}${p.url?` · <a href="${esc(p.url)}" target="_blank" rel="noopener">buka</a>`:''}</td><td>${Rp(rate)}<br><span class="muted">ratecard</span></td><td>${fmt(p.v||0)}</td><td>${fmt(p.sv||0)}</td><td><b style="color:var(--${!p.sv?'muted':c<ROI_GOOD?'good':c>ROI_GOOD*2?'bad':'fg'})">${p.sv?Rp(c):'–'}</b></td></tr>`; }).join('')}</tbody></table>
+        const p=x.q.p, val=x.q.val, c=p.sv?val/p.sv:0; return `<tr><td class="txt" style="text-align:left">${dLabel(p.d)}</td><td style="text-align:left"><span class="chip in">Postingan</span></td><td class="txt" style="text-align:left">${/photo/.test(p.url||'')?'Foto slide':'Video'}${p.url?` · <a href="${esc(p.url)}" target="_blank" rel="noopener">buka</a>`:''}</td><td>${Rp(val)}<br><span class="muted">${x.q.from?'ratecard payment '+dLabel(x.q.from.d):'di luar paket'}</span></td><td>${fmt(p.v||0)}</td><td>${fmt(p.sv||0)}</td><td><b style="color:var(--${!p.sv?'muted':c<ROI_GOOD?'good':c>ROI_GOOD*2?'bad':'fg'})">${p.sv?Rp(c):'–'}</b></td></tr>`; }).join('')}</tbody></table>
     ${posts.length?'':'<p class="muted" style="margin:8px 0 0">Belum ada postingan tercatat.</p>'}
   </div>`;
 }
@@ -1824,7 +1829,7 @@ function renderRoi(){
   const C=new Map(), get=k=>{ if(!C.has(k)) C.set(k,{u:'',cost:0,pay:0,n:0,v:0,sv:0,l:0,c:0,s:0,P:[],Q:[]}); return C.get(k); };
   for(const p of posts){ const k=handleKey(p.u); const key=[...C.keys()].find(x=>sameHandle(x,k))||k; const x=get(key); x.u=x.u||p.u; x.n++; x.v+=p.v||0; x.sv+=p.sv||0; x.l+=p.l||0; x.c+=p.c||0; x.s+=p.s||0; x.Q.push(p); }
   for(const r of pays){ const m=String(r.note||'').match(/@([\w.]+)/); if(!m) continue; const k=handleKey(m[1]); const key=[...C.keys()].find(x=>sameHandle(x,k))||k; const x=get(key); x.u=x.u||'@'+m[1]; x.cost+=r.out; x.pay++; x.P.push(r); }
-  const rows=[...C.values()].filter(x=>x.cost>0); rows.forEach(x=>{ x.ord=x.P.reduce((s,r)=>s+roiPaket(r.note).n,0); x.rate=x.ord?x.cost/x.ord:0; x.used=x.ord&&x.n<x.ord?x.rate*x.n:x.cost; });
+  const rows=[...C.values()].filter(x=>x.cost>0); rows.forEach(x=>{ x.ord=x.P.reduce((s,r)=>s+roiPaket(r.note).n,0); x.rate=x.ord?x.cost/x.ord:0; x.A=roiAlloc(x); x.used=x.n>=x.ord?x.cost:x.A.used; });
   const withSv=rows.filter(x=>x.sv>0).sort((a,b)=>a.used/a.sv-b.used/b.sv);
   const T=rows.reduce((a,x)=>({cost:a.cost+x.cost,used:a.used+(x.sv?x.used:0),sv:a.sv+x.sv,v:a.v+x.v}),{cost:0,used:0,sv:0,v:0}), avg=T.sv?T.used/T.sv:0;
   const best=withSv[0], worst=withSv[withSv.length-1];
