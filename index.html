@@ -1023,7 +1023,7 @@ table.roi-sub{width:100%;margin-top:8px} table.roi-sub th{font-size:10px} table.
     </section>
   <section id="robuxSec">
     <div class="sec-head"><div><div class="eyebrow">Saldo Robux &amp; proyeksi</div><h2>Robux di grup dan nilainya dalam Rupiah</h2>
-      <p>Catat Community Funds, pending, rebates, dan payout dari Roblox di waktu yang sama dengan data sales terakhir. Roblox menahan revenue 30 hari: pending = revenue 30 hari terakhir, lalu masuk ke saldo. Dari situ jadwal pending cair dan proyeksinya bisa dihitung. Tidak mengubah Semua transaksi di Pembukuan, dan tidak mengikuti filter tanggal.</p></div>
+      <p>Catat Community Funds, pending, rebates, dan payout dari Roblox di waktu yang sama dengan data sales terakhir. Roblox menahan revenue 30 hari: pending = revenue 30 hari terakhir, lalu masuk ke saldo. Setelah ada catatan, saldo dan pending ikut berjalan sendiri setiap data sales baru ditarik: tiap penjualan pindah dari pending ke saldo tepat 30 hari kemudian (jam dan detik yang sama). Payout tidak terlihat di data sales, jadi sesekali sinkronkan lagi lewat screenshot Summary. Dari situ jadwal pending cair dan proyeksinya bisa dihitung. Tidak mengubah Semua transaksi di Pembukuan, dan tidak mengikuti filter tanggal.</p></div>
       <div class="controls"><button class="btn primary" type="button" id="rbxToggle" aria-expanded="false" aria-controls="rbxFormPanel">+ Catat saldo Robux</button></div></div>
     <div class="panel" id="rbxFormPanel" hidden>
       <form id="rbxForm" class="rbx-form" autocomplete="off">
@@ -2854,7 +2854,9 @@ function renderRobux(){
   const okPer=per.filter(x=>x.full), outGeneric=okPer.length?okPer.reduce((s,x)=>s+x.keluar,0)/okPer.reduce((s,x)=>s+x.days,0):null;
   const netOut=poDay!=null?poDay:outGeneric; // Robux keluar per hari (payout); rebates dihitung terpisah
   const since=salesEnd>lt?revBetween(lt,salesEnd):0, sinceDays=salesEnd>lt?(salesEnd-lt)/86400:0;
-  const nowEst=held+since+(last.rb!=null?rbSince:0)-(netOut||0)*sinceDays;
+  // saldo & pending ikut data sales: penjualan pindah dari pending ke saldo tepat 30 hari (jam & detik yang sama) setelah terjual
+  const live=salesEnd>lt, cairSince=live?revBetween(lt-HOLD,salesEnd-HOLD):0, sNow=last.s+cairSince+(live&&last.rb!=null?rbSince:0), pNow=live?expPend(salesEnd):last.p, cair24=revBetween(salesEnd-HOLD,salesEnd-HOLD+86400);
+  const nowEst=sNow+pNow-(netOut||0)*sinceDays;
   const rows=bookRows(), bank=rows.length?rows[rows.length-1].bal:0;
   const gap=salesEnd-lt, sync=Math.abs(gap)<=3600?['','✓ Waktu catatan terakhir cocok dengan data sales terakhir.']:gap<0?['warn',`Data sales baru sampai ${dLabT(wibStrTs(salesEnd))}, lebih awal ${fmtDur(-gap)} dari catatan terakhir (${dLabT(last.t)}). Revenue di sela itu belum terhitung: cek email Roblox (tombol Spreadsheet) supaya data sales menyusul.`]:['',`Data sales sudah ${fmtDur(gap)} lebih baru dari catatan terakhir. Revenue sejak catatan ikut dihitung di perkiraan.`];
   const ep=expPend(lt), pd=last.p-ep, pendOk=salesEnd>=lt-60&&Math.abs(pd)<=Math.max(50,last.p*0.002);
@@ -2869,10 +2871,10 @@ function renderRobux(){
   const warn=sync[0]==='warn'||/rbx-sync warn/.test(chk);
   body.innerHTML=`${warn?'<div class="rbx-sync warn">⚠ Ada data yang perlu dicek. Klik <b>+ Catat saldo Robux</b> untuk melihat detailnya.</div>':''}
     <div class="kpis rbx-kpis" style="margin-top:14px">
-      ${k('Saldo (Community Funds)',R(last.s),`${Rp(last.s*rate)} · siap dicairkan`)}
-      ${k('Pending',R(last.p),`${Rp(last.p*rate)} · cair bertahap 30 hari`)}
-      ${k('Saldo + pending',R(held),`${Rp(held*rate)} · per ${dLabT(last.t)}`,'hl')}
-      ${k('Perkiraan sekarang',R(nowEst),`${Rp(nowEst*rate)}${since?` · + revenue ${R(since)} sejak catatan`:''}`)}
+      ${k('Saldo (Community Funds)',R(sNow),`${Rp(sNow*rate)} · ${live?`catatan ${R(last.s)} + cair ${R(cairSince)}${last.rb!=null&&rbSince?` + rebates ${R(rbSince)}`:''} sejak ${dLabT(last.t)} · belum dikurangi payout sesudahnya`:'siap dicairkan'}`)}
+      ${k('Pending',R(pNow),`${Rp(pNow*rate)} · revenue 30 hari terakhir${live?` · ${R(cair24)} cair dalam 24 jam`:''}`)}
+      ${k('Saldo + pending',R(sNow+pNow),`${Rp((sNow+pNow)*rate)} · per ${live?dLabT(wibStrTs(salesEnd))+' (data sales terakhir)':dLabT(last.t)}`,'hl')}
+      ${k('Perkiraan sekarang',R(nowEst),`${Rp(nowEst*rate)}${since&&netOut?` · saldo + pending − perkiraan payout ${R((netOut||0)*sinceDays)} sejak catatan`:''}`)}
       ${k('Payout/hari',netOut==null?'–':R(netOut),netOut==null?'isi payout, atau tunggu catatan kedua':poDay!=null?`${Rp(netOut*rate)}/hari · ${rateSrc}`:`rata-rata ${okPer.length} periode (total keluar)`)}
       ${k('Rebates',R(rbNow),`sudah didapat menurut data sales${last.rb!=null?` · Roblox mencatat ${R(last.rb)} per ${dLabT(last.t)} (selisih ±${R(lag)} masih diproses)`:''} · sisa potensi ${R(rbRemain)}`)}
       ${k('Posisi total',Rp(bank+nowEst*rate),`saldo rekening ${Rp(bank)} + nilai Robux ${Rp(nowEst*rate)}`)}
