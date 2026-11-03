@@ -533,6 +533,9 @@ body:not(.show-src) .datapanel{display:none}
 #finTable tr.fe-del .fe{text-decoration:line-through}
 #finTable .fe-delbtn{all:unset;cursor:pointer;font:600 11px var(--mono);padding:5px 8px;border-radius:4px;border:1px solid var(--bad);color:var(--bad);white-space:nowrap}
 .cmodal .am-box.ads-box.bank-box{max-width:920px} .bank-tbl input{width:100%;min-width:0;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font:13px var(--body)} .bank-tbl input[type=date]{width:140px} .bank-tbl .bk-on{width:16px;height:16px} .bank-tbl td{vertical-align:middle} .bank-err{color:var(--bad);font-size:13px;margin:8px 0 0}
+.cmodal .am-box.fp-box{max-width:560px;max-height:calc(100vh - 32px);display:flex;flex-direction:column} .fp-list{overflow:auto;min-height:0}
+.fp-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--panel-2)} .fp-h{display:flex;align-items:center;justify-content:space-between;gap:8px} .fp-m{font-size:13px;color:var(--fg-2);margin:4px 0 6px}
+.fp-st{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted)} .fp-st b{color:var(--fg);font-family:var(--mono)}
 .cmodal .am-box.ads-box{max-width:640px;max-height:calc(100vh - 32px);overflow:auto}
 .ads-box table{width:100%;border-collapse:collapse;font-size:13px}.ads-box td,.ads-box th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
 .ads-box td.n{text-align:right;font-family:var(--mono)}.ads-box tr.dup{opacity:.45}
@@ -3617,10 +3620,36 @@ async function findPosts(kind){
     if(!j.ok) throw new Error(/tidak dikenal/i.test(j.error||'')?'Apps Script belum diperbarui. Tempel script terbaru lalu deploy versi baru.':(j.error||'gagal'));
     if(j.info&&j.postingan==null){ say(j.info,''); return; }
     const e=(j.eksternalBaru||[]).length, i=(j.internalBaru||[]).length;
-    say(`✓ ${e} postingan eksternal baru, ${i} internal baru, ${fmt(j.diperbarui||0)} statistik diperbarui · memuat ulang…`,'ok');
-    await shLoad(false); setTimeout(()=>location.reload(),900);
+    say(`✓ ${e} postingan eksternal baru, ${i} internal baru, ${fmt(j.diperbarui||0)} statistik diperbarui`,'ok');
+    // bandingkan dengan data sebelum pencarian supaya rincian postingan baru bisa ditampilkan
+    const pidOf=u=>(String(u||'').match(/(\d{15,})/)||[])[1]||'';
+    const oldE=new Set(RECS.mk.map(x=>pidOf(x.url))), oldI=new Set(((RECS.int||{}).posts||[]).map(x=>pidOf(x.url)||String(x.id)));
+    let P={}; try{ P=shParse(await shCall({action:'read'})); }catch(_){}
+    const newE=(P.mk||[]).filter(x=>!oldE.has(pidOf(x.url))), newI=(((P.int||{}).posts)||[]).filter(x=>!oldI.has(pidOf(x.url)||String(x.id)));
+    await shLoad(false);
+    findPopup({newE,newI,allE:P.mk||RECS.mk,allI:((P.int||{}).posts)||[],upd:j.diperbarui||0,akun:j.akun||0});
   }catch(err){ say('Gagal: '+(err.message||err),'err'); }
   finally{ findBusy=false; btn.removeAttribute('aria-disabled'); }
+}
+function findPopup(o){
+  const pays=bookRows().filter(r=>r.cat==='Endorse'&&r.out), ordOf=u=>{ const k=handleKey(u); return pays.filter(r=>{ const m=String(r.note||'').match(/@([\w.]+)/); return m&&sameHandle(handleKey(m[1]),k); }).reduce((s,r)=>s+roiPaket(r.note).n,0); };
+  const nthE=x=>{ const k=handleKey(x.u), mine=o.allE.filter(y=>sameHandle(handleKey(y.u),k)).sort((a,b)=>(a.d||'').localeCompare(b.d||'')||String(a.url).localeCompare(String(b.url))); return [mine.findIndex(y=>y.url===x.url)+1,mine.length,ordOf(x.u)]; };
+  const nthI=x=>{ const mine=o.allI.filter(y=>y.acc===x.acc).sort((a,b)=>(a.t||0)-(b.t||0)); return [mine.findIndex(y=>y.url===x.url)+1,mine.length]; };
+  const st=x=>`<div class="fp-st"><span><b>${fmt(x.v||0)}</b> views</span><span><b>${fmt(x.l||0)}</b> likes</span><span><b>${fmt(x.c||0)}</b> komentar</span><span><b>${fmt(x.s||0)}</b> share</span><span><b>${fmt(x.sv||0)}</b> save</span></div>`;
+  const jenis=u=>/\/photo\//.test(u||'')?'Foto slide':'Video';
+  const cardE=x=>{ const [n,tot,ord]=nthE(x); return `<div class="fp-item"><div class="fp-h"><b>${esc(x.u)}</b><span class="chip pay">Endorse</span></div>
+    <div class="fp-m">${dLabelY(x.d)} · ${jenis(x.url)} · postingan ke-${n}${ord?` dari ${ord} konten dipesan${ord-tot>0?` (sisa ${ord-tot})`:''}`:` (total ${tot})`} · <a href="${esc(x.url)}" target="_blank" rel="noopener">buka</a></div>${st(x)}</div>`; };
+  const cardI=x=>{ const [n]=nthI(x), w=x.t?wibStr(x.t):''; return `<div class="fp-item"><div class="fp-h"><b>@${esc(x.acc||'')}</b><span class="chip in">Internal</span></div>
+    <div class="fp-m">${w?dLabelY(w.slice(0,10))+' '+w.slice(11)+' WIB':''} · ${x.type==='video'?'Video':'Foto slide'} · postingan ke-${n} · <a href="${esc(x.url)}" target="_blank" rel="noopener">buka</a></div>${st(x)}</div>`; };
+  const n=o.newE.length+o.newI.length, m=document.createElement('div'); m.className='cmodal';
+  m.innerHTML=`<div class="am-box fp-box" role="dialog" aria-modal="true" aria-label="Hasil cari postingan baru"><h3>${n?`${n} postingan baru ditemukan`:'Tidak ada postingan baru'}</h3>
+    <p class="note" style="margin:0 0 10px">${fmt(o.akun)} akun dicek · ${fmt(o.upd)} statistik postingan lama diperbarui.</p>
+    <div class="fp-list">${o.newE.length?`<div class="eyebrow" style="margin:4px 0 6px">Eksternal (endorse)</div>${o.newE.sort((a,b)=>(b.d||'').localeCompare(a.d||'')).map(cardE).join('')}`:''}
+      ${o.newI.length?`<div class="eyebrow" style="margin:10px 0 6px">Internal</div>${o.newI.sort((a,b)=>(b.t||0)-(a.t||0)).map(cardI).join('')}`:''}
+      ${n?'':'<p class="muted" style="margin:6px 0">Semua postingan kreator dan akun internal sudah tercatat.</p>'}</div>
+    <div class="am-actions" style="margin-top:12px"><button class="btn primary" type="button" data-ok>OK</button></div></div>`;
+  document.body.appendChild(m); const ok=m.querySelector('[data-ok]'); ok.focus();
+  const close=()=>{ m.remove(); location.reload(); }; ok.addEventListener('click',close); m.addEventListener('keydown',e=>{ if(e.key==='Escape') close(); });
 }
 $('mkFindBtn').addEventListener('click',()=>findPosts('mk'));
 $('intFindBtn').addEventListener('click',()=>findPosts('int'));
