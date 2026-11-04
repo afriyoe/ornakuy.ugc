@@ -3136,7 +3136,7 @@ $('xlsxBtn').addEventListener('click',async()=>{
   }catch(e){ setSaveSt('Gagal membuat spreadsheet: '+(e.message||e),'err'); }
   btn.removeAttribute('aria-disabled');
 });
-(function(){ let m=null; try{ m=localStorage.getItem('ornakuy-main'); }catch(e){} showMain(m||'ana'); })();
+(function(){ let m=null; try{ m=localStorage.getItem('ornakuy-main'); }catch(e){} showMain('ana'); if(m&&m!=='ana') setTimeout(()=>showMain(m),0); })();   // tab terakhir dibuka setelah seluruh skrip siap
 
 // ---------- Saldo Robux & proyeksi ----------
 // RECS.robux = [{t:'YYYY-MM-DD HH:MM' (WIB), s:saldo R$, p:pending R$, rate:Rp per R$, note}]
@@ -4572,8 +4572,8 @@ const SH_CODE="// ORNA KUY — jembatan Google Sheets + sales otomatis dari emai
 function shCfg(){ try{ return JSON.parse(localStorage.getItem('ornakuy-sheet')||'null')||{}; }catch(e){ return {}; } }
 function SHEET_ON(){ const c=shCfg(); return !window.claude&&!!(c.url&&c.key); }
 function shDot(cls,title){ const d=$('shDot'); if(d){ d.className='sh-dot '+(cls||''); d.parentElement.title=title||''; } }
-const wibStr=ts=>new Date((+ts+7*3600)*1000).toISOString().slice(0,16).replace('T',' ');
-const wibParse=v=>{ const m=String(v||'').trim().match(/^(\d{4}-\d\d-\d\d)(?:[ T](\d\d:\d\d))?/); return m?Date.parse(`${m[1]}T${m[2]||'00:00'}:00+07:00`):0; };
+function wibStr(ts){ return new Date((+ts+7*3600)*1000).toISOString().slice(0,16).replace('T',' '); }   // function (bukan const) supaya bisa dipakai sebelum baris ini saat dashboard pertama dibuka
+function wibParse(v){ const m=String(v||'').trim().match(/^(\d{4}-\d\d-\d\d)(?:[ T](\d\d:\d\d))?/); return m?Date.parse(`${m[1]}T${m[2]||'00:00'}:00+07:00`):0; }
 function shSalesSheet(S){ S=S||RAW;
   return {header:['Waktu (unix)','Waktu (WIB)','Buyer ID','Asset ID','Item','Tipe aset','Lokasi','Game ID','Revenue (R$)','Harga (R$)'],text:[1,2,3,7],
     rows:S.tx.map(t=>{ const p=S.p[t[2]]; return [t[0],wibStr(t[0]),String(S.b[t[1]]),String(p[2]),p[0],p[1],t[3]?'Game':'Website',t[3]&&t[4]>=0?String(S.g[t[4]]):'',t[5],t[6]]; })}; }
