@@ -613,6 +613,8 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
 .stale-dot:focus{outline:2px solid var(--bad);outline-offset:2px} .stale-dot.show::after{content:attr(data-tip);position:fixed;left:var(--tx,0);top:var(--ty,0);z-index:30;width:250px;padding:8px 10px;border-radius:8px;background:var(--fg);color:var(--bg);font:500 12px/1.45 var(--body);text-align:left;white-space:normal;box-shadow:0 6px 18px rgba(0,0,0,.25)}
 #unsavedBar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:60;max-width:min(720px,calc(100vw - 32px));padding:10px 14px;border-radius:10px;background:#fff3c4;color:#5b4500;border:1px solid #e7c84a;box-shadow:0 8px 24px rgba(0,0,0,.18);font:500 13px/1.5 var(--body);display:flex;gap:10px;align-items:center;flex-wrap:wrap} #unsavedBar .btn{padding:5px 10px}
 #promoTable td.pe{cursor:text}
+.ads-b{display:inline-block;padding:2px 8px;border-radius:6px;font:700 11px var(--mono);letter-spacing:.04em;color:#fff} .ads-b.on{background:#1f9d55} .ads-b.off{background:var(--bad)}
+.ads-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px} .ads-dot.on{background:#1f9d55} .ads-dot.off{background:var(--bad)}
 .pr-pv{display:flex;gap:8px;align-items:flex-start} .pr-pv img{width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--line);flex:none}
 .promo-drop{margin:0 0 12px;padding:14px 16px;border:1.5px dashed var(--line);border-radius:10px;color:var(--muted);font-size:13px;text-align:center;cursor:pointer;background:var(--panel-2)} .promo-drop.over{border-color:var(--accent);color:var(--fg);background:var(--accent-soft)}
 .tab-badge{display:inline-grid;place-items:center;min-width:17px;height:17px;padding:0 4px;margin-left:5px;border-radius:9px;background:var(--bad);color:#fff;font:700 11px var(--body);vertical-align:1px}
@@ -1883,6 +1885,14 @@ function endorseState(){
   return {deals,extra,fuzzy};
 }
 let endOpen=new Set(), endPid=null, endState=null;
+// iklan TikTok per postingan (dari tab Iklan & promosi): biaya, tayangan iklan, suka & komentar dari iklan, status berjalan
+function promoByPid(){ const m=new Map(); for(const x of PROMO_N()){ if(!x.pid) continue; const a=m.get(x.pid)||{n:0,cost:0,views:0,inter:0,costI:0,run:false};
+    const cpi=promoCpi(x); a.n++; a.cost+=x.cost||0; a.views+=x.views||0; if(cpi){ a.inter+=(x.cost||0)/cpi; a.costI+=x.cost||0; } if(PROMO_RUN.test(x.st||'')) a.run=true; m.set(x.pid,a); } return m; }
+function adsSum(PA,pids){ const a={n:0,cost:0,views:0,inter:0,costI:0,run:false}; for(const id of pids){ const x=PA.get(id); if(!x) continue; a.n+=x.n; a.cost+=x.cost; a.views+=x.views; a.inter+=x.inter; a.costI+=x.costI; if(x.run) a.run=true; } return a; }
+const adsBadge=a=>a.n?`<span class="ads-b ${a.run?'on':'off'}" title="${a.run?'Ada iklan yang masih berjalan':'Iklan sudah selesai / mati'} · ${a.n} pesanan iklan">Ads</span><br><small class="muted">${Rp(a.cost)}${a.inter?` · ${RpC(a.costI/a.inter)}/interaksi`:''}</small>`:'';
+const adsCells=a=>{ if(!a||!a.n) return '<td class="muted">–</td><td class="muted">–</td><td class="muted">–</td><td class="muted">–</td>'; const v=a.inter?a.costI/a.inter:null, r=cpiRate(v);
+  return `<td><span class="ads-dot ${a.run?'on':'off'}" title="${a.run?'Iklan berjalan':'Iklan selesai'}"></span>${Rp(a.cost)}</td><td>${v==null?'<span class="muted">–</span>':`<b style="color:${r[1]}" title="${r[0]}">${RpC(v)}</b>`}</td><td>${fmt(a.views)}</td><td>${a.inter?fmt(Math.round(a.inter)):'–'}</td>`; };
+const ADS_TH='<th title="Biaya iklan TikTok (Promosi) untuk postingan ini">Biaya ads</th><th title="Biaya iklan ÷ suka &amp; komentar dari iklan">Biaya / interaksi</th><th title="Tayangan dari iklan">Tayangan ads</th><th title="Suka &amp; komentar dari iklan">Interaksi ads</th>';
 const sumM = ps => ps.reduce((a,p)=>({v:a.v+(p.v||0),l:a.l+(p.l||0),c:a.c+(p.c||0),s:a.s+(p.s||0),sv:a.sv+(p.sv||0)}),{v:0,l:0,c:0,s:0,sv:0});
 function renderEndorse(){
   const S=endState=endorseState(), D_=S.deals.filter(x=>inRange(x.d));
@@ -1923,8 +1933,8 @@ function renderEndorse(){
   const st=x=>x.noPay?['Tanpa payment','']:!x.posted?['Belum posting','out']:(x.lf||x.lv)?['Sebagian','pay']:['Selesai','in'];
   const slot=(a,b)=>b?`${a}<span class="muted"> / ${b}</span>`:(a?`${a}`:'<span class="muted">–</span>');
   const mrow=m=>`<td>${fmt(m.v)}</td><td>${fmt(m.l)}</td><td>${fmt(m.c)}</td><td>${fmt(m.s)}</td><td>${fmt(m.sv)}</td>`;
-  const rows=byU.sort((a,b)=>b.left-a.left||a.u.localeCompare(b.u));
-  $('endTable').innerHTML=`<thead><tr><th style="width:26px"></th><th style="text-align:left">Kreator</th><th style="text-align:left">Status</th><th>Foto slide</th><th>Video</th><th>Payment</th><th>Belum terpos&shy;ting</th></tr></thead>`+intGroupHtml(S)+
+  const rows=byU.sort((a,b)=>b.left-a.left||a.u.localeCompare(b.u)), PA=promoByPid(); S.PA=PA;
+  $('endTable').innerHTML=`<thead><tr><th style="width:26px"></th><th style="text-align:left">Kreator</th><th style="text-align:left">Status</th><th>Foto slide</th><th>Video</th><th>Payment</th><th>Belum terpos&shy;ting</th><th title="Hijau: ada iklan TikTok yang masih berjalan · merah: iklan sudah selesai · kosong: tidak diiklankan">Ads</th></tr></thead>`+intGroupHtml(S)+
     rows.map(x=>{ const [sl,sc]=st(x), open=endOpen.has(x.u), m=sumM(x.posts.map(p=>p.p));
       // pengingat: status Sebagian tapi tidak ada postingan baru (foto slide / video) selama 3 hari atau lebih
       const lastD=x.posts.map(p=>p.t.d||p.p.d||'').filter(Boolean).sort().pop()||'', idle=lastD?daysBetween(lastD,todayWIB())-1:null;
@@ -1932,16 +1942,17 @@ function renderEndorse(){
       const stale=(sl==='Sebagian'&&idle!=null&&idle>=3)||(sl==='Belum posting'&&payIdle!=null&&payIdle>=3);
       const tip=!stale?'':sl==='Belum posting'?`Sudah dibayar sejak ${dLabel(payD)} (${payIdle} hari) tapi belum ada postingan sama sekali. ${sisa} belum diposting.`:`Belum ada postingan terbaru selama ${idle} hari (terakhir ${dLabel(lastD)}). Sisa ${sisa} belum diposting.`;
       const pays=x.g.map(d=>`${d.d?dLabel(d.d):'?'}: ${d.foto?d.foto+' post foto slide':''}${d.foto&&d.video?' + ':''}${d.video?d.video+' post video':''} · ${Rp(d.amt)}`).join(' &nbsp;|&nbsp; ');
-      const sub = !open ? '' : `<tr class="end-sub"><td></td><td colspan="6"><div class="end-pays">${pays?'Payment: '+pays:'Belum ada payment endorse di Keuangan untuk akun ini.'}</div>
-        <table class="end-links"><thead><tr><th style="text-align:left">Postingan</th><th style="text-align:left">Tayang</th><th>Views</th><th>Like</th><th>Komen</th><th>Share</th><th>Save</th></tr></thead><tbody>
-        ${x.posts.length?x.posts.map((p,i)=>`<tr class="click${p.t.pid===endPid?' sel':''}" tabindex="0" data-pid="${p.t.pid}"><td style="text-align:left;font-family:var(--body)"><span class="chip ${p.t.type==='video'?'pay':''}">${p.t.type==='video'?'▶ Video':'▣ Foto slide'}</span> #${i+1}${p.extra?' <span class="chip out">di luar payment</span>':''}</td><td style="text-align:left">${p.t.d?dLabel(p.t.d):'–'}</td>${mrow(sumM([p.p]))}</tr>`).join('')
-          :`<tr class="emptyrow"><td colspan="7">Belum ada link postingan.</td></tr>`}</tbody>
-        ${x.posts.length>1?`<tfoot><tr><td style="text-align:left">Total ${x.posts.length} postingan</td><td></td>${mrow(m)}</tr></tfoot>`:''}</table></td></tr>`;
+      const AD=adsSum(PA,x.posts.map(p=>p.t.pid));
+      const sub = !open ? '' : `<tr class="end-sub"><td></td><td colspan="7"><div class="end-pays">${pays?'Payment: '+pays:'Belum ada payment endorse di Keuangan untuk akun ini.'}</div>
+        <table class="end-links"><thead><tr><th style="text-align:left">Postingan</th><th style="text-align:left">Tayang</th><th>Views</th><th>Like</th><th>Komen</th><th>Share</th><th>Save</th>${ADS_TH}</tr></thead><tbody>
+        ${x.posts.length?x.posts.map((p,i)=>`<tr class="click${p.t.pid===endPid?' sel':''}" tabindex="0" data-pid="${p.t.pid}"><td style="text-align:left;font-family:var(--body)"><span class="chip ${p.t.type==='video'?'pay':''}">${p.t.type==='video'?'▶ Video':'▣ Foto slide'}</span> #${i+1}${p.extra?' <span class="chip out">di luar payment</span>':''}</td><td style="text-align:left">${p.t.d?dLabel(p.t.d):'–'}</td>${mrow(sumM([p.p]))}${adsCells(PA.get(p.t.pid))}</tr>`).join('')
+          :`<tr class="emptyrow"><td colspan="11">Belum ada link postingan.</td></tr>`}</tbody>
+        ${x.posts.length>1?`<tfoot><tr><td style="text-align:left">Total ${x.posts.length} postingan</td><td></td>${mrow(m)}${adsCells(AD)}</tr></tfoot>`:''}</table></td></tr>`;
       return `<tbody class="end-grp${open?' open':''}"><tr class="click end-main" tabindex="0" data-u="${esc(x.u)}" aria-expanded="${open}"><td class="caret">${open?'▾':'▸'}</td>
         <td style="text-align:left;font-family:var(--body)"><b>${esc(x.u)}</b><br><small class="muted">${x.g.length} payment · ${x.posted} postingan${m.v?` · ${fmt(m.v)} views`:''}</small></td>
         <td style="text-align:left"><span class="chip ${sc}">${sl}</span>${stale?`<span class="stale-dot" tabindex="0" role="button" aria-label="${esc(tip)}" data-tip="${esc(tip)}">!</span>`:''}</td><td>${slot(x.df,x.tf)}</td><td>${slot(x.dv,x.tv)}</td>
-        <td>${Rp(x.amt)}</td><td class="${x.left>0.5?'neg':'pos'}"><b>${Rp(x.left)}</b></td></tr>${sub}</tbody>`; }).join('')+
-    (rows.length>1?`<tfoot><tr><td></td><td style="text-align:left">Total</td><td></td><td>${fmt(tf-lf)} / ${fmt(tf)}</td><td>${fmt(tv-lv)} / ${fmt(tv)}</td><td>${Rp(tot)}</td><td>${Rp(left)}</td></tr></tfoot>`:'');
+        <td>${Rp(x.amt)}</td><td class="${x.left>0.5?'neg':'pos'}"><b>${Rp(x.left)}</b></td><td>${adsBadge(AD)}</td></tr>${sub}</tbody>`; }).join('')+
+    (rows.length>1?`<tfoot><tr><td></td><td style="text-align:left">Total</td><td></td><td>${fmt(tf-lf)} / ${fmt(tf)}</td><td>${fmt(tv-lv)} / ${fmt(tv)}</td><td>${Rp(tot)}</td><td>${Rp(left)}</td><td>${(a=>a.n?Rp(a.cost):'')(adsSum(PA,rows.flatMap(r=>r.posts.map(p=>p.t.pid))))}</td></tr></tfoot>`:'');
   const notes=[];
   if(S.fuzzy.size) notes.push('Dicocokkan otomatis karena nama akun sedikit beda dari pembukuan: '+[...S.fuzzy].map(([a,b])=>`${esc(a)} → ${esc(b)}`).join(', ')+'.');
   if(S.extra.length) notes.push(`<span style="color:var(--bad)">${S.extra.length} link belum masuk paket payment (tetap tampil di tabel):</span> `+S.extra.map(x=>`<a href="#" data-pid="${x.t.pid}" class="xpick">${esc(x.t.u)}</a> (${x.why})`).join(', ')+'.');
@@ -2090,6 +2101,36 @@ async function imgHash(src,crop){ const bmp=src instanceof ImageBitmap?src:await
   const px=g.getImageData(0,0,9,8).data, L=[]; for(let i=0;i<px.length;i+=4) L.push(px[i]*0.299+px[i+1]*0.587+px[i+2]*0.114);
   let bits=''; for(let r=0;r<8;r++) for(let k=0;k<8;k++) bits+=L[r*9+k]>L[r*9+k+1]?'1':'0';
   return bits.match(/.{4}/g).map(b=>parseInt(b,2).toString(16)).join(''); }
+// Sidik jari gambar versi 2: gambar abu-abu kecil (sampul 16 kolom, thumbnail iklan 16×16, 16 tingkat terang).
+// Dicocokkan dengan korelasi (NCC) di banyak posisi & ukuran: thumbnail iklan boleh hanya sebagian sampul (setengah / seperempat),
+// dan bagian putih (kolase beberapa video) diabaikan. Tiap seperempat thumbnail juga dicocokkan sendiri.
+function graySig(bmp,crop,W,H){ let {x,y,w,h}=crop||{x:0,y:0,w:bmp.width,h:bmp.height};
+  if(!H){ H=Math.max(12,Math.min(32,Math.round(W*h/w))); }
+  const c=document.createElement('canvas'); c.width=W; c.height=H; const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(bmp,x,y,w,h,0,0,W,H);
+  const px=g.getImageData(0,0,W,H).data, q=new Uint8Array(Math.ceil(W*H/2));
+  for(let i=0;i<W*H;i++){ const v=Math.min(15,Math.round((px[i*4]*0.299+px[i*4+1]*0.587+px[i*4+2]*0.114)/17)); q[i>>1]|=(i&1)?v:(v<<4); }
+  let b=''; q.forEach(v=>b+=String.fromCharCode(v)); return `g${W}x${H}:`+btoa(b); }
+const SIG_CACHE=new Map();
+function sigParse(s){ if(SIG_CACHE.has(s)) return SIG_CACHE.get(s); const m=/^g(\d+)x(\d+):(.+)$/.exec(String(s||'')); if(!m){ SIG_CACHE.set(s,null); return null; }
+  const W=+m[1], H=+m[2], b=atob(m[3]), v=new Float32Array(W*H); for(let i=0;i<W*H;i++){ const by=b.charCodeAt(i>>1); v[i]=((i&1)?by&15:by>>4)*17; }
+  const o={W,H,v}; SIG_CACHE.set(s,o); return o; }
+function sigSample(P,x0,y0,w,h,kw,kh){ const out=new Float32Array(kw*kh); for(let j=0;j<kh;j++) for(let i=0;i<kw;i++){ const fx=x0+(i+0.5)*w/kw-0.5, fy=y0+(j+0.5)*h/kh-0.5;
+    const ax=Math.max(0,Math.min(P.W-1,Math.floor(fx))), ay=Math.max(0,Math.min(P.H-1,Math.floor(fy))), bx=Math.min(P.W-1,ax+1), by=Math.min(P.H-1,ay+1), tx=Math.max(0,Math.min(1,fx-ax)), ty=Math.max(0,Math.min(1,fy-ay));
+    out[j*kw+i]=(P.v[ay*P.W+ax]*(1-tx)+P.v[ay*P.W+bx]*tx)*(1-ty)+(P.v[by*P.W+ax]*(1-tx)+P.v[by*P.W+bx]*tx)*ty; } return out; }
+// skor kemiripan 0..1 (1 = sama persis) antara thumbnail iklan dan sampul postingan
+function sigScore(a,b){ const P=sigParse(a), C=sigParse(b); if(!P||!C) return null; let best=0;
+  const T=[[0,0,P.W,P.H,0],[0,0,P.W/2,P.H/2,0.05],[P.W/2,0,P.W/2,P.H/2,0.05],[0,P.H/2,P.W/2,P.H/2,0.05],[P.W/2,P.H/2,P.W/2,P.H/2,0.05],[0,0,P.W,P.H/2,0.03],[0,P.H/2,P.W,P.H/2,0.03]];
+  for(const [tx,ty,tw,th,pen] of T) for(const k of [C.W,Math.round(C.W*0.75),Math.round(C.W*0.5)]){ const kw=k, kh=Math.max(4,Math.round(k*th/tw)); if(kh>C.H) continue;
+    const t=sigSample(P,tx,ty,tw,th,kw,kh), M=[]; for(let i=0;i<t.length;i++) if(t[i]<238) M.push(i); if(M.length<t.length*0.45) continue;
+    let mt=0; for(const i of M) mt+=t[i]; mt/=M.length; let vt=0; for(const i of M) vt+=(t[i]-mt)**2; if(vt/M.length<64) continue;
+    const step=k===C.W?1:2;
+    for(let oy=0;oy+kh<=C.H;oy+=step) for(let ox=0;ox+kw<=C.W;ox+=step){ let mc=0; for(const i of M) mc+=C.v[(oy+((i/kw)|0))*C.W+ox+i%kw]; mc/=M.length;
+      let sxy=0, sc=0; for(const i of M){ const cv=C.v[(oy+((i/kw)|0))*C.W+ox+i%kw]-mc; sxy+=(t[i]-mt)*cv; sc+=cv*cv; }
+      if(sc<1) continue; const r=sxy/Math.sqrt(vt*sc)-pen; if(r>best) best=r; } }
+  return best; }
+// jarak gambar untuk pencocokan (kecil = mirip, 99 = tidak ada data): sidik versi 2 kalau ada, kalau belum pakai sidik lama
+function imgDist(a,b){ if(!a||!b) return 99; if(a[0]==='g'&&b[0]==='g'){ const r=sigScore(a,b); return r==null?99:Math.max(0,Math.round((1-r)*100)); } return a[0]!=='g'&&b[0]!=='g'?hamming(a,b):99; }
+async function bmpOf(src){ return src instanceof ImageBitmap?src:await createImageBitmap(src instanceof Blob?src:await (await fetch(src)).blob()); }
 // gambar kecil thumbnail iklan (dari screenshot) untuk dicek mata: disimpan bersama data promosi
 function promoThumb(bmp,crop){ const c=document.createElement('canvas'); c.width=c.height=72; let {x,y,w,h}=crop; const s=Math.min(w,h); c.getContext('2d').drawImage(bmp,x+(w-s)/2,y+(h-s)/2,s,s,0,0,72,72); return c.toDataURL('image/jpeg',0.7); }
 // sampul postingan (dari Drive lewat Apps Script) untuk ditampilkan di samping thumbnail iklan
@@ -2124,37 +2165,42 @@ function promoNameHits(title,posts){ const base=promoBase(title), nb=normN(base)
     if(nb&&(h===nb||nk.some(n=>n===nb||(nb.length>=4&&n.length>=4&&(n.startsWith(nb)||nb.startsWith(n)))))) return true;
     return toks.some(t=>h.includes(t)||(cap&&cap.includes(t))||nk.some(n=>n.includes(t))); }); }
 // cocokkan satu pesanan promosi ke postingan: gambar + nama + tanggal
-function promoMatch(o){ const posts=allPosts().filter(p=>!o.d||(p.d<=o.d&&p.d>=addDays(o.d,-60))), C=COVER();
+// hasil pencocokan disimpan sementara (perbandingan gambar cukup berat); dihitung ulang kalau data sampul / nickname / postingan berubah
+const PM_CACHE=new Map();
+function promoMatch(o){ const C0=COVER(), key=[o.k,o.d,o.title,String(o.hash||'').length,(o.hash||'').slice(-12),Object.keys(C0).length,Object.keys(NICK()).length,(RECS.mk||[]).length,(INT().posts||[]).length].join('|');
+  if(PM_CACHE.has(key)) return PM_CACHE.get(key); const r=promoMatch0(o); PM_CACHE.set(key,r); return r; }
+function promoMatch0(o){ const posts=allPosts().filter(p=>!o.d||(p.d<=o.d&&p.d>=addDays(o.d,-60))), C=COVER();
   const byName=new Set(promoNameHits(o.title,posts).map(p=>p.pid));
-  const sc=posts.map(p=>({p,dist:o.hash&&C[p.pid]?hamming(o.hash,C[p.pid]):99,name:byName.has(p.pid)})).sort((a,b)=>a.dist-b.dist||(b.name-a.name)||(b.p.d.localeCompare(a.p.d)));
+  const sc=posts.map(p=>({p,dist:imgDist(o.hash,C[p.pid]),name:byName.has(p.pid)})).sort((a,b)=>a.dist-b.dist||(b.name-a.name)||(b.p.d.localeCompare(a.p.d)));
   const best=sc[0], second=sc[1];
-  if(best&&best.dist<=10&&(!second||second.dist>=best.dist+5||(best.name&&!second.name))) return {pid:best.p.pid,how:best.name?'gambar + nama':'gambar',cand:sc.slice(0,5)};
+  if(best&&best.dist<=10&&(!second||second.dist>=best.dist+4||(best.name&&!second.name))) return {pid:best.p.pid,how:best.name?'gambar + nama':'gambar',cand:sc.slice(0,5)};
   if(best&&best.dist<=16&&best.name) return {pid:best.p.pid,how:'gambar + nama',cand:sc.slice(0,5)};
   const nm=sc.filter(x=>x.name).sort((a,b)=>b.p.d.localeCompare(a.p.d)); if(nm.length) return {pid:nm[0].p.pid,how:nm.length>1?'nama + tanggal (ragu)':'nama + tanggal',cand:nm.slice(0,5).concat(sc.filter(x=>!x.name).slice(0,3))};
   return {pid:'',how:'perlu dipilih',cand:sc.filter(x=>x.dist<99).slice(0,5).concat(posts.slice().sort((a,b)=>b.d.localeCompare(a.d)).slice(0,5).map(p=>({p,dist:99,name:false})))}; }
 async function coverSync(say){ if(window.claude||!SHEET_ON()) return 0; // ambil sampul yang tersimpan di Drive (lewat Apps Script) lalu buat sidik jarinya
   const c=shCfg(), post=async b=>{ const r=await fetch(c.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...b,key:c.key})}); return r.json(); };
   let j=await post({action:'sampul',ids:[]}); if(!j.ok) throw new Error(/tidak dikenal/i.test(j.error||'')?'Apps Script belum diperbarui':j.error);
-  const C={...COVER()}, need=(j.have||[]).filter(id=>!C[id]); let done=0;
+  const C={...COVER()}, need=(j.have||[]).filter(id=>!C[id]||C[id][0]!=='g'); let done=0;
   for(let i=0;i<need.length;i+=30){ say&&say(`Membaca sampul ${Math.min(i+30,need.length)}/${need.length}…`); const r=await post({action:'sampul',ids:need.slice(i,i+30)});
-    for(const [id,url] of Object.entries(r.data||{})){ try{ C[id]=await imgHash(url); done++; }catch(e){} } }
-  if(done){ RECS.cover=C; } return done; }
+    for(const [id,url] of Object.entries(r.data||{})){ try{ const b=await bmpOf(url); C[id]=graySig(b,null,16); if(!COVER_IMG[id]) COVER_IMG[id]=url; done++; }catch(e){} } }
+  if(done){ RECS.cover=C; PM_CACHE.clear(); } return done; }
 async function promoImport(files){ const st=$('promoSt'), say=(t,c)=>{ st.className='upd-st '+(c||''); st.textContent=t; }; let worker=null;
   try{ if(!window.claude&&SHEET_ON()){ try{ await coverSync(say); }catch(e){ say('Sampul belum bisa dibaca: '+e.message+'. Pencocokan memakai nama & tanggal.',''); } }
     say('Menyiapkan pembaca gambar…'); await adsLoadOcr(); worker=await Tesseract.createWorker('ind+eng').catch(()=>Tesseract.createWorker('eng'));
     const got=[]; let i=0;
     for(const f of files){ i++; say(`Membaca screenshot ${i}/${files.length}…`); const bmp=await createImageBitmap(f); const {data}=await worker.recognize(f);
       const P=promoParseShot(data,bmp.width), D=P.filter(o=>o.det); if(D.length){ const g='g'+D.map(o=>String(o.title).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12)).sort().join('-')+'-'+D.reduce((a,o)=>a+(o.cost||0),0); D.forEach(o=>o.grp=g); }
-      for(const o of P){ try{ o.hash=await imgHash(bmp,o.crop); o.th=promoThumb(bmp,o.crop); }catch(e){} delete o.crop; delete o.det; got.push(o); } }
+      for(const o of P){ try{ const s=Math.min(o.crop.w,o.crop.h); o.hash=graySig(bmp,{x:o.crop.x+(o.crop.w-s)/2,y:o.crop.y+(o.crop.h-s)/2,w:s,h:s},16,16); o.th=promoThumb(bmp,o.crop); }catch(e){} delete o.crop; delete o.det; got.push(o); } }
     if(!got.length){ say('Tidak ada pesanan promosi terbaca. Pastikan screenshot dari Promosi → Dasbor → Riwayat pesanan atau Detail pesanan.','err'); return; }
     const L=PROMO().slice(); let add=0, upd=0;
     for(const o of got){ const k=promoKey(o), old=L.find(x=>x.k===k), now=Date.now();
-      if(old){ Object.assign(old,{st:o.st,cost:o.cost??old.cost,views:o.views??old.views,m2:o.m2??old.m2,m2l:o.m2l||old.m2l,cpi:o.cpi??old.cpi,hash:old.hash||o.hash,th:o.th||old.th,upd:now}); if(old.how!=='manual'){ const m=promoMatch(old); old.pid=m.pid; old.how=m.how; } upd++; }
+      if(old){ Object.assign(old,{st:o.st,cost:o.cost??old.cost,views:o.views??old.views,m2:o.m2??old.m2,m2l:o.m2l||old.m2l,cpi:o.cpi??old.cpi,hash:o.hash||old.hash,th:o.th||old.th,upd:now}); if(old.how!=='manual'){ const m=promoMatch(old); old.pid=m.pid; old.how=m.how; } upd++; }
       else { const x={k,...o,upd:now}; const m=promoMatch(x); x.pid=m.pid; x.how=m.how; L.push(x); add++; } }
     promoLinkDetail(L);
     RECS.promo=L.sort((a,b)=>(b.d||'').localeCompare(a.d||'')); renderAdsTab(); renderRoi();
     const unk=L.filter(x=>!x.pid).length; say(`✓ ${add} pesanan baru, ${upd} diperbarui${unk?` · ${unk} perlu dipilih videonya`:' · semua sudah cocok'}`,'ok'); await saveRecords();
   }catch(err){ say('Gagal: '+(err.message||err),'err'); } finally{ if(worker) worker.terminate(); } }
+document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('[data-promoadd]')) $('promoShotIn').click(); });
 $('promoShotIn').addEventListener('change',e=>{ const f=[...e.target.files]; e.target.value=''; if(f.length) promoImport(f); });
 // banyak screenshot sekaligus: tarik & lepas, tempel (Ctrl+V), atau klik kotak
 (()=>{ const z=$('promoDrop'); if(!z) return; const imgs=l=>[...(l||[])].filter(f=>f&&/^image\//.test(f.type)).sort((a,b)=>(a.lastModified||0)-(b.lastModified||0));
@@ -2203,7 +2249,7 @@ function renderPromo(){ if(!$('promoTable')) return; const L=PROMO(), P=new Map(
       <td class="pe" data-pe="cost" data-k="${esc(x.k)}" title="Klik 2× untuk mengoreksi angka"><b>${Rp(x.cost||0)}</b></td><td class="pe" data-pe="views" data-k="${esc(x.k)}" title="Klik 2× untuk mengoreksi angka">${x.views!=null?fmt(x.views):'–'}</td><td>${x.views?Rp((x.cost||0)/x.views*1000):'–'}</td><td class="pe" data-pe="m2" data-k="${esc(x.k)}" title="Klik 2× untuk mengoreksi angka">${x.m2!=null?fmt(x.m2):'–'}<br><span class="muted">${esc(x.m2l||'')}</span></td>
       <td>${(()=>{ const v=promoCpi(x), r=cpiRate(v); return v==null?'<span class="muted">–</span>':`<b style="color:${r[1]}">${RpC(v)}</b><br><span class="muted" style="color:${r[1]}">${r[0]}</span>`; })()}</td>
       <td>${l?`<b style="color:var(--${l.lift-liftBase()>0.05?'good':l.lift-liftBase()<-0.05?'bad':'fg'})">${pctS(l.lift)}</b>`:'<span class="muted">belum cukup data</span>'}</td><td><button class="btn ghost" type="button" data-promodel="${esc(x.k)}" aria-label="Hapus pesanan">✕</button></td></tr>`; }).join('')
-      :'<tr class="emptyrow"><td colspan="10">Belum ada data. Klik 📷 Tambah screenshot Promosi atau tarik screenshot ke kotak di atas.</td></tr>')+'</tbody>'; }
+      :'<tr class="emptyrow"><td colspan="10">Belum ada data. <button type="button" class="btn primary" data-promoadd>📷 Tambah screenshot Promosi</button> atau tarik screenshot ke kotak di atas.</td></tr>')+'</tbody>'; }
 function renderAdsEff(){ if(!$('adsEffTable')) return; const day=new Map();
   for(const a of adsRows()){ if(a.k==='topup'||!/berhasil/i.test(a.st||'Berhasil')) continue; const d=String(a.ts).slice(0,10); day.set(d,(day.get(d)||0)-(+a.amt||0)); }
   const P=new Map(allPosts().map(p=>[p.pid,p])), base=liftBase(), rows=[];
@@ -2221,7 +2267,16 @@ function renderCand(){ if(!$('candTable')) return; const L=bepData().filter(x=>x
   $('candTable').innerHTML=`<thead><tr><th style="text-align:left">Produk</th><th style="text-align:left">Kategori</th><th>Umur</th><th>Revenue/hari (7h)</th><th>Balik modal</th><th style="text-align:left">Alasan</th></tr></thead><tbody>`+
     (C.length?C.map(x=>{ const pr=RAW.p[x.pi]; return `<tr><td class="txt" style="text-align:left">${esc(pr[0])}</td><td style="text-align:left">${esc(tname(pr[1]))}</td><td>${x.age} hari</td><td><b>${R(x.perDay)}</b></td><td>${x.bep?`<span class="chip in">✓ ${x.days} hari</span>`:`${Math.round(x.rev/x.cost*100)}%${x.eta!=null?` · ±${x.eta} hari lagi`:''}`}</td><td style="text-align:left;font-family:var(--body)">${!x.bep?'laris tapi belum balik modal: promosi mempercepat':'produk baru yang paling cepat laku: dorong selagi naik'}</td></tr>`; }).join('')
       :'<tr class="emptyrow"><td colspan="6">Belum ada kandidat.</td></tr>')+'</tbody>'; }
-function renderAdsTab(){ renderPromo(); renderPromoStale(); renderAdsEff(); renderCand(); loadCoverImgs(); }
+function renderAdsTab(){ renderPromo(); renderPromoStale(); renderAdsEff(); renderCand(); loadCoverImgs(); promoUpgrade(); }
+// sekali per sesi (versi GitHub): sampul dibuat ulang dengan sidik jari versi 2, thumbnail iklan lama juga, lalu dicocokkan ulang
+let promoUpgraded=false;
+async function promoUpgrade(){ if(promoUpgraded||window.claude||!SHEET_ON()||!PROMO().length) return; promoUpgraded=true;
+  const st=$('promoSt'), say=(t,c)=>{ if(st){ st.className='upd-st '+(c||''); st.textContent=t; } };
+  try{ let ch=0; for(const x of PROMO()) if(x.th&&(!x.hash||x.hash[0]!=='g')){ try{ x.hash=graySig(await bmpOf(x.th),null,16,16); ch++; }catch(e){} }
+    const n=await coverSync(say); if(!n&&!ch) { say(''); return; }
+    let rm=0; for(const x of PROMO()) if(x.how!=='manual'){ const m=promoMatch(x); if(m.pid!==x.pid) rm++; x.pid=m.pid; x.how=m.how; }
+    say(`✓ Pencocokan gambar diperbarui${n?` (${fmt(n)} sampul dibaca ulang)`:''}${rm?` · ${fmt(rm)} pesanan berubah videonya`:''}`,'ok'); renderPromo(); renderRoi(); renderEndorse(); await saveRecords(); }
+  catch(e){ say('Sampul belum bisa dibaca: '+(e.message||e),'err'); } }
 function renderMkCost(views){
   const rows=bookRows().filter(r=>r.out&&inRange(r.d)&&MK_CATS.includes(r.cat)), tot=rows.reduce((s,r)=>s+r.out,0);
   let pcs=0, rev=0; for(const r of TX) if(inRange(r.d)){ pcs++; rev+=r.rev; }
@@ -2537,13 +2592,14 @@ function intGroupHtml(S){
     const key='__int:'+a.u, U='@'+a.u;
     for(const p of P) S.byPid.set(p.id,{p,t:{u:U,type:p.type,pid:p.id,d:wibOf(p.t).slice(0,10)},deal:null,internal:true});
     const open=endOpen.has(key), m=sumM(P), nf=P.filter(p=>p.type==='foto').length, nv=P.length-nf;
-    const sub=!open?'':`<tr class="end-sub"><td></td><td colspan="6"><div class="end-pays">Akun sendiri · ${esc(a.country||'')} · tanpa payment · ${fmt(P.length)} postingan publik di rentang ini, terbaru di atas. Data TikTok ${new Date(a.at||I.at).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}.</div>
-      <div class="int-scroll"><table class="end-links"><thead><tr><th style="text-align:left">Postingan</th><th style="text-align:left">Tayang</th><th>Views</th><th>Like</th><th>Komen</th><th>Share</th><th>Save</th></tr></thead><tbody>
-      ${P.map((p,i)=>`<tr class="click${p.id===endPid?' sel':''}" tabindex="0" data-pid="${p.id}"><td style="text-align:left;font-family:var(--body)"><span class="chip ${p.type==='video'?'pay':''}">${p.type==='video'?'▶ Video':'▣ Foto slide'}</span> #${P.length-i}</td><td style="text-align:left">${dLabel(wibOf(p.t).slice(0,10))} <span class="muted">${wibOf(p.t).slice(11,16)}</span></td>${mrow(p)}</tr>`).join('')}
-      </tbody><tfoot><tr><td style="text-align:left">Total ${fmt(P.length)} postingan</td><td></td>${mrow(m)}</tr></tfoot></table></div></td></tr>`;
+    const PA=S.PA||promoByPid(), AD=adsSum(PA,P.map(p=>p.id));
+    const sub=!open?'':`<tr class="end-sub"><td></td><td colspan="7"><div class="end-pays">Akun sendiri · ${esc(a.country||'')} · tanpa payment · ${fmt(P.length)} postingan publik di rentang ini, terbaru di atas. Data TikTok ${new Date(a.at||I.at).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}.</div>
+      <div class="int-scroll"><table class="end-links"><thead><tr><th style="text-align:left">Postingan</th><th style="text-align:left">Tayang</th><th>Views</th><th>Like</th><th>Komen</th><th>Share</th><th>Save</th>${ADS_TH}</tr></thead><tbody>
+      ${P.map((p,i)=>`<tr class="click${p.id===endPid?' sel':''}" tabindex="0" data-pid="${p.id}"><td style="text-align:left;font-family:var(--body)"><span class="chip ${p.type==='video'?'pay':''}">${p.type==='video'?'▶ Video':'▣ Foto slide'}</span> #${P.length-i}</td><td style="text-align:left">${dLabel(wibOf(p.t).slice(0,10))} <span class="muted">${wibOf(p.t).slice(11,16)}</span></td>${mrow(p)}${adsCells(PA.get(p.id))}</tr>`).join('')}
+      </tbody><tfoot><tr><td style="text-align:left">Total ${fmt(P.length)} postingan</td><td></td>${mrow(m)}${adsCells(AD)}</tr></tfoot></table></div></td></tr>`;
     return `<tbody class="end-grp int-grp${open?' open':''}"><tr class="click end-main" tabindex="0" data-u="${esc(key)}" aria-expanded="${open}"><td class="caret">${open?'▾':'▸'}</td>
       <td style="text-align:left;font-family:var(--body)"><b>${esc(U)}</b> <span class="chip in" style="margin-left:4px">Internal</span> ${accChip(a.u)}<br><small class="muted">${esc(a.country||'akun sendiri')}${a.main?' · akun utama':''} · ${fmt(P.length)} postingan · ${fmt(m.v)} views</small></td>
-      <td style="text-align:left"><span class="chip">Akun sendiri</span></td><td>${fmt(nf)}</td><td>${fmt(nv)}</td><td class="muted">–</td><td class="muted">–</td></tr>${sub}</tbody>`; }).join('');
+      <td style="text-align:left"><span class="chip">Akun sendiri</span></td><td>${fmt(nf)}</td><td>${fmt(nv)}</td><td class="muted">–</td><td class="muted">–</td><td>${adsBadge(AD)}</td></tr>${sub}</tbody>`; }).join('');
 }
 
 // ---------- internal recap per day / week / month ----------
