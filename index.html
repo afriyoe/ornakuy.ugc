@@ -2947,6 +2947,7 @@ function noteNorm(note,cat,inA,outA){ inA=+inA||0; outA=+outA||0;
     const ke=rest.match(/(?:^|\s)ke\s+(.+)$/i), who=ke?ke[1].replace(/\b(?:robux|rbx|jual|penjualan|hasil)\b/gi,' ').replace(/\s+/g,' ').replace(/^[\s,.:;-]+|[\s,.:;-]+$/g,'').trim():'';
     s=who?`Jual Robux ke ${who}${n?' R$'+fmt(n):''}`:`Hasil Penjualan ${n?'R$'+fmt(n):'Robux'}`;
     return {note:s,in:inA,out:outA}; }
+  if(cat==='Endorse'||/^\s*(?:endorse|endrose|endors)/i.test(s)){ const e=endorseNorm(s); if(e) return {note:e,in:inA,out:outA}; }
   if(r){ s=(r.pre.replace(/\b(?:robux|rbx)\s*$/i,'')+' R$'+fmt(n)+' '+r.post.replace(/^\s*(?:robux|rbx)\b/i,'')).replace(/\s+/g,' ').trim(); }
   return {note:s?titleCase(s):s,in:inA,out:outA}; }
 // seragamkan semua transaksi & pending yang sudah ada (sekali per perubahan; hasilnya disimpan)
@@ -2956,6 +2957,21 @@ function bookNormAll(){ if(!BOOK||!Array.isArray(BOOK.tx)) return 0; let ch=0;
   for(const p of (Array.isArray(BOOK.pending)?BOOK.pending:[])){ const c=noteNorm(p.note,p.cat,p.in,p.out); if(c.note!==p.note||c.in!==p.in||c.out!==p.out){ p.note=c.note; p.in=c.in; p.out=c.out; ch++; } }
   if(ch){ BOOK.src={...(BOOK.src||{}),at:Date.now()}; RECS.book=BOOK; clearTimeout(bookNormT); bookNormT=setTimeout(()=>{ try{ saveRecords(); }catch(e){} },1500); }
   return ch; }
+// Endorse: selalu "Endorse TikTok {n} Video + {n} Foto Slide @akun", bagaimanapun cara ketiknya
+const EN_SKIP=/^(?:endorse|endorsement|endrose|endors|endorsee|endorse?an|tiktok|tik|tok|tt|ig|instagram|foto|photo|slide|slides|fotoslide|video|vid|vt|konten|content|bayar|payment|pembayaran|dp|lunas|ke|untuk|buat|akun|kreator|creator|dan|\+|&|x|rp|idr|k|rb|ribu|jt|juta)$/i;
+function knownHandles(){ const S=new Map(); try{ for(const p of (RECS.mk||[])) if(p&&p.u) S.set(String(p.u).replace(/^@/,'').toLowerCase(),String(p.u).replace(/^@/,'')); }catch(e){}
+  try{ for(const t of (BOOK&&BOOK.tx)||[]){ const m=t&&String(t[2]||'').match(/@([\w.]+)/); if(m) S.set(m[1].toLowerCase(),m[1]); } }catch(e){} return S; }
+function endorseNorm(s){ let t=' '+s.replace(/[,;]/g,' ')+' ', vid=0, fs=0;
+  t=t.replace(/(\d+)\s*(?:x\s*)?(?:video|vid|vt)\b/gi,(_,n)=>{ vid+=+n; return ' '; });
+  t=t.replace(/(\d+)\s*(?:x\s*)?(?:foto\s*slides?|fotoslide|slides?|foto|photos?)\b/gi,(_,n)=>{ fs+=+n; return ' '; });
+  t=t.replace(/(?:video|vid|vt)\s*(\d+)\b/gi,(_,n)=>{ vid+=+n; return ' '; }).replace(/(?:foto\s*slides?|slides?|foto)\s*(\d+)\b/gi,(_,n)=>{ fs+=+n; return ' '; });
+  const ig=/\b(?:ig|instagram)\b/i.test(t);
+  let acc=''; const at=t.match(/@([\w.]+)/); if(at){ acc=at[1]; t=t.replace(at[0],' '); }
+  const words=t.split(/\s+/).filter(w=>w&&!EN_SKIP.test(w)&&!/^[\d.,]+(?:k|rb|jt)?$/i.test(w)&&!/^[+&·—-]$/.test(w));
+  if(!acc&&words.length){ const K=knownHandles(), i=Math.max(0,words.findIndex(w=>K.has(w.replace(/^@/,'').toLowerCase()))); acc=words.splice(i,1)[0]; const k=K.get(acc.toLowerCase()); if(k) acc=k; }
+  if(!vid&&!fs&&!acc) return null;
+  const parts=[vid?`${vid} Video`:'',fs?`${fs} Foto Slide`:''].filter(Boolean).join(' + ');
+  return `Endorse ${ig?'Instagram':'TikTok'}${parts?' '+parts:''}${acc?' @'+acc:''}${words.length?' '+titleCase(words.join(' ')):''}`; }
 // ---------- pending (tagihan / pemasukan yang belum terjadi) ----------
 // BOOK.pending = [{id,d,cat,note,in,out,recur:''|'bulanan',created}]
 const PEND=()=>{ if(!Array.isArray(BOOK.pending)) BOOK.pending=[]; return BOOK.pending; };
@@ -4038,7 +4054,7 @@ new MutationObserver(retheme).observe(document.documentElement,{attributes:true,
     januari:1,februari:2,maret:3,april:4,juni:6,juli:7,agustus:8,september:9,oktober:10,november:11,desember:12};
   const CAT_MAP=[
     [/gaji|gajian|salary|upah|honor/i,'Gaji','out'],
-    [/endorse/i,'Endorse','out'],
+    [/endorse|endrose|endors/i,'Endorse','out'],
     [/chat\s*gpt/i,'ChatGPT','out'],
     [/tripo/i,'Tripo','out'],
     [/roblox\s*plus/i,'Roblox Plus','out'],
@@ -5097,6 +5113,6 @@ $('shBtn').addEventListener('click',shModal);
 })();
 
 </script>
-<script>(function(){var B='20261105115538';function chk(){if(!/github\.io$/.test(location.hostname))return;fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/ORNA_BUILD='(\d+)'/);if(!m||m[1]===B)return;if(location.search.indexOf("v="+m[1])>=0)return;var d=document.createElement("div");d.textContent="Versi baru dashboard tersedia · memuat ulang…";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8579b;color:#fff;padding:10px 16px;font:600 14px system-ui;text-align:center";document.body.appendChild(d);setTimeout(function(){location.replace(location.pathname+"?v="+m[1]+location.hash)},700)}).catch(function(){})}window.ORNA_BUILD=B;setTimeout(chk,1200);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
-<!-- ORNA_BUILD='20261105115538' -->
+<script>(function(){var B='20261105120200';function chk(){if(!/github\.io$/.test(location.hostname))return;fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/ORNA_BUILD='(\d+)'/);if(!m||m[1]===B)return;if(location.search.indexOf("v="+m[1])>=0)return;var d=document.createElement("div");d.textContent="Versi baru dashboard tersedia · memuat ulang…";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8579b;color:#fff;padding:10px 16px;font:600 14px system-ui;text-align:center";document.body.appendChild(d);setTimeout(function(){location.replace(location.pathname+"?v="+m[1]+location.hash)},700)}).catch(function(){})}window.ORNA_BUILD=B;setTimeout(chk,1200);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
+<!-- ORNA_BUILD='20261105120200' -->
 </body></html>
