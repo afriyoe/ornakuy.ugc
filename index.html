@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Cache-Control" content="no-cache"></head><body>
 <title>ORNA KUY ROBLOX</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Chakra+Petch:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
@@ -2243,7 +2243,15 @@ function fineMatch(o,posts,byName){ const nm=posts.filter(p=>byName.has(p.pid)),
   return {pid:'',acc:'',how:'perlu dipilih',cand}; }
 function promoMatch0(o){ const posts=allPosts().filter(p=>!o.d||(p.d<=o.d&&p.d>=addDays(o.d,-60))), C=COVER();
   const byName=new Set(promoNameHits(o.title,posts).map(p=>p.pid));
-  if(FT.has(o.k)&&COVPIX.size) return fineMatch(o,posts,byName);
+  if(FT.has(o.k)&&COVPIX.size){ const fm=fineMatch(o,posts,byName), b=fm.cand&&fm.cand[0];
+    if(fm.pid&&!/ragu/.test(fm.how)) return fm;                       // thumbnail yakin → pakai
+    const lg=promoMatchOld(o,posts,byName,C);                           // bandingkan dengan cara lama (gambar abu-abu + nama)
+    if(fm.pid&&(lg.how==='perlu dipilih'||/ragu/.test(lg.how))) return fm;   // keduanya ragu → thumbnail warna didahulukan
+    if(lg.how!=='perlu dipilih') return lg;
+    if(b&&b.f>=0.62) return {pid:b.p.pid,acc:b.p.u,how:'gambar (ragu)',cand:fm.cand};   // tetap tebak dari thumbnail yang paling mirip
+    return lg.cand&&lg.cand.length?lg:fm; }
+  return promoMatchOld(o,posts,byName,C); }
+function promoMatchOld(o,posts,byName,C){
   const sc=posts.map(p=>({p,dist:imgDist(o.hash,C[p.pid]),name:byName.has(p.pid)})).sort((a,b)=>a.dist-b.dist||(b.name-a.name)||(b.p.d.localeCompare(a.p.d)));
   const best=sc[0], second=sc[1];
   if(best&&best.dist<=10&&(!second||second.dist>=best.dist+4||(best.name&&!second.name))) return {pid:best.p.pid,acc:best.p.u,how:best.name?'gambar + nama':'gambar',cand:sc.slice(0,5)};
@@ -2433,15 +2441,17 @@ function promoFixSaved(){ let n=0; for(const x of PROMO()){
 function renderAdsTab(){ promoFixSaved(); renderPromo(); renderPromoStale(); renderAdsEff(); renderCand(); loadCoverImgs(); promoUpgrade(); }
 // sekali per sesi (versi GitHub): sampul dibuat ulang dengan sidik jari versi 2, thumbnail iklan lama juga, lalu dicocokkan ulang
 let promoUpgraded=false;
+const pmRank=m=>!m.pid?0:/ragu/.test(m.how||'')?1:2;
 async function promoUpgrade(){ if(promoUpgraded||window.claude||!SHEET_ON()||!PROMO().length) return; promoUpgraded=true;
   const st=$('promoSt'), say=(t,c)=>{ if(st){ st.className='upd-st '+(c||''); st.textContent=t; } };
   try{ let ch=0; for(const x of PROMO()) if(x.th&&(!x.hash||x.hash[0]!=='g')){ try{ x.hash=graySig(await bmpOf(x.th),null,16,16); ch++; }catch(e){} }
     const n=await coverSync(say); const np=await ensureCovPix(say); for(const x of PROMO()) await promoTmpl(x.k,x.th); PM_CACHE.clear();
-    let done={}; try{ done=JSON.parse(localStorage.getItem('ornakuy-fine')||'{}'); }catch(e){}
+    let done={}; try{ done=JSON.parse(localStorage.getItem('ornakuy-fine2')||'{}'); }catch(e){}
     const L=PROMO().filter(x=>x.how!=='manual'&&x.how!=='ID video'&&FT.has(x.k)&&(done[x.k]!==COVPIX.size||!x.pid)); let rm=0, i=0;
     for(const x of L){ i++; if(i%2===1){ say(`Mencocokkan thumbnail iklan ${i}/${L.length}…`); await new Promise(r=>setTimeout(r,0)); }
-      const m=promoMatch(x); if(m.pid!==x.pid||(m.acc||'')!==(x.acc||'')) rm++; x.pid=m.pid; x.how=m.how; x.acc=m.acc||''; done[x.k]=COVPIX.size; }
-    try{ localStorage.setItem('ornakuy-fine',JSON.stringify(done)); }catch(e){}
+      const m=promoMatch(x); done[x.k]=COVPIX.size; if(x.pid&&pmRank(m)<pmRank(x)) continue;   // jangan ganti hasil lama dengan yang lebih lemah
+      if(m.pid!==x.pid||(m.acc||'')!==(x.acc||'')) rm++; x.pid=m.pid; x.how=m.how; x.acc=m.acc||''; }
+    try{ localStorage.setItem('ornakuy-fine2',JSON.stringify(done)); }catch(e){}
     if(!n&&!ch&&!rm&&!np){ say(''); return; } say(`✓ Pencocokan thumbnail selesai${rm?` · ${fmt(rm)} pesanan berubah videonya`:' · tidak ada perubahan'}`,'ok'); renderPromo(); renderRoi(); renderEndorse(); await saveRecords(); }
   catch(e){ say('Sampul belum bisa dibaca: '+(e.message||e),'err'); } }
 function renderMkCost(views){
@@ -5039,4 +5049,6 @@ $('shBtn').addEventListener('click',shModal);
 })();
 
 </script>
+<script>(function(){var B='20261105113302';function chk(){if(!/github\.io$/.test(location.hostname))return;fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/ORNA_BUILD='(\d+)'/);if(!m||m[1]===B)return;if(location.search.indexOf("v="+m[1])>=0)return;var d=document.createElement("div");d.textContent="Versi baru dashboard tersedia · memuat ulang…";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8579b;color:#fff;padding:10px 16px;font:600 14px system-ui;text-align:center";document.body.appendChild(d);setTimeout(function(){location.replace(location.pathname+"?v="+m[1]+location.hash)},700)}).catch(function(){})}window.ORNA_BUILD=B;setTimeout(chk,1200);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
+<!-- ORNA_BUILD='20261105113302' -->
 </body></html>
