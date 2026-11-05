@@ -613,6 +613,7 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
 .stale-dot:focus{outline:2px solid var(--bad);outline-offset:2px} .stale-dot.show::after{content:attr(data-tip);position:fixed;left:var(--tx,0);top:var(--ty,0);z-index:30;width:250px;padding:8px 10px;border-radius:8px;background:var(--fg);color:var(--bg);font:500 12px/1.45 var(--body);text-align:left;white-space:normal;box-shadow:0 6px 18px rgba(0,0,0,.25)}
 #unsavedBar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:60;max-width:min(720px,calc(100vw - 32px));padding:10px 14px;border-radius:10px;background:#fff3c4;color:#5b4500;border:1px solid #e7c84a;box-shadow:0 8px 24px rgba(0,0,0,.18);font:500 13px/1.5 var(--body);display:flex;gap:10px;align-items:center;flex-wrap:wrap} #unsavedBar .btn{padding:5px 10px}
 #promoTable td.pe{cursor:text}
+.pinned{position:fixed!important;z-index:38;background:var(--bg);box-shadow:0 6px 14px -10px rgba(0,0,0,.45);margin:0!important}
 .ads-b{display:inline-block;padding:2px 8px;border-radius:6px;font:700 11px var(--mono);letter-spacing:.04em;color:#fff} .ads-b.on{background:#1f9d55} .ads-b.off{background:var(--bad)}
 .ads-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px} .ads-dot.on{background:#1f9d55} .ads-dot.off{background:var(--bad)}
 .pr-pv{display:flex;gap:8px;align-items:flex-start} .pr-pv img{width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--line);flex:none}
@@ -931,8 +932,14 @@ table.roi-sub{width:100%;margin-top:8px} table.roi-sub th{font-size:10px} table.
     <section data-mt="ads" id="promoSec">
       <div class="sec-head"><div><div class="eyebrow">TikTok Promosi</div><h2>Promosi per video</h2>
         <p>Data dari screenshot halaman Promosi TikTok (Dasbor → Riwayat pesanan). Setiap pesanan otomatis dicocokkan ke video dan username lewat gambar thumbnail (dibandingkan dengan sampul postingan yang tersimpan), nama di judul, dan tanggal. Pesanan yang sudah ada tidak dobel: angkanya diperbarui. Angka hasil baca screenshot bisa dikoreksi dengan klik 2× pada angkanya.</p></div>
-        <div class="controls"><span class="upd-st" id="promoSt" role="status" aria-live="polite"></span><button class="btn ghost" type="button" id="coverFill" title="Ambil sampul (thumbnail) dan nickname dari link postingan yang sudah ada">Lengkapi sampul &amp; nickname</button><label class="btn primary" for="promoShotIn" style="cursor:pointer" title="Bisa pilih banyak screenshot sekaligus">📷 Tambah screenshot Promosi (bisa banyak)</label><input type="file" id="promoShotIn" accept="image/*" multiple hidden></div></div>
+        <div class="controls"><span class="upd-st" id="promoSt" role="status" aria-live="polite"></span><a class="btn ghost" id="bmLink" href="#" title="Tarik tombol ini ke bar bookmark browser (Chrome, Edge, Safari)">🔖 Kirim ke ORNA KUY</a><button class="btn ghost" type="button" id="coverFill" title="Ambil sampul (thumbnail) dan nickname dari link postingan yang sudah ada">Lengkapi sampul &amp; nickname</button><label class="btn primary" for="promoShotIn" style="cursor:pointer" title="Bisa pilih banyak screenshot sekaligus">📷 Tambah screenshot Promosi</label><input type="file" id="promoShotIn" accept="image/*" multiple hidden></div></div>
       <div id="promoStale"></div>
+      <details class="more" id="bmHelp"><summary>Ambil data langsung dari TikTok Promosi (tanpa screenshot)</summary><div class="panel" style="font-size:13px;line-height:1.7">
+        <ol style="margin:0;padding-left:20px"><li><b>Sekali saja:</b> tampilkan bar bookmark (Chrome/Edge: Cmd/Ctrl + Shift + B · Safari: View → Show Favorites Bar), lalu <b>tarik tombol 🔖 Kirim ke ORNA KUY</b> di atas ke bar bookmark.</li>
+        <li>Buka <b>tiktok.com/promote</b> di browser yang sama (login akun TikTok), klik <b>Riwayat pesanan → Lihat lainnya</b>.</li>
+        <li>Klik bookmark <b>Kirim ke ORNA KUY</b>. Halaman digulir otomatis sampai semua pesanan termuat (±10–20 detik), lalu klik <b>Kirim ke dashboard</b>.</li>
+        <li>Dashboard terbuka dan langsung menyimpan semua pesanan ke spreadsheet. Video dicocokkan lewat ID video kalau ada di halaman, kalau tidak lewat gambar + nickname + tanggal. Pesanan yang sama tidak dobel.</li></ol>
+        <p class="muted" style="margin:8px 0 0">Pesanan berisi beberapa video tetap bisa dirinci lewat screenshot Detail pesanan.</p></div></details>
       <div class="promo-drop" id="promoDrop" tabindex="0" role="button" aria-label="Tambah screenshot Promosi">Tarik &amp; lepas banyak screenshot Promosi ke sini, tempel dengan Ctrl+V, atau <u>pilih file</u>. Semua dibaca berurutan; pesanan yang muncul di beberapa screenshot tidak dobel.</div>
       <div class="kpis rbx-kpis" id="promoKpis"></div>
       <div class="panel"><div class="tbl-wrap" style="margin-top:0;border-top:0"><table id="promoTable"></table></div></div>
@@ -2050,7 +2057,7 @@ function allPosts(){ const out=[]; for(const p of RECS.mk||[]){ const pid=pidOfU
 function promoNum(s){ const m=String(s||'').replace(/\s+/g,' ').match(/(\d[\d.,]*)\s*(rb|ribu|k|jt|juta|m)?\b/i); if(!m) return null; let n=m[1], suf=(m[2]||'').toLowerCase();
   if(suf){ n=n.replace(/\./g,'').replace(',','.'); } else if(/^\d{1,3}([.,]\d{3})+$/.test(n)) n=n.replace(/[.,]/g,''); else n=n.replace(',','.');
   const v=parseFloat(n)*({rb:1e3,ribu:1e3,k:1e3,jt:1e6,juta:1e6,m:1e6}[suf]||1); return isNaN(v)?null:Math.round(v); }
-const PROMO_ST=/^\W{0,3}(Tutup|Aktif|Selesai|Tertunda|Sedang\s+Diperiksa|Ditolak|Dijeda|Berakhir)\b/i;
+const PROMO_ST=/^\W{0,3}(Ditutup|Tutup|Aktif|Selesai|Tertunda|Sedang\s+Diperiksa|Ditolak|Dijeda|Berakhir)\b/i;
 function promoParseShot(data,W){ const L=(data.lines||[]).map(l=>({t:String(l.text||'').trim(),b:l.bbox,w:l.words||[]})).filter(l=>l.t), out=[];
   if(/detail\s*pesanan|hasil\s*promosi|berdasarkan\s*video|mempromosikan\s*\d+\s*materi/i.test(L.map(l=>l.t).join(' '))) return promoParseDetail(L,W);
   const starts=L.map((l,i)=>PROMO_ST.test(l.t)?i:-1).filter(i=>i>=0);
@@ -2081,15 +2088,17 @@ function promoFixPair(rc,rv){ let cost=promoNum(rc), views=promoNum(rv); const o
   return {cost,views}; }
 // halaman "Detail pesanan" (satu pesanan bisa mempromosikan beberapa video): baca hasil per video
 function promoParseDetail(L,W){ const out=[], txt=L.map(l=>l.t).join(' '); if(!/detail\s*pesanan|hasil\s*promosi|berdasarkan\s*video|materi\s*iklan/i.test(txt)) return out;
-  const dm=txt.match(/(\d{2})\/(\d{2})\/(20\d\d)/), d=dm?`${dm[3]}-${dm[2]}-${dm[1]}`:'', ST=/(s[ce]lesai|aktif|tertunda|ditolak|dijeda|diperiksa)/i;
+  const dm=txt.match(/(\d{2})\/(\d{2})\/(20\d\d)/), d=dm?`${dm[3]}-${dm[2]}-${dm[1]}`:'', ST=/(s[ce]lesai|aktif|tertunda|ditolak|dijeda|diperiksa|ditutup|tutup|berakhir)/i;
   L.forEach((l,i)=>{ if(!PR_COST.test(l.t)||/biaya\s*per/i.test(l.t)) return;
     let vi=-1; for(let k=i-1;k>=Math.max(0,i-3);k--) if(PR_VIEW.test(L[k].t)){ vi=k; break; } if(vi<0) return;
     const cpiL=L.slice(i+1,i+3).find(x=>/biaya\s*per/i.test(x.t));
-    let si=-1; for(let k=vi-1;k>=Math.max(0,vi-3);k--) if(ST.test(L[k].t)&&L[k].t.replace(/[^A-Za-z]/g,'').length<=14){ si=k; break; }
-    let ti=-1; for(let k=(si>=0?si:vi)-1;k>=Math.max(0,(si>=0?si:vi)-3);k--) if(/[A-Za-z]{3}/.test(L[k].t)&&!PR_VIEW.test(L[k].t)&&!/hasil\s*promosi|berdasarkan/i.test(L[k].t)){ ti=k; break; }
+    // hanya teks di kolom kanan thumbnail yang dipakai (sisa gambar thumbnail yang terbaca diabaikan)
     const lab=(L[vi].w||[]).find(w=>/^t\S{0,2}yangan$/i.test(w.text||''))||(l.w||[]).find(w=>/^b[il1]aya$/i.test(w.text||'')), colX=lab?lab.bbox.x0:(W||0)*0.3;
-    const title=ti<0?'':promoTitle((L[ti].w||[]).length?L[ti].w.filter(w=>w.bbox.x0>=colX-25).map(w=>w.text).join(' '):L[ti].t);
-    const stRaw=si>=0?(L[si].t.match(ST)||[])[1]:''; const st=/s[ce]lesai/i.test(stRaw)?'Selesai':stRaw?stRaw[0].toUpperCase()+stRaw.slice(1).toLowerCase():'';
+    const colT=x=>(x.w||[]).length?x.w.filter(w=>w.bbox.x0>=colX-25).map(w=>w.text).join(' ').trim():x.t, isSt=x=>{ const t=colT(x).replace(/[^A-Za-z]/g,''); return ST.test(t)&&t.length<=14; };
+    let si=-1; for(let k=vi-1;k>=Math.max(0,vi-3);k--) if(isSt(L[k])){ si=k; break; }
+    let ti=-1; for(let k=(si>=0?si:vi)-1;k>=Math.max(0,(si>=0?si:vi)-4);k--){ const t=colT(L[k]); if(/[A-Za-z]{3}/.test(t)&&!isSt(L[k])&&!PR_VIEW.test(t)&&!PR_COST.test(t)&&!/biaya\s*per|hasil\s*promosi|berdasarkan|lebih\s*banyak/i.test(t)){ ti=k; break; } }
+    const title=ti<0?'':promoTitle(colT(L[ti]));
+    const stRaw=si>=0?(colT(L[si]).match(ST)||[])[1]:''; const st=/s[ce]lesai/i.test(stRaw)?'Selesai':/tutup/i.test(stRaw)?'Ditutup':stRaw?stRaw[0].toUpperCase()+stRaw.slice(1).toLowerCase():'';
     const cv=promoFixPair((l.t.match(PR_COST)||[])[1],(L[vi].t.match(PR_VIEW)||[])[1]), cpi=cpiL?promoNum(cpiL.t.replace(/^.*?(rp)/i,'')):null;
     const top=(ti>=0?L[ti]:L[vi]).b.y0, bot=(cpiL||l).b.y1, size=Math.max(20,bot-top), x0=Math.max(0,colX-(W||0)*0.047-size);
     out.push({det:true,st,obj:'Detail pesanan · per video',d,cost:cv.cost,views:cv.views,m2l:'Suka & komentar',m2:cpi&&cv.cost?Math.round(cv.cost/cpi):null,cpi:cpi||null,title,crop:{x:x0,y:Math.max(0,top),w:size,h:size}}); });
@@ -2184,6 +2193,67 @@ async function coverSync(say){ if(window.claude||!SHEET_ON()) return 0; // ambil
   for(let i=0;i<need.length;i+=30){ say&&say(`Membaca sampul ${Math.min(i+30,need.length)}/${need.length}…`); const r=await post({action:'sampul',ids:need.slice(i,i+30)});
     for(const [id,url] of Object.entries(r.data||{})){ try{ const b=await bmpOf(url); C[id]=graySig(b,null,16); if(!COVER_IMG[id]) COVER_IMG[id]=url; done++; }catch(e){} } }
   if(done){ RECS.cover=C; PM_CACHE.clear(); } return done; }
+// gabungkan pesanan baru ke data: pesanan yang sama (kunci sama, atau tanggal & tujuan sama dengan judul / biaya mirip) diperbarui, tidak dobel.
+// o.vid = ID video yang terbaca langsung dari halaman TikTok (paling akurat)
+function promoMerge(got){ const L=PROMO().slice(), V=new Set(allPosts().map(p=>p.pid)); let add=0, upd=0; const nt=t=>promoBase(t).toLowerCase().replace(/[^a-z0-9]/g,''), no=t=>String(t||'').toLowerCase().replace(/[^a-z]/g,'');
+  for(const o of got){ const k=promoKey(o), now=Date.now(), vid=(o.vids||[]).find(id=>V.has(id))||'';
+    const old=L.find(x=>x.k===k)||L.find(x=>!x.grp&&!o.grp&&x.d&&x.d===o.d&&no(x.obj)===no(o.obj)&&((nt(x.title)&&nt(o.title)&&(nt(x.title).startsWith(nt(o.title))||nt(o.title).startsWith(nt(x.title))))||(x.cost&&o.cost&&Math.abs(x.cost-o.cost)/o.cost<=0.03)));
+    if(old){ Object.assign(old,{st:o.st||old.st,cost:o.cost??old.cost,views:o.views??old.views,m2:o.m2??old.m2,m2l:o.m2l||old.m2l,cpi:o.cpi??old.cpi,hash:o.hash||old.hash,th:o.th||old.th,upd:now});
+      if(o.web&&o.title) old.title=o.title; if(vid&&old.how!=='manual'){ old.pid=vid; old.how='ID video'; } else if(old.how!=='manual'&&old.how!=='ID video'){ const m=promoMatch(old); old.pid=m.pid; old.how=m.how; } upd++; }
+    else { const x={k,...o,upd:now}; delete x.vids; delete x.web; if(vid){ x.pid=vid; x.how='ID video'; } else { const m=promoMatch(x); x.pid=m.pid; x.how=m.how; } L.push(x); add++; } }
+  promoLinkDetail(L); RECS.promo=L.sort((a,b)=>(b.d||'').localeCompare(a.d||'')); return {add,upd,unk:L.filter(x=>!x.pid).length}; }
+// ===== data langsung dari halaman TikTok Promosi (lewat tombol bookmark "Kirim ke ORNA KUY") =====
+function promoParseWeb(o){ const L0=(o.lines||[]).map(t=>String(t).replace(/\s+/g,' ').trim()).filter(Boolean), L=[];
+  for(const t of L0){ if(/^(rb|ribu|jt|juta|k|%)$/i.test(t)&&L.length) L[L.length-1]+=' '+t; else L.push(t); }   // "Rp9,33" + "rb" jadi satu
+  const txt=L.join(' '), WST=/^\W{0,3}(Ditutup|Tutup|Aktif|Selesai|Tertunda|Sedang\s+Diperiksa|Ditolak|Dijeda|Berakhir|Dikirim\s+sebagian)/i;
+  const si=L.findIndex(t=>WST.test(t)); if(si<0) return null; const st=(L[si].match(WST)||[])[1]||'';
+  const dm=txt.match(/(\d{2})\/(\d{2})\/(20\d\d)/), d=dm?`${dm[3]}-${dm[2]}-${dm[1]}`:'';
+  const head=L.slice(si,si+4).join(' '), obj=dm&&head.includes(dm[0])?head.slice(head.indexOf(st)+st.length,head.indexOf(dm[0])).replace(/[,\s]+$/,'').trim():'';
+  const val=re=>{ const i=L.findIndex(t=>re.test(t)); if(i<0) return {i:-1,v:''}; const m=L[i].match(re), rest=(m&&m[m.length-1]||'').trim(); return {i,v:/\d/.test(rest)?rest:(L[i+1]||'')}; };
+  const c=val(/^b[il1]aya\s*[il1]klan\s*(.*)$/i), v=val(/^tayangan\s*video\s*(.*)$/i), M2=/^(suka\s*&\s*komentar|kunjungan\s*profil|pengikut(?:\s*baru)?|klik(?:\s*tautan)?|tayangan\s*profil|jangkauan|pemutaran)\s*(.*)$/i, m=val(M2);
+  if(c.i<0) return null; const lastI=Math.max(c.i,v.i,m.i)+1;
+  const BTN=/(promosikan(\s+lagi)?|tingkatkan\s+anggaran|lihat\s+detail|ulangi|perpanjang)$/i;
+  const tl=(L.slice(lastI+1).map(t=>t.replace(BTN,'').trim()).find(t=>/[A-Za-z]{3}/.test(t)&&!M2.test(t))||'');
+  const ml=m.i>=0?(L[m.i].match(M2)||[])[1]:'';
+  return {web:true,st:st.replace(/\s+/g,' '),obj,d,cost:promoNum(c.v),views:v.i>=0?promoNum(v.v):null,m2l:ml?ml.replace(/\s+/g,' ').replace(/^./,x=>x.toUpperCase()):'',m2:m.i>=0?promoNum(m.v):null,title:promoTitle(tl),vids:o.ids||[],th:/^data:image/.test(o.th||'')?o.th:''}; }
+async function promoImportWeb(orders){ const st=$('promoSt'), say=(t,c)=>{ if(st){ st.className='upd-st '+(c||''); st.textContent=t; } };
+  const got=[]; for(const o of orders||[]){ const x=promoParseWeb(o); if(!x) continue; if(x.th){ try{ x.hash=graySig(await bmpOf(x.th),null,16,16); }catch(e){} } got.push(x); }
+  if(!got.length){ say('Tidak ada pesanan terbaca dari halaman TikTok.','err'); return 'tidak ada pesanan terbaca'; }
+  if(SHEET_ON()&&!window.claude){ try{ await coverSync(say); }catch(e){} }
+  const {add,upd,unk}=promoMerge(got); renderAdsTab(); renderRoi(); renderEndorse();
+  const msg=`${add} pesanan baru, ${upd} diperbarui${unk?` · ${unk} perlu dipilih videonya`:''}`; say('✓ Dari TikTok Promosi: '+msg,'ok'); await saveRecords(); return msg; }
+// kode tombol bookmark: jalan di halaman tiktok.com/promote, menggulir sampai semua pesanan termuat, lalu mengirim datanya ke dashboard
+function promoBookmarklet(){ (async()=>{ const D='__DASH__';
+  const bar=document.createElement('div'); bar.style.cssText='position:fixed;z-index:2147483647;left:50%;top:16px;transform:translateX(-50%);background:#16161a;color:#fff;padding:12px 16px;border-radius:10px;font:14px system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:92vw';
+  document.body.appendChild(bar); const say=t=>{ bar.firstChild?bar.firstChild.nodeValue=t:bar.appendChild(document.createTextNode(t)); };
+  const cnt=e=>((e.innerText||'').match(/Biaya iklan/gi)||[]).length;
+  say('ORNA KUY: memuat semua pesanan…'); let last=-1, same=0; const t0=Date.now();
+  while(Date.now()-t0<20000&&same<4){ const sc=[document.scrollingElement,...document.querySelectorAll('div,main,section')].filter(e=>e&&e.scrollHeight>e.clientHeight+40);
+    sc.forEach(e=>{ try{ e.scrollTop=e.scrollHeight; }catch(x){} }); scrollTo(0,document.body.scrollHeight); await new Promise(r=>setTimeout(r,1000));
+    const n=cnt(document.body); same=n===last?same+1:0; last=n; say('ORNA KUY: memuat pesanan… '+n); }
+  const one=[...document.querySelectorAll('div,li,section,article,a')].filter(e=>cnt(e)===1), cards=one.filter(e=>!e.parentElement||cnt(e.parentElement)>1);
+  const thumb=async src=>{ try{ const im=new Image(); im.crossOrigin='anonymous'; im.src=src; await im.decode(); const c=document.createElement('canvas'); c.width=c.height=72; const s=Math.min(im.naturalWidth,im.naturalHeight);
+      c.getContext('2d').drawImage(im,(im.naturalWidth-s)/2,(im.naturalHeight-s)/2,s,s,0,0,72,72); return c.toDataURL('image/jpeg',0.7); }catch(x){ return ''; } };
+  const orders=[]; for(const e of cards){ const img=[...e.querySelectorAll('img')].map(i=>i.currentSrc||i.src).find(Boolean)||((getComputedStyle(e.querySelector('[style*="background"]')||e).backgroundImage||'').match(/url\("?(.*?)"?\)/)||[])[1]||'';
+    const tw=document.createTreeWalker(e,NodeFilter.SHOW_TEXT), lines=[]; let nd; while((nd=tw.nextNode())){ const t=nd.nodeValue.trim(); if(t&&nd.parentElement&&getComputedStyle(nd.parentElement).display!=='none') lines.push(t); }
+    orders.push({lines,ids:[...new Set(e.outerHTML.match(/\b7\d{18}\b/g)||[])],th:img?await thumb(img):''}); }
+  if(!orders.length){ say('ORNA KUY: tidak ada pesanan terbaca. Buka Promosi → Riwayat pesanan → Lihat lainnya, lalu klik bookmark lagi.'); setTimeout(()=>bar.remove(),8000); return; }
+  say('ORNA KUY: '+orders.length+' pesanan terbaca.'); const b=document.createElement('button'); b.textContent='Kirim ke dashboard'; b.style.cssText='margin-left:12px;padding:7px 12px;border:0;border-radius:6px;background:#fe2c55;color:#fff;font-weight:700;cursor:pointer'; bar.appendChild(b);
+  const x=document.createElement('button'); x.textContent='✕'; x.style.cssText='margin-left:8px;background:none;border:0;color:#fff;cursor:pointer;font-size:16px'; x.onclick=()=>bar.remove(); bar.appendChild(x);
+  b.onclick=()=>{ const w=open(D+'#promoweb','ornakuy'); const data={type:'ornakuy-promo',id:String(Date.now()),orders}; let n=0;
+    const h=e=>{ if(e.data&&e.data.type==='ornakuy-ready'&&w) w.postMessage(data,'*'); if(e.data&&e.data.type==='ornakuy-done'&&e.data.id===data.id){ say('✓ Terkirim ke dashboard: '+e.data.msg); b.remove(); removeEventListener('message',h); setTimeout(()=>bar.remove(),8000); } };
+    addEventListener('message',h); say('ORNA KUY: membuka dashboard…'); const iv=setInterval(()=>{ if(++n>60){ clearInterval(iv); return; } try{ w&&w.postMessage(data,'*'); }catch(x){} },2000); };
+})(); }
+function promoBookmarkHref(){ const dash=/github\.io$/.test(location.hostname)?location.origin+location.pathname:'https://afriyoe.github.io/ornakuy.ugc/';
+  return 'javascript:'+encodeURIComponent('('+promoBookmarklet.toString().replace('__DASH__',dash)+')()'); }
+// dashboard menerima data dari tab TikTok (hanya versi GitHub; diproses setelah data spreadsheet siap)
+(()=>{ if(window.claude) return; const seen=new Set(); let busy=false;
+  addEventListener('message',async e=>{ const d=e.data; if(!d||d.type!=='ornakuy-promo'||!/(^|\.)tiktok\.com$/.test(new URL(e.origin).hostname)) return;
+    if(seen.has(d.id)||busy) return; let done=null; try{ done=sessionStorage.getItem('ornakuy-promoweb'); }catch(x){} if(done===d.id){ e.source&&e.source.postMessage({type:'ornakuy-done',id:d.id,msg:'sudah diterima'},'*'); return; }
+    busy=true; seen.add(d.id); try{ for(let i=0;i<40&&!window.SH_READY;i++) await new Promise(r=>setTimeout(r,500));
+      showMain('mk'); showMkTab('ads'); const msg=await promoImportWeb(d.orders); try{ sessionStorage.setItem('ornakuy-promoweb',d.id); }catch(x){}
+      e.source&&e.source.postMessage({type:'ornakuy-done',id:d.id,msg},'*'); } catch(err){ e.source&&e.source.postMessage({type:'ornakuy-done',id:d.id,msg:'gagal: '+(err.message||err)},'*'); } finally{ busy=false; } });
+  if(location.hash==='#promoweb'&&window.opener){ let n=0; const iv=setInterval(()=>{ if(++n>60) return clearInterval(iv); try{ window.opener.postMessage({type:'ornakuy-ready'},'*'); }catch(x){} },1000); } })();
 async function promoImport(files){ const st=$('promoSt'), say=(t,c)=>{ st.className='upd-st '+(c||''); st.textContent=t; }; let worker=null;
   try{ if(!window.claude&&SHEET_ON()){ try{ await coverSync(say); }catch(e){ say('Sampul belum bisa dibaca: '+e.message+'. Pencocokan memakai nama & tanggal.',''); } }
     say('Menyiapkan pembaca gambar…'); await adsLoadOcr(); worker=await Tesseract.createWorker('ind+eng').catch(()=>Tesseract.createWorker('eng'));
@@ -2192,15 +2262,23 @@ async function promoImport(files){ const st=$('promoSt'), say=(t,c)=>{ st.classN
       const P=promoParseShot(data,bmp.width), D=P.filter(o=>o.det); if(D.length){ const g='g'+D.map(o=>String(o.title).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12)).sort().join('-')+'-'+D.reduce((a,o)=>a+(o.cost||0),0); D.forEach(o=>o.grp=g); }
       for(const o of P){ try{ const s=Math.min(o.crop.w,o.crop.h); o.hash=graySig(bmp,{x:o.crop.x+(o.crop.w-s)/2,y:o.crop.y+(o.crop.h-s)/2,w:s,h:s},16,16); o.th=promoThumb(bmp,o.crop); }catch(e){} delete o.crop; delete o.det; got.push(o); } }
     if(!got.length){ say('Tidak ada pesanan promosi terbaca. Pastikan screenshot dari Promosi → Dasbor → Riwayat pesanan atau Detail pesanan.','err'); return; }
-    const L=PROMO().slice(); let add=0, upd=0;
-    for(const o of got){ const k=promoKey(o), old=L.find(x=>x.k===k), now=Date.now();
-      if(old){ Object.assign(old,{st:o.st,cost:o.cost??old.cost,views:o.views??old.views,m2:o.m2??old.m2,m2l:o.m2l||old.m2l,cpi:o.cpi??old.cpi,hash:o.hash||old.hash,th:o.th||old.th,upd:now}); if(old.how!=='manual'){ const m=promoMatch(old); old.pid=m.pid; old.how=m.how; } upd++; }
-      else { const x={k,...o,upd:now}; const m=promoMatch(x); x.pid=m.pid; x.how=m.how; L.push(x); add++; } }
-    promoLinkDetail(L);
-    RECS.promo=L.sort((a,b)=>(b.d||'').localeCompare(a.d||'')); renderAdsTab(); renderRoi();
-    const unk=L.filter(x=>!x.pid).length; say(`✓ ${add} pesanan baru, ${upd} diperbarui${unk?` · ${unk} perlu dipilih videonya`:' · semua sudah cocok'}`,'ok'); await saveRecords();
+    const {add,upd,unk}=promoMerge(got); renderAdsTab(); renderRoi();
+    say(`✓ ${add} pesanan baru, ${upd} diperbarui${unk?` · ${unk} perlu dipilih videonya`:' · semua sudah cocok'}`,'ok'); await saveRecords();
   }catch(err){ say('Gagal: '+(err.message||err),'err'); } finally{ if(worker) worker.terminate(); } }
 document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('[data-promoadd]')) $('promoShotIn').click(); });
+// menu utama (Analisis/Marketing/Keuangan/Planning) dan sub tab tetap di atas saat halaman di-scroll
+(()=>{ const P=[]; function pin(el,topOf){ if(!el) return; const ph=document.createElement('div'); ph.style.cssText='height:0;flex-basis:100%;margin:0;padding:0'; el.parentNode.insertBefore(ph,el); P.push({el,ph,topOf,on:false}); }
+  const main=$('mainnav'), isBottom=()=>main&&getComputedStyle(main).position==='fixed'&&!main.classList.contains('pinned');
+  const mainH=()=>{ const p=P[0]; return p&&p.on?p.el.offsetHeight:0; };
+  pin(main,()=>0); ['vtabs','mkTabs','finTabs'].forEach(id=>pin($(id),mainH)); document.querySelectorAll('nav.subtabs').forEach(n=>{ if(!P.some(p=>p.el===n)) pin(n,mainH); });
+  function off(p){ if(!p.on) return; p.on=false; p.el.classList.remove('pinned'); p.el.style.top=p.el.style.left=p.el.style.width=''; p.ph.style.height='0'; }
+  function upd(){ for(const p of P){ if(p.el===main&&isBottom()){ off(p); continue; }   // di HP menu utama sudah di bawah layar
+      if(!p.ph.getClientRects().length){ off(p); continue; }   // tab ini sedang tidak tampil
+      const r=p.ph.getBoundingClientRect(), top=p.topOf();
+      if(r.top<top){ if(!p.on){ const b=p.el.getBoundingClientRect(); p.left=b.left; p.width=b.width; p.h=p.el.offsetHeight; p.on=true; p.el.classList.add('pinned'); p.ph.style.height=p.h+'px'; }
+        p.el.style.top=top+'px'; p.el.style.left=p.left+'px'; p.el.style.width=p.width+'px'; } else off(p); } }
+  addEventListener('scroll',upd,{passive:true}); addEventListener('resize',()=>{ P.forEach(off); upd(); }); document.addEventListener('click',()=>setTimeout(upd,50)); })();
+(()=>{ const a=$('bmLink'); if(!a) return; a.href=promoBookmarkHref(); a.addEventListener('click',e=>{ e.preventDefault(); const h=$('bmHelp'); if(h){ h.open=true; h.scrollIntoView({behavior:'smooth',block:'center'}); } }); })();
 $('promoShotIn').addEventListener('change',e=>{ const f=[...e.target.files]; e.target.value=''; if(f.length) promoImport(f); });
 // banyak screenshot sekaligus: tarik & lepas, tempel (Ctrl+V), atau klik kotak
 (()=>{ const z=$('promoDrop'); if(!z) return; const imgs=l=>[...(l||[])].filter(f=>f&&/^image\//.test(f.type)).sort((a,b)=>(a.lastModified||0)-(b.lastModified||0));
@@ -2222,10 +2300,14 @@ $('coverFill').addEventListener('click',async()=>{ const st=$('promoSt'), say=(t
   try{ const c=shCfg(); say('Mengambil sampul & nickname dari link postingan… (bisa 1–3 menit)'); const h=await (await fetch(c.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'sampul',ids:[],key:c.key})})).json();
     const have=new Set(h.have||[]), urls=allPosts().filter(p=>!have.has(p.pid)).map(p=>p.url);
     if(!urls.length){ say('✓ Semua postingan sudah punya sampul.','ok'); return; }
-    const r=await (await fetch(c.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'sampulIsi',urls:urls.slice(0,150),key:c.key,apify:apifyToken()})})).json();
-    if(!r.ok) throw new Error(r.error||'gagal'); const n=await coverSync(say); for(const x of PROMO()) if(x.how!=='manual'){ const m=promoMatch(x); x.pid=m.pid; x.how=m.how; }
-    await shLoad(false).catch(()=>{}); for(const x of PROMO()) if(x.how!=='manual'){ const m=promoMatch(x); x.pid=m.pid; x.how=m.how; }
-    say(`✓ ${fmt(r.disimpan||0)} sampul baru tersimpan${r.preview!=null?` (${fmt(r.preview)} dari preview link, ${fmt(r.apify||0)} lewat Apify)`:''}, ${fmt(r.nick||0)} nickname, ${fmt(n)} sampul dibaca`,'ok'); renderAdsTab(); await saveRecords(); }catch(err){ say('Gagal: '+(err.message||err),'err'); } });
+    // dikirim per 8 postingan supaya tiap permintaan selesai jauh sebelum batas waktu Apps Script (postingan beriklan didahulukan)
+    const prio=new Set(PROMO().map(x=>x.pid).filter(Boolean)), list=urls.sort((a,b)=>(prio.has(pidOfUrl(b))?1:0)-(prio.has(pidOfUrl(a))?1:0)), r={disimpan:0,preview:0,apify:0,nick:0}; let fail=0;
+    for(let i=0;i<list.length;i+=8){ say(`Mengambil sampul & nickname ${Math.min(i+8,list.length)}/${list.length}…`);
+      try{ const q=await (await fetch(c.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'sampulIsi',urls:list.slice(i,i+8),key:c.key,apify:apifyToken()})})).json();
+        if(!q.ok) throw new Error(q.error||'gagal'); for(const k in r) r[k]+=q[k]||0; }catch(e){ fail++; if(fail>=3&&!r.disimpan) throw e; } }
+    try{ const P=shParse(await shCall({action:'read'})); if(P.nick) RECS.nick=P.nick; }catch(e){}
+    const n=await coverSync(say); PM_CACHE.clear(); for(const x of PROMO()) if(x.how!=='manual'){ const m=promoMatch(x); x.pid=m.pid; x.how=m.how; }
+    say(`✓ ${fmt(r.disimpan||0)} sampul baru tersimpan (${fmt(r.preview)} dari preview link, ${fmt(r.apify||0)} lewat Apify), ${fmt(r.nick||0)} nickname, ${fmt(n)} sampul dibaca${fail?` · ${fail} kelompok gagal, klik lagi untuk melanjutkan`:''}`,'ok'); renderAdsTab(); await saveRecords(); }catch(err){ say('Gagal: '+(err.message||err),'err'); } });
 document.addEventListener('change',async e=>{ const s=e.target.closest&&e.target.closest('select[data-promopick]'); if(!s) return; const x=PROMO().find(p=>p.k===s.dataset.promopick); if(!x) return;
   x.pid=s.value; x.how=s.value?'manual':'perlu dipilih';
   const p=s.value&&allPosts().find(q=>q.pid===s.value); if(p&&/^\s*video\s+/i.test(x.title||'')&&nickLearn(p.u,x.title)){ for(const y of PROMO()) if(y!==x&&y.how!=='manual'){ const m=promoMatch(y); y.pid=m.pid; y.how=m.how; } }
@@ -3739,9 +3821,11 @@ const TT=(function(){
   function applySort(table){
     heads(table).forEach(c=>c.removeAttribute('data-sort'));
     const s=sortSt.get(table); if(!s) return; const th=thBy(table,s.label); if(!th) return; th.setAttribute('data-sort',s.dir);
-    const idx=colIndex(th), dir=s.dir==='asc'?1:-1, U=units(table); if(!U.length) return;
+    const idx=colIndex(th), dir=s.dir==='asc'?1:-1, U=units(table), dashFirst=!!s.dashFirst; if(!U.length) return;
     U.forEach((u,i)=>{ if(u.el.__ord==null) u.el.__ord=i; });   // remember the original order for the 3rd click
-    const cmp=(a,b)=>{ const A=key(cellAt(a.row,idx)),B=key(cellAt(b.row,idx)); if(A.n!==null&&B.n!==null) return (A.n-B.n)*dir; if(A.n!==null) return -1; if(B.n!==null) return 1; return A.t.localeCompare(B.t,'id')*dir; };
+    const cmp=(a,b)=>{ const A=key(cellAt(a.row,idx)),B=key(cellAt(b.row,idx)); const ea=A.n===-Infinity, eb=B.n===-Infinity;
+      if(ea!==eb) return dashFirst?(ea?-1:1):(ea?1:-1); if(ea&&eb) return 0;   // "–" (kosong) di bawah, kecuali di klik ke-3
+      if(A.n!==null&&B.n!==null) return (A.n-B.n)*dir; if(A.n!==null) return -1; if(B.n!==null) return 1; return A.t.localeCompare(B.t,'id')*dir; };
     U.forEach(u=>{ u.subs=subsOf(u.el); }); U.sort(cmp); const parent=U[0].el.parentNode, anchor=table.tBodies.length>1?(table.tFoot||null):null;
     U.forEach(u=>{ const at=anchor&&u.el.parentNode===table?anchor:null; parent.insertBefore(u.el,at); u.subs.forEach(x=>parent.insertBefore(x,at)); });
   }
@@ -3774,8 +3858,10 @@ const TT=(function(){
     const th=e.target.closest('thead th'); if(!th||!lab(th)||th.closest('.tfilter')||th.closest('#plForm')) return; const table=th.closest('table'); if(!table) return;
     wire(table); const label=lab(th), cur=sortSt.get(table);
     const sample=units(table).slice(0,5).map(u=>key(cellAt(u.row,colIndex(th)))), numeric=sample.some(k=>k.n!==null&&k.n!==-Infinity);
-    if(cur&&cur.label===label&&cur.step===2){ sortSt.delete(table); restore(table); return; }   // 3rd click: back to the original order
-    sortSt.set(table,cur&&cur.label===label?{label,dir:cur.dir==='desc'?'asc':'desc',step:2}:{label,dir:numeric?'desc':'asc',step:1});
+    // angka: klik 1 tertinggi · klik 2 terendah (yang kosong "–" di bawah) · klik 3 terendah dengan "–" ikut (paling atas) · klik 4 urutan awal. Teks: A–Z · Z–A · awal
+    const same=cur&&cur.label===label, last=numeric?3:2;
+    if(same&&cur.step>=last){ sortSt.delete(table); restore(table); return; }
+    sortSt.set(table,!same?{label,dir:numeric?'desc':'asc',step:1}:numeric?{label,dir:'asc',step:cur.step+1,dashFirst:cur.step+1===3}:{label,dir:cur.dir==='desc'?'asc':'desc',step:2});
     if(!needAll(table)) refresh(table);
   });
   // filter bars
@@ -4731,15 +4817,15 @@ async function shLoad(reload){
   try{ const j=await shCall({action:'ping'});
     if(!j.stamp){ shDot('err','Spreadsheet masih kosong'); setSaveSt('Spreadsheet masih kosong. Klik Spreadsheet → Kirim semua data.','err'); return; }
     const needRec=!(SHC&&SHC.stamp===j.stamp), needSales=!!j.salesStamp&&!(SHC&&SHC.salesStamp===j.salesStamp);
-    if(!needRec&&!needSales){ shDot('ok','Tersambung · data terbaru'); return; }
+    if(!needRec&&!needSales){ shDot('ok','Tersambung · data terbaru'); window.SH_READY=true; return; }
     const sig=j.stamp+':'+j.salesStamp; let last=null; try{ last=sessionStorage.getItem('ornakuy-sh-reload'); }catch(e){}
-    if(last===sig){ shDot('err','Gagal memuat data spreadsheet'); return; }
+    if(last===sig){ shDot('err','Gagal memuat data spreadsheet'); window.SH_READY=true; return; }
     try{ sessionStorage.setItem('ornakuy-sh-reload',sig); }catch(e){}
     setSaveSt(needSales?'Memuat data sales terbaru…':'Memuat data terbaru dari spreadsheet…');
     if(needSales) await shSalesLoad();
     if(needRec) await shLoad(false);
     location.reload();
-  }catch(e){ shDot('err',String(e.message||e)); setSaveSt('Spreadsheet tidak bisa dihubungi: '+(e.message||e),'err'); }
+  }catch(e){ shDot('err',String(e.message||e)); setSaveSt('Spreadsheet tidak bisa dihubungi: '+(e.message||e),'err'); window.SH_READY=true; }
 })();
 function shModal(){
   const c=shCfg(), inArt=!!window.claude, m=document.createElement('div'); m.className='cmodal';
