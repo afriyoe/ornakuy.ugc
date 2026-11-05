@@ -2916,6 +2916,46 @@ function bookRows(){
   const rows=BOOK.tx.map((t,i)=>({no:i+1,d:t[0],m:t[0]?t[0].slice(0,7):NODATE,cat:t[1],note:t[2],in:t[3],out:t[4]}));
   rows.sort((a,b)=>(a.d||'9999-99-99').localeCompare(b.d||'9999-99-99')||a.no-b.no); let bal=0; for(const r of rows){ bal+=r.in-r.out; r.bal=bal; } return rows;
 }
+// ---------- penyeragaman keterangan transaksi ----------
+// Robux selalu ditulis R$angka (dari: robux 1000, 1000 robux, 100rbx, rbx 100, R 1000, R$1000, 1000R$, 1000 $R).
+// Penjualan Robux: "Jual Robux ke Nama R$n" kalau ada tujuannya, selain itu "Hasil Penjualan R$n".
+// Kalau nominal rupiah tidak diisi, rupiah = Robux × RBX_RATE. Kata diawali huruf besar.
+const RBX_RATE=125;
+function rbxParse(s,u){ let t=String(s).replace(/[.,](?=\d{3}(?!\d))/g,'').replace(',','.'); let v=parseFloat(t); if(/^(k|rb)$/i.test(u||'')) v*=1000; return Math.round(v)||0; }
+function rbxFind(line){ const N='(\\d[\\d.,]*)\\s*(k|rb)?';
+  const pats=[[`R\\$\\s*${N}`,1],[`\\$R\\s*${N}`,1],[`${N}\\s*(?:R\\$|\\$R)`,1],[`${N}\\s*(?:robux|rbx)\\b`,1],[`\\b(?:robux|rbx)\\s*${N}`,2],[`(?:^|\\s)R\\s+${N}`,2]];
+  for(const [p,soft] of pats){ const m=line.match(new RegExp(p,soft===2&&p.startsWith('(?:^')?'':'i')); if(!m) continue; const n=rbxParse(m[1],m[2]); if(!n) continue;
+    if(soft===2&&n>=50000&&!m[2]) continue;   // "robux 275000" = rupiah, bukan Robux
+    const lead=m[0].match(/^\s*/)[0]; return {n,pre:line.slice(0,m.index)+lead,post:line.slice(m.index+m[0].length)}; }
+  return null; }
+const TC_SMALL=new Set(['ke','di','dari','untuk','dan','atau','dengan','per','yang','x','&','+','—','-','·']);
+const TC_FIX={tiktok:'TikTok',ugc:'UGC',chatgpt:'ChatGPT',ai:'AI',ads:'Ads',vsphone:'VSPhone',vmos:'VMOS',ugcs:'UGC'};
+function titleCase(s){ let first=true; return String(s).split(/(\s+)/).map(w=>{ if(!w||/^\s+$/.test(w)) return w; const isFirst=first; first=false; const lw=w.toLowerCase(), core=lw.replace(/[^a-z]/g,'');
+  if(w[0]==='@'||/^R\$/.test(w)||/^https?:/i.test(w)) return w;
+  if(core&&TC_FIX[core]&&!/[A-Z]/.test(w.slice(1))) return w.replace(new RegExp(core,'i'),TC_FIX[core]);
+  if(!isFirst&&TC_SMALL.has(lw)) return lw;
+  if(/[A-Z]/.test(w.slice(1))) return w;
+  return w.replace(/^([^a-zA-Z]*)([a-z])/,(m,a,b)=>a+b.toUpperCase()); }).join(''); }
+function noteNorm(note,cat,inA,outA){ inA=+inA||0; outA=+outA||0;
+  let s=String(note||'').replace(/\b(?:rp|idr)\b\.?(?=\s|\d|$)/gi,' ').replace(/\s+/g,' ').trim();
+  const r=rbxFind(s); let n=r?r.n:0; const rest=r?(r.pre+' '+r.post).replace(/\s+/g,' ').trim():s;
+  const hasRbx=!!r||/\b(?:robux|rbx)\b/i.test(s);
+  const sale=cat==='Penjualan Robux'||(hasRbx&&/\b(?:jual|penjualan|terjual|hasil)\b/i.test(s)&&!/\bbeli\b/i.test(s)&&!outA);
+  if(sale&&!/credit|kredit|gift|voucher/i.test(s)){
+    if(!n&&inA>0&&cat==='Penjualan Robux') n=Math.round(inA/RBX_RATE);
+    if(n&&!inA&&!outA) inA=n*RBX_RATE;
+    const ke=rest.match(/(?:^|\s)ke\s+(.+)$/i), who=ke?ke[1].replace(/\b(?:robux|rbx|jual|penjualan|hasil)\b/gi,' ').replace(/\s+/g,' ').replace(/^[\s,.:;-]+|[\s,.:;-]+$/g,'').trim():'';
+    s=who?`Jual Robux ke ${who}${n?' R$'+fmt(n):''}`:`Hasil Penjualan ${n?'R$'+fmt(n):'Robux'}`;
+    return {note:s,in:inA,out:outA}; }
+  if(r){ s=(r.pre.replace(/\b(?:robux|rbx)\s*$/i,'')+' R$'+fmt(n)+' '+r.post.replace(/^\s*(?:robux|rbx)\b/i,'')).replace(/\s+/g,' ').trim(); }
+  return {note:s?titleCase(s):s,in:inA,out:outA}; }
+// seragamkan semua transaksi & pending yang sudah ada (sekali per perubahan; hasilnya disimpan)
+let bookNormT=null;
+function bookNormAll(){ if(!BOOK||!Array.isArray(BOOK.tx)) return 0; let ch=0;
+  for(const t of BOOK.tx){ if(!t) continue; const c=noteNorm(t[2],t[1],t[3],t[4]); if(c.note!==t[2]||c.in!==t[3]||c.out!==t[4]){ t[2]=c.note; t[3]=c.in; t[4]=c.out; ch++; } }
+  for(const p of (Array.isArray(BOOK.pending)?BOOK.pending:[])){ const c=noteNorm(p.note,p.cat,p.in,p.out); if(c.note!==p.note||c.in!==p.in||c.out!==p.out){ p.note=c.note; p.in=c.in; p.out=c.out; ch++; } }
+  if(ch){ BOOK.src={...(BOOK.src||{}),at:Date.now()}; RECS.book=BOOK; clearTimeout(bookNormT); bookNormT=setTimeout(()=>{ try{ saveRecords(); }catch(e){} },1500); }
+  return ch; }
 // ---------- pending (tagihan / pemasukan yang belum terjadi) ----------
 // BOOK.pending = [{id,d,cat,note,in,out,recur:''|'bulanan',created}]
 const PEND=()=>{ if(!Array.isArray(BOOK.pending)) BOOK.pending=[]; return BOOK.pending; };
@@ -2939,7 +2979,7 @@ function renderBookSource(){
     (s&&s.at?` · diperbarui ${new Date(s.at).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})}`:'')+`</span>`
     : `<span><b>Belum ada data</b> · upload file Pembukuan ORNA KUY (.xlsx)</span>`;
 }
-function renderFin(){
+function renderFin(){ bookNormAll();
   renderBookSource();
   const all=bookRows();
   const months=[...new Set(all.map(r=>r.m))].sort((a,b)=>a===NODATE?1:b===NODATE?-1:a.localeCompare(b));
@@ -3177,7 +3217,7 @@ async function finEditSave(){
   if(!ch.length){ finEditCancel(); return; }
   const nDel=ch.filter(([,e])=>e.del).length, nEd=ch.length-nDel;
   if(!await confirmBox('Apakah perubahan sudah benar?',`${nEd} transaksi diubah dan ${nDel} transaksi dihapus. Cek lagi sebelum menyimpan; saldo akan dihitung ulang dan data Marketing (payment endorse) ikut berubah.`,'Simpan')) return;
-  for(const [no,e] of ch) BOOK.tx[no-1]=e.del?null:[toDateStr(e.d)||'',String(e.cat||'').trim(),String(e.note||'').trim(),num(e.in),num(e.out)];
+  for(const [no,e] of ch){ if(e.del){ BOOK.tx[no-1]=null; continue; } const cat=String(e.cat||'').trim(), nn=noteNorm(String(e.note||'').trim(),cat,num(e.in),num(e.out)); BOOK.tx[no-1]=[toDateStr(e.d)||'',cat,nn.note,nn.in,nn.out]; }
   BOOK.tx=BOOK.tx.filter(Boolean); BOOK.src={...(BOOK.src||{}),at:Date.now()}; RECS.book=BOOK;
   finEdit=null; renderFin(); TT.drawBar('finTable'); await saveRecords();
 }
@@ -4043,6 +4083,10 @@ new MutationObserver(retheme).observe(document.documentElement,{attributes:true,
       r.date=`${yr}-${mon}-${day}`;
       line=line.replace(dm[0],'').trim();
     }
+    // nilai Robux (R$1000, 1000 robux, 100rbx, rbx 100, R 1000, 1000R$, 1000 $R) dipisah dulu supaya tidak dianggap rupiah
+    let rbN=0; { const rb=rbxFind(line); if(rb){ rbN=rb.n; line=(rb.pre+' '+rb.post).replace(/\s+/g,' ').trim(); }
+      else if(/\b(?:robux|rbx)\b/i.test(line)){ const m=[...line.matchAll(/(^|\s)(\d[\d.,]*)(?=\s|$)/g)].find(m=>!/\brp\.?\s*$/i.test(line.slice(0,m.index+m[1].length))&&rbxParse(m[2])<50000);
+        if(m){ rbN=rbxParse(m[2]); line=(line.slice(0,m.index)+' '+line.slice(m.index+m[0].length)).replace(/\s+/g,' ').trim(); } } }
     // extract amount (look for number with suffix, prefer the one that looks like money)
     const amts=[...line.matchAll(/([\d.,]+)\s*(k|rb|ribu|jt|juta)?(?!\s*(?:foto|video|slide|postingan))/gi)];
     if(amts.length){
@@ -4066,11 +4110,15 @@ new MutationObserver(retheme).observe(document.documentElement,{attributes:true,
       if(/penjualan|hasil|pendapatan|pemasukan/i.test(line)){r.dir='in';r.cat='Pemasukan Lain';}
       else r.cat='Lainnya';
     }
+    if((rbN||/\b(?:robux|rbx)\b/i.test(r.raw))&&/\b(?:jual|penjualan|terjual|hasil)\b/i.test(r.raw)&&!/\bbeli\b/i.test(r.raw)){ r.cat='Penjualan Robux'; r.dir='in'; }
+    else if(rbN&&/\bbeli\b/i.test(r.raw)){ r.cat='Robux'; r.dir='out'; }
     if(!r.date&&r.pending) r.date=todayWIB();
     // build description from remaining text
     r.desc=line.replace(/\s+/g,' ').replace(/^[\s,.:;-]+|[\s,.:;-]+$/g,'').trim();
     // capitalize first letter
     if(r.desc) r.desc=r.desc[0].toUpperCase()+r.desc.slice(1);
+    // seragamkan keterangan; Robux tanpa nominal rupiah → × RBX_RATE
+    const nn=noteNorm(r.desc+(rbN?' R$'+rbN:''),r.cat,r.dir==='in'?r.amount:0,r.dir==='out'?r.amount:0); r.desc=nn.note; r.amount=r.dir==='in'?nn.in:nn.out;
     return r;
   }
   let parsed=[];
@@ -5049,6 +5097,6 @@ $('shBtn').addEventListener('click',shModal);
 })();
 
 </script>
-<script>(function(){var B='20261105113302';function chk(){if(!/github\.io$/.test(location.hostname))return;fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/ORNA_BUILD='(\d+)'/);if(!m||m[1]===B)return;if(location.search.indexOf("v="+m[1])>=0)return;var d=document.createElement("div");d.textContent="Versi baru dashboard tersedia · memuat ulang…";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8579b;color:#fff;padding:10px 16px;font:600 14px system-ui;text-align:center";document.body.appendChild(d);setTimeout(function(){location.replace(location.pathname+"?v="+m[1]+location.hash)},700)}).catch(function(){})}window.ORNA_BUILD=B;setTimeout(chk,1200);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
-<!-- ORNA_BUILD='20261105113302' -->
+<script>(function(){var B='20261105115538';function chk(){if(!/github\.io$/.test(location.hostname))return;fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/ORNA_BUILD='(\d+)'/);if(!m||m[1]===B)return;if(location.search.indexOf("v="+m[1])>=0)return;var d=document.createElement("div");d.textContent="Versi baru dashboard tersedia · memuat ulang…";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8579b;color:#fff;padding:10px 16px;font:600 14px system-ui;text-align:center";document.body.appendChild(d);setTimeout(function(){location.replace(location.pathname+"?v="+m[1]+location.hash)},700)}).catch(function(){})}window.ORNA_BUILD=B;setTimeout(chk,1200);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
+<!-- ORNA_BUILD='20261105115538' -->
 </body></html>
