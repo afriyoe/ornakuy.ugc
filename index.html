@@ -2185,10 +2185,65 @@ function promoNameHits(title,posts){ const base=promoBase(title), nb=normN(base)
 // cocokkan satu pesanan promosi ke postingan: gambar + nama + tanggal
 // hasil pencocokan disimpan sementara (perbandingan gambar cukup berat); dihitung ulang kalau data sampul / nickname / postingan berubah
 const PM_CACHE=new Map();
-function promoMatch(o){ const C0=COVER(), key=[o.k,o.d,o.title,String(o.hash||'').length,(o.hash||'').slice(-12),Object.keys(C0).length,Object.keys(NICK()).length,(RECS.mk||[]).length,(INT().posts||[]).length].join('|');
+function promoMatch(o){ const C0=COVER(), key=[FT.has(o.k)?'F'+COVPIX.size:'c',o.k,o.d,o.title,String(o.hash||'').length,(o.hash||'').slice(-12),Object.keys(C0).length,Object.keys(NICK()).length,(RECS.mk||[]).length,(INT().posts||[]).length].join('|');
   if(PM_CACHE.has(key)) return PM_CACHE.get(key); const r=promoMatch0(o); PM_CACHE.set(key,r); return r; }
+// ===== Pencocokan thumbnail versi 3 (warna, sebagian sampul pun bisa) =====
+// Thumbnail iklan dipotong dari pinggir putih, lalu dicari di sampul tiap video dalam berbagai ukuran & posisi (100% sampai 35% lebar sampul)
+// dengan korelasi warna. Seperempat thumbnail juga dicari sendiri (kolase beberapa video). Gambar sampul kecil disimpan di browser (IndexedDB).
+const COVPIX=new Map(), FT=new Map(), FS=new Map();
+function trimBox(bmp,cr){ cr=cr||{x:0,y:0,w:bmp.width,h:bmp.height}; const N=96, c=document.createElement('canvas'); c.width=N; c.height=Math.max(8,Math.round(N*cr.h/cr.w)); const g=c.getContext('2d'); g.drawImage(bmp,cr.x,cr.y,cr.w,cr.h,0,0,c.width,c.height);
+  const d=g.getImageData(0,0,c.width,c.height).data, W=c.width, H=c.height, ink=i=>{ const r=d[i],gg=d[i+1],b=d[i+2]; return (r*0.299+gg*0.587+b*0.114)<228||Math.max(r,gg,b)-Math.min(r,gg,b)>28; };
+  const col=new Array(W).fill(0), row=new Array(H).fill(0); for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(ink((y*W+x)*4)){ col[x]++; row[y]++; }
+  const lim=(a,n)=>{ const s0=a.findIndex(v=>v>n*0.2), e=a.length-1-[...a].reverse().findIndex(v=>v>n*0.2); return [s0,e]; };
+  const [x0,x1]=lim(col,H), [y0,y1]=lim(row,W); if(x0<0||y0<0||x1<=x0||y1<=y0) return cr; return {x:cr.x+x0*cr.w/W,y:cr.y+y0*cr.h/H,w:(x1-x0+1)*cr.w/W,h:(y1-y0+1)*cr.h/H}; }
+function rgbGrid(bmp,cr,W,H){ cr=cr||{x:0,y:0,w:bmp.width,h:bmp.height}; const c=document.createElement('canvas'); c.width=W; c.height=H; const g=c.getContext('2d'); g.imageSmoothingQuality='high'; g.drawImage(bmp,cr.x,cr.y,cr.w,cr.h,0,0,W,H);
+  const d=g.getImageData(0,0,W,H).data, o=new Uint8Array(W*H*3); for(let i=0;i<W*H;i++){ o[i*3]=d[i*4]; o[i*3+1]=d[i*4+1]; o[i*3+2]=d[i*4+2]; } return {W,H,p:o}; }
+function rgbSample(T,x0,y0,w,h,kw,kh){ const o=new Float32Array(kw*kh*3); for(let j=0;j<kh;j++) for(let i=0;i<kw;i++){ const fx=x0+(i+0.5)*w/kw-0.5, fy=y0+(j+0.5)*h/kh-0.5, ax=Math.max(0,Math.min(T.W-1,Math.floor(fx))), ay=Math.max(0,Math.min(T.H-1,Math.floor(fy))), bx=Math.min(T.W-1,ax+1), by=Math.min(T.H-1,ay+1), tx=Math.max(0,Math.min(1,fx-ax)), ty=Math.max(0,Math.min(1,fy-ay));
+  for(let ch=0;ch<3;ch++){ const v=(a,b)=>T.p[(b*T.W+a)*3+ch]; o[(j*kw+i)*3+ch]=(v(ax,ay)*(1-tx)+v(bx,ay)*tx)*(1-ty)+(v(ax,by)*(1-tx)+v(bx,by)*tx)*ty; } } return o; }
+// skor 0..1: seberapa mirip thumbnail iklan (T) dengan bagian mana pun dari sampul (C)
+function fineScore(T,C,cache){ let best=0; const h=T.W/2;
+  const parts=[[0,0,T.W,T.H,0,[1,0.85,0.7,0.56,0.44,0.35]],[0,0,h,h,0.04,[1,0.85]],[h,0,h,h,0.04,[1,0.85]],[0,h,h,h,0.04,[1,0.85]],[h,h,h,h,0.04,[1,0.85]]];
+  for(const [px,py,pw,ph,pen,fr] of parts) for(const f of fr){ const k=Math.round(C.W*f); if(k>C.H||k<8) continue; const key=px+','+py+','+pw+','+k; let t=cache.get(key);
+    if(!t){ const r=rgbSample(T,px,py,pw,ph,k,k), M=[]; for(let i=0;i<k*k;i++) if(!(r[i*3]>236&&r[i*3+1]>236&&r[i*3+2]>236)) M.push(i);
+      const mt=[0,0,0]; for(const i of M) for(let ch=0;ch<3;ch++) mt[ch]+=r[i*3+ch]; for(let ch=0;ch<3;ch++) mt[ch]/=M.length||1; let vt=0; for(const i of M) for(let ch=0;ch<3;ch++) vt+=(r[i*3+ch]-mt[ch])**2;
+      t={r,M,mt,vt,ok:M.length>=k*k*0.4&&vt/((M.length||1)*3)>40}; cache.set(key,t); }
+    if(!t.ok) continue; const {r,M,mt,vt}=t, step=k*k>300?2:1;
+    const at=(ox,oy)=>{ if(ox<0||oy<0||ox+k>C.W||oy+k>C.H) return -1; let m0=0,m1=0,m2=0; for(const i of M){ const q=((oy+((i/k)|0))*C.W+ox+i%k)*3; m0+=C.p[q]; m1+=C.p[q+1]; m2+=C.p[q+2]; } m0/=M.length; m1/=M.length; m2/=M.length;
+      let sxy=0, sc=0; for(const i of M){ const q=((oy+((i/k)|0))*C.W+ox+i%k)*3, a=C.p[q]-m0, b=C.p[q+1]-m1, c=C.p[q+2]-m2; sxy+=(r[i*3]-mt[0])*a+(r[i*3+1]-mt[1])*b+(r[i*3+2]-mt[2])*c; sc+=a*a+b*b+c*c; }
+      return sc<1?-1:sxy/Math.sqrt(vt*sc); };
+    // kasar dulu (lompat 2), lalu perhalus di sekitar 3 posisi terbaik
+    const top=[]; for(let oy=0;oy+k<=C.H;oy+=step) for(let ox=0;ox+k<=C.W;ox+=step){ const v=at(ox,oy); if(top.length<3||v>top[2][0]){ top.push([v,ox,oy]); top.sort((a,b)=>b[0]-a[0]); if(top.length>3) top.pop(); } }
+    for(const [v0,ox,oy] of top){ let v=v0; if(step>1) for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) if(dx||dy) v=Math.max(v,at(ox+dx,oy+dy)); if(v-pen>best) best=v-pen; } }
+  return best; }
+function fineOf(k,pid){ const key=k+'|'+pid; if(FS.has(key)) return FS.get(key); const T=FT.get(k), C=COVPIX.get(pid); if(!T||!C) return null; if(!T.cache) T.cache=new Map(); const v=fineScore(T,C,T.cache); FS.set(key,v); return v; }
+async function promoTmpl(k,th){ if(!th||FT.has(k)) return; try{ const b=await bmpOf(th), bx=trimBox(b), s0=Math.min(bx.w,bx.h); FT.set(k,rgbGrid(b,{x:bx.x+(bx.w-s0)/2,y:bx.y+(bx.h-s0)/2,w:s0,h:s0},20,20)); }catch(e){} }
+const idb=(()=>{ let dbp=null; const open=()=>dbp||(dbp=new Promise((ok,no)=>{ try{ const r=indexedDB.open('ornakuy-img',1); r.onupgradeneeded=()=>r.result.createObjectStore('cov'); r.onsuccess=()=>ok(r.result); r.onerror=()=>no(r.error); }catch(e){ no(e); } }));
+  return { all:async()=>{ const db=await open(); return new Promise(ok=>{ const out=new Map(), tx=db.transaction('cov'), st=tx.objectStore('cov'), rq=st.openCursor(); rq.onsuccess=()=>{ const c=rq.result; if(c){ out.set(String(c.key),c.value); c.continue(); } else ok(out); }; rq.onerror=()=>ok(out); }); },
+    put:async(k,v)=>{ const db=await open(); return new Promise(ok=>{ const tx=db.transaction('cov','readwrite'); tx.objectStore('cov').put(v,k); tx.oncomplete=ok; tx.onerror=ok; }); } }; })();
+let covPixLoaded=false;
+async function ensureCovPix(say){ if(window.claude||!SHEET_ON()) return 0; if(!covPixLoaded){ try{ (await idb.all()).forEach((v,k)=>COVPIX.set(k,v)); }catch(e){} covPixLoaded=true; }
+  const c=shCfg(), post=async b=>(await fetch(c.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...b,key:c.key})})).json();
+  const h=await post({action:'sampul',ids:[]}); const need=(h.have||[]).filter(id=>!COVPIX.has(id)); let n=0;
+  for(let i=0;i<need.length;i+=30){ say&&say(`Menyiapkan gambar sampul ${Math.min(i+30,need.length)}/${need.length}… (sekali saja di perangkat ini)`); let r={}; try{ r=await post({action:'sampul',ids:need.slice(i,i+30)}); }catch(e){ continue; }
+    for(const [id,url] of Object.entries(r.data||{})){ try{ const b=await bmpOf(url), W=32, H=Math.max(24,Math.min(64,Math.round(32*b.height/b.width))), g=rgbGrid(b,null,W,H); COVPIX.set(id,g); idb.put(id,g); n++; }catch(e){} } }
+  if(n) FS.clear(); return n; }
+// pencocokan pakai thumbnail (dipakai kalau gambar sampul & thumbnail sudah siap)
+function fineMatch(o,posts,byName){ const nm=posts.filter(p=>byName.has(p.pid)), accs=[...new Set(nm.map(p=>handleKey(p.u)))], C=COVER();
+  let pool=accs.length===1?posts.filter(p=>handleKey(p.u)===accs[0]):posts;
+  if(pool.length>35){ const coarse=pool.slice().sort((a,b)=>imgDist(o.hash,C[a.pid])-imgDist(o.hash,C[b.pid])).slice(0,25), recent=pool.slice().sort((a,b)=>b.d.localeCompare(a.d)).slice(0,10); pool=[...new Set([...coarse,...recent,...nm])]; }
+  const sc=pool.filter(p=>COVPIX.has(p.pid)).map(p=>{ const f=fineOf(o.k,p.pid)||0; return {p,f,dist:Math.round((1-f)*100),name:byName.has(p.pid)}; }).sort((a,b)=>b.f-a.f);
+  const b=sc[0], m=b?b.f-(sc[1]?sc[1].f:0):0, cand=sc.slice(0,10);
+  if(accs.length===1){ if(b) return {pid:b.p.pid,acc:b.p.u,how:b.f>=0.7&&m>=0.03?'akun + gambar':'akun pasti, video perkiraan (ragu)',cand};
+    const l=nm.slice().sort((a,b2)=>b2.d.localeCompare(a.d))[0]; return {pid:l.pid,acc:l.u,how:'akun pasti, video perkiraan (ragu)',cand}; }
+  if(b&&b.f>=0.86&&m>=0.05) return {pid:b.p.pid,acc:b.p.u,how:'gambar (sampul)',cand};
+  const bn=sc.find(x=>x.name); if(bn) return {pid:bn.p.pid,acc:bn.p.u,how:'nama + gambar (ragu)',cand};
+  // tetap tebak dari thumbnail walau ada yang mirip (mis. foto slide dari outfit yang sama): pilih yang paling mirip, tandai ragu
+  if(b&&b.f>=0.78){ const near=sc.filter(x=>x.f>=b.f-0.03), one=new Set(near.map(x=>handleKey(x.p.u))).size===1;
+    return {pid:b.p.pid,acc:b.p.u,how:one&&near.length>1?'akun + gambar (ragu)':'gambar (ragu)',cand}; }
+  return {pid:'',acc:'',how:'perlu dipilih',cand}; }
 function promoMatch0(o){ const posts=allPosts().filter(p=>!o.d||(p.d<=o.d&&p.d>=addDays(o.d,-60))), C=COVER();
   const byName=new Set(promoNameHits(o.title,posts).map(p=>p.pid));
+  if(FT.has(o.k)&&COVPIX.size) return fineMatch(o,posts,byName);
   const sc=posts.map(p=>({p,dist:imgDist(o.hash,C[p.pid]),name:byName.has(p.pid)})).sort((a,b)=>a.dist-b.dist||(b.name-a.name)||(b.p.d.localeCompare(a.p.d)));
   const best=sc[0], second=sc[1];
   if(best&&best.dist<=10&&(!second||second.dist>=best.dist+4||(best.name&&!second.name))) return {pid:best.p.pid,acc:best.p.u,how:best.name?'gambar + nama':'gambar',cand:sc.slice(0,5)};
@@ -2198,8 +2253,10 @@ function promoMatch0(o){ const posts=allPosts().filter(p=>!o.d||(p.d<=o.d&&p.d>=
   if(nm.length){ const accs=[...new Set(nm.map(x=>handleKey(x.p.u)))];
     // nama/nickname hanya cocok ke satu akun: akunnya pasti, videonya belum (kecuali gambar salah satu video jelas paling mirip)
     if(accs.length===1){ const im=nm.slice().sort((a,b)=>a.dist-b.dist); if(im[0].dist<=20&&(!im[1]||im[1].dist>=im[0].dist+5)) return {pid:im[0].p.pid,acc:im[0].p.u,how:'nama + gambar',cand:im.slice(0,8)};
-      return {pid:'',acc:nm[0].p.u,how:'akun pasti, video belum',cand:nm.slice(0,12)}; }
-    return {pid:'',acc:'',how:'nama mirip beberapa akun',cand:nm.slice(0,8).concat(sc.filter(x=>!x.name).slice(0,3))}; }
+      // akun pasti; video diperkirakan = video akun itu yang gambarnya paling mirip (bisa diganti dari daftar)
+      return {pid:im[0].p.pid,acc:im[0].p.u,how:'akun pasti, video perkiraan (ragu)',cand:im.slice(0,12)}; }
+    const im=nm.slice().sort((a,b)=>a.dist-b.dist||b.p.d.localeCompare(a.p.d));
+    return {pid:im[0].p.pid,acc:im[0].p.u,how:'nama + gambar (ragu)',cand:im.slice(0,8).concat(sc.filter(x=>!x.name).slice(0,3))}; }
   return {pid:'',acc:'',how:'perlu dipilih',cand:sc.filter(x=>x.dist<99).slice(0,5).concat(posts.slice().sort((a,b)=>b.d.localeCompare(a.d)).slice(0,5).map(p=>({p,dist:99,name:false})))}; }
 async function coverSync(say){ if(window.claude||!SHEET_ON()) return 0; // ambil sampul yang tersimpan di Drive (lewat Apps Script) lalu buat sidik jarinya
   const c=shCfg(), post=async b=>{ const r=await fetch(c.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...b,key:c.key})}); return r.json(); };
@@ -2234,7 +2291,7 @@ function promoParseWeb(o){ const L0=(o.lines||[]).map(t=>String(t).replace(/\s+/
 async function promoImportWeb(orders){ const st=$('promoSt'), say=(t,c)=>{ if(st){ st.className='upd-st '+(c||''); st.textContent=t; } };
   const got=[]; for(const o of orders||[]){ const x=promoParseWeb(o); if(!x) continue; if(x.th){ try{ x.hash=graySig(await bmpOf(x.th),null,16,16); }catch(e){} } got.push(x); }
   if(!got.length){ say('Tidak ada pesanan terbaca dari halaman TikTok.','err'); return 'tidak ada pesanan terbaca'; }
-  if(SHEET_ON()&&!window.claude){ try{ await coverSync(say); }catch(e){} }
+  if(SHEET_ON()&&!window.claude){ try{ await coverSync(say); await ensureCovPix(say); }catch(e){} } for(const o of got) await promoTmpl(promoKey(o),o.th);
   const {add,upd,unk}=promoMerge(got); renderAdsTab(); renderRoi(); renderEndorse();
   const msg=`${add} pesanan baru, ${upd} diperbarui${unk?` · ${unk} perlu dipilih videonya`:''}`; say('✓ Dari TikTok Promosi: '+msg,'ok'); await saveRecords(); return msg; }
 // kode tombol bookmark: jalan di halaman tiktok.com/promote, menggulir sampai semua pesanan termuat, lalu mengirim datanya ke dashboard
@@ -2278,8 +2335,9 @@ async function promoImport(files){ const st=$('promoSt'), say=(t,c)=>{ st.classN
     const got=[]; let i=0;
     for(const f of files){ i++; say(`Membaca screenshot ${i}/${files.length}…`); const bmp=await createImageBitmap(f); const {data}=await worker.recognize(f);
       const P=promoParseShot(data,bmp.width), D=P.filter(o=>o.det); if(D.length){ const g='g'+D.map(o=>String(o.title).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12)).sort().join('-')+'-'+D.reduce((a,o)=>a+(o.cost||0),0); D.forEach(o=>o.grp=g); }
-      for(const o of P){ try{ const s=Math.min(o.crop.w,o.crop.h); o.hash=graySig(bmp,{x:o.crop.x+(o.crop.w-s)/2,y:o.crop.y+(o.crop.h-s)/2,w:s,h:s},16,16); o.th=promoThumb(bmp,o.crop); }catch(e){} delete o.crop; delete o.det; got.push(o); } }
+      for(const o of P){ try{ const cr=o.crop, bx=trimBox(bmp,{x:Math.max(0,cr.x-cr.w*0.15),y:Math.max(0,cr.y-cr.h*0.08),w:cr.w*1.17,h:cr.h*1.16}); o.crop=bx; const s=Math.min(bx.w,bx.h); o.hash=graySig(bmp,{x:bx.x+(bx.w-s)/2,y:bx.y+(bx.h-s)/2,w:s,h:s},16,16); o.th=promoThumb(bmp,bx); }catch(e){} delete o.crop; delete o.det; got.push(o); } }
     if(!got.length){ say('Tidak ada pesanan promosi terbaca. Pastikan screenshot dari Promosi → Dasbor → Riwayat pesanan atau Detail pesanan.','err'); return; }
+    if(!window.claude&&SHEET_ON()){ try{ await ensureCovPix(say); }catch(e){} } for(const o of got) await promoTmpl(promoKey(o),o.th);
     const {add,upd,unk}=promoMerge(got); renderAdsTab(); renderRoi();
     say(`✓ ${add} pesanan baru, ${upd} diperbarui${unk?` · ${unk} perlu dipilih videonya`:' · semua sudah cocok'}`,'ok'); await saveRecords();
   }catch(err){ say('Gagal: '+(err.message||err),'err'); } finally{ if(worker) worker.terminate(); } }
@@ -2342,7 +2400,7 @@ function renderPromo(){ if(!$('promoTable')) return; const L=PROMO(), P=new Map(
       return ['Biaya per suka & komentar',v==null?'–':`<span style="color:${r[1]}">${RpC(v)}</span>`,v==null?'belum ada data suka & komentar':`${r[0]} · ${fmt(Math.round(m))} suka & komentar dari ${fmt(S.length)} iklan`]; })(),['Cocok otomatis',`${fmt(ok)} / ${fmt(L.length)}`,L.length-ok?`${L.length-ok} perlu dipilih videonya`:'semua pesanan sudah terhubung ke video']]
     .map(k=>`<div class="kpi"><span class="eyebrow">${k[0]}</span><span class="v">${k[1]}</span><span class="s">${k[2]}</span></div>`).join('');
   const accCell=x=>{ const n=nickOf(x.acc)[0]; return `<b>${esc(x.acc)}</b>${n?` <span class="muted">(${esc(n)})</span>`:''} · <span class="chip pay" title="Akun pembuat video sudah pasti dari nama / nickname di judul, tapi videonya belum bisa dipastikan">video belum pasti</span><br>`; };
-  const opts=x=>{ const m=promoMatch(x), seen=new Set(); return `<select data-promopick="${esc(x.k)}" aria-label="Pilih video"><option value="">Pilih video…</option>${m.cand.filter(c=>!seen.has(c.p.pid)&&seen.add(c.p.pid)).map(c=>`<option value="${c.p.pid}"${c.p.pid===x.pid?' selected':''}>${esc(c.p.u)} · ${dLabel(c.p.d)} · ${c.p.type}${c.dist<99?` · beda gambar ${c.dist}`:''}</option>`).join('')}</select>`; };
+  const opts=x=>{ const m=promoMatch(x), seen=new Set(); return `<select data-promopick="${esc(x.k)}" aria-label="Pilih video"><option value="">Pilih video…</option>${m.cand.filter(c=>!seen.has(c.p.pid)&&seen.add(c.p.pid)).map(c=>`<option value="${c.p.pid}"${c.p.pid===x.pid?' selected':''}>${esc(c.p.u)} · ${dLabel(c.p.d)} · ${c.p.type}${c.f!=null?` · mirip ${Math.round(c.f*100)}%`:c.dist<99?` · beda gambar ${c.dist}`:''}</option>`).join('')}</select>`; };
   $('promoTable').innerHTML=`<thead><tr><th style="text-align:left">Tanggal</th><th style="text-align:left">Pesanan</th><th style="text-align:left">Video</th><th>Biaya</th><th>Tayangan iklan</th><th>Per 1.000 tayangan</th><th>Interaksi</th><th title="Biaya iklan ÷ suka &amp; komentar hasil iklan. Di bawah Rp20 sangat baik · Rp20–30 baik · Rp30–50 cukup baik · Rp50–70 kurang baik · Rp70+ tidak baik">Biaya per suka &amp; komentar</th><th title="Penjualan 1–3 hari setelah promosi dimulai vs 3 hari sebelumnya">Efek sales 1–3 hari</th><th></th></tr></thead><tbody>`+
     (L.length?L.map(x=>{ const p=P.get(x.pid), l=salesLift(x.d); return `<tr><td class="txt" style="text-align:left">${x.d?dLabelY(x.d):'–'}<br><span class="chip ${/aktif/i.test(x.st)?'in':''}">${esc(x.st||'–')}</span>${PROMO_RUN.test(x.st||'')&&x.upd&&Date.now()-x.upd>=3*864e5?`<span class="stale-dot" tabindex="0" role="button" aria-label="Belum ada screenshot terbaru" data-tip="Masih tercatat ${esc(x.st)}, tapi screenshot terakhir ${Math.floor((Date.now()-x.upd)/864e5)} hari lalu. Kirim screenshot Promosi terbaru.">!</span>`:''}<br><span class="muted">update ${x.upd?wibStr(x.upd/1000).slice(5).replace('-','/'):'–'}</span></td>
       <td class="txt" style="text-align:left"><div class="pr-pv">${x.th?`<img src="${x.th}" alt="Thumbnail iklan" title="Thumbnail iklan (dari screenshot)">`:''}${p?`<img data-cov="${p.pid}" alt="Sampul video yang cocok" title="Sampul video ${esc(p.u)}" ${COVER_IMG[p.pid]?`src="${COVER_IMG[p.pid]}"`:'hidden'}>`:''}<div>${esc(x.title||'–')}<br><span class="muted">${esc(x.obj||'')}${x.split?' · dirinci per video, biaya tidak dihitung dua kali':''}${x.grp&&!x.parent?' · pesanan induk belum ada (kirim screenshot Riwayat pesanan)':''}</span></div></div></td>
@@ -2378,9 +2436,13 @@ let promoUpgraded=false;
 async function promoUpgrade(){ if(promoUpgraded||window.claude||!SHEET_ON()||!PROMO().length) return; promoUpgraded=true;
   const st=$('promoSt'), say=(t,c)=>{ if(st){ st.className='upd-st '+(c||''); st.textContent=t; } };
   try{ let ch=0; for(const x of PROMO()) if(x.th&&(!x.hash||x.hash[0]!=='g')){ try{ x.hash=graySig(await bmpOf(x.th),null,16,16); ch++; }catch(e){} }
-    const n=await coverSync(say); PM_CACHE.clear();
-    let rm=0; for(const x of PROMO()) if(x.how!=='manual'&&x.how!=='ID video'){ const m=promoMatch(x); if(m.pid!==x.pid||(m.acc||'')!==(x.acc||'')) rm++; x.pid=m.pid; x.how=m.how; x.acc=m.acc||''; }
-    if(!n&&!ch&&!rm){ say(''); return; } say(`✓ Pencocokan diperbarui${n?` (${fmt(n)} sampul dibaca ulang)`:''}${rm?` · ${fmt(rm)} pesanan berubah`:''}`,'ok'); renderPromo(); renderRoi(); renderEndorse(); await saveRecords(); }
+    const n=await coverSync(say); const np=await ensureCovPix(say); for(const x of PROMO()) await promoTmpl(x.k,x.th); PM_CACHE.clear();
+    let done={}; try{ done=JSON.parse(localStorage.getItem('ornakuy-fine')||'{}'); }catch(e){}
+    const L=PROMO().filter(x=>x.how!=='manual'&&x.how!=='ID video'&&FT.has(x.k)&&(done[x.k]!==COVPIX.size||!x.pid)); let rm=0, i=0;
+    for(const x of L){ i++; if(i%2===1){ say(`Mencocokkan thumbnail iklan ${i}/${L.length}…`); await new Promise(r=>setTimeout(r,0)); }
+      const m=promoMatch(x); if(m.pid!==x.pid||(m.acc||'')!==(x.acc||'')) rm++; x.pid=m.pid; x.how=m.how; x.acc=m.acc||''; done[x.k]=COVPIX.size; }
+    try{ localStorage.setItem('ornakuy-fine',JSON.stringify(done)); }catch(e){}
+    if(!n&&!ch&&!rm&&!np){ say(''); return; } say(`✓ Pencocokan thumbnail selesai${rm?` · ${fmt(rm)} pesanan berubah videonya`:' · tidak ada perubahan'}`,'ok'); renderPromo(); renderRoi(); renderEndorse(); await saveRecords(); }
   catch(e){ say('Sampul belum bisa dibaca: '+(e.message||e),'err'); } }
 function renderMkCost(views){
   const rows=bookRows().filter(r=>r.out&&inRange(r.d)&&MK_CATS.includes(r.cat)), tot=rows.reduce((s,r)=>s+r.out,0);
