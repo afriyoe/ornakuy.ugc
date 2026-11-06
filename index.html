@@ -1147,7 +1147,19 @@ const validSales = r => r && Array.isArray(r.tx) && r.tx.length && Array.isArray
 const EMBED = readEmbed('ornakuy-data'), FILE_SALES = readJSONSync('data/sales.json');
 let STORED = null; try{ const x=JSON.parse(localStorage.getItem(STORE_KEY)||'null'); if(x&&validSales(x.raw)) STORED=x; }catch(e){}
 // Google Sheets = master data di versi GitHub: salinan terakhir dari spreadsheet dipakai lebih dulu
-const SHC=(()=>{ try{ if(window.claude) return null; const c=JSON.parse(localStorage.getItem('ornakuy-sheet')||'null'); if(!c||!c.url||!c.key) return null; return JSON.parse(localStorage.getItem('ornakuy-sheet-cache')||'null'); }catch(e){ return null; } })();
+// lz-string 1.5.0 (MIT, pieroxy) — data sales disimpan terkompresi (±6× lebih kecil) supaya muat di penyimpanan browser
+var LZString=function(){var r=String.fromCharCode,o="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",n="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$",e={};function t(r,o){if(!e[r]){e[r]={};for(var n=0;n<r.length;n++)e[r][r.charAt(n)]=n}return e[r][o]}var i={compressToBase64:function(r){if(null==r)return"";var n=i._compress(r,6,function(r){return o.charAt(r)});switch(n.length%4){default:case 0:return n;case 1:return n+"===";case 2:return n+"==";case 3:return n+"="}},decompressFromBase64:function(r){return null==r?"":""==r?null:i._decompress(r.length,32,function(n){return t(o,r.charAt(n))})},compressToUTF16:function(o){return null==o?"":i._compress(o,15,function(o){return r(o+32)})+" "},decompressFromUTF16:function(r){return null==r?"":""==r?null:i._decompress(r.length,16384,function(o){return r.charCodeAt(o)-32})},compressToUint8Array:function(r){for(var o=i.compress(r),n=new Uint8Array(2*o.length),e=0,t=o.length;e<t;e++){var s=o.charCodeAt(e);n[2*e]=s>>>8,n[2*e+1]=s%256}return n},decompressFromUint8Array:function(o){if(null==o)return i.decompress(o);for(var n=new Array(o.length/2),e=0,t=n.length;e<t;e++)n[e]=256*o[2*e]+o[2*e+1];var s=[];return n.forEach(function(o){s.push(r(o))}),i.decompress(s.join(""))},compressToEncodedURIComponent:function(r){return null==r?"":i._compress(r,6,function(r){return n.charAt(r)})},decompressFromEncodedURIComponent:function(r){return null==r?"":""==r?null:(r=r.replace(/ /g,"+"),i._decompress(r.length,32,function(o){return t(n,r.charAt(o))}))},compress:function(o){return i._compress(o,16,function(o){return r(o)})},_compress:function(r,o,n){if(null==r)return"";var e,t,i,s={},u={},a="",p="",c="",l=2,f=3,h=2,d=[],m=0,v=0;for(i=0;i<r.length;i+=1)if(a=r.charAt(i),Object.prototype.hasOwnProperty.call(s,a)||(s[a]=f++,u[a]=!0),p=c+a,Object.prototype.hasOwnProperty.call(s,p))c=p;else{if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++),s[p]=f++,c=String(a)}if(""!==c){if(Object.prototype.hasOwnProperty.call(u,c)){if(c.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==o-1?(v=0,d.push(n(m)),m=0):v++;for(t=c.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=c.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}0==--l&&(l=Math.pow(2,h),h++),delete u[c]}else for(t=s[c],e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;0==--l&&(l=Math.pow(2,h),h++)}for(t=2,e=0;e<h;e++)m=m<<1|1&t,v==o-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;for(;;){if(m<<=1,v==o-1){d.push(n(m));break}v++}return d.join("")},decompress:function(r){return null==r?"":""==r?null:i._decompress(r.length,32768,function(o){return r.charCodeAt(o)})},_decompress:function(o,n,e){var t,i,s,u,a,p,c,l=[],f=4,h=4,d=3,m="",v=[],g={val:e(0),position:n,index:1};for(t=0;t<3;t+=1)l[t]=t;for(s=0,a=Math.pow(2,2),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;c=r(s);break;case 2:return""}for(l[3]=c,i=c,v.push(c);;){if(g.index>o)return"";for(s=0,a=Math.pow(2,d),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;switch(c=s){case 0:for(s=0,a=Math.pow(2,8),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 1:for(s=0,a=Math.pow(2,16),p=1;p!=a;)u=g.val&g.position,g.position>>=1,0==g.position&&(g.position=n,g.val=e(g.index++)),s|=(u>0?1:0)*p,p<<=1;l[h++]=r(s),c=h-1,f--;break;case 2:return v.join("")}if(0==f&&(f=Math.pow(2,d),d++),l[c])m=l[c];else{if(c!==h)return null;m=i+i.charAt(0)}v.push(m),l[h++]=i+m.charAt(0),i=m,0==--f&&(f=Math.pow(2,d),d++)}}};return i}();"function"==typeof define&&define.amd?define(function(){return LZString}):"undefined"!=typeof module&&null!=module?module.exports=LZString:"undefined"!=typeof angular&&null!=angular&&angular.module("LZString",[]).factory("LZString",function(){return LZString});
+const SALES_Z='ornakuy-sales-z';
+function salesZGet(){ try{ const z=localStorage.getItem(SALES_Z); return z?JSON.parse(LZString.decompressFromUTF16(z)):null; }catch(e){ return null; } }
+// kosongkan salinan ganda yang tidak dipakai saat spreadsheet tersambung (dulu memenuhi penyimpanan browser)
+function lsFree(){ try{ localStorage.removeItem(STORE_KEY); localStorage.removeItem(REC_KEY); }catch(e){} }
+const SHC=(()=>{ try{ if(window.claude) return null; const c=JSON.parse(localStorage.getItem('ornakuy-sheet')||'null'); if(!c||!c.url||!c.key) return null;
+  const o=JSON.parse(localStorage.getItem('ornakuy-sheet-cache')||'null'); if(!o) return null;
+  if(o.sales){ // pindahkan sales lama (tidak terkompresi) ke penyimpanan terkompresi
+    lsFree(); try{ localStorage.setItem(SALES_Z,LZString.compressToUTF16(JSON.stringify(o.sales))); const s=o.sales; delete o.sales; localStorage.setItem('ornakuy-sheet-cache',JSON.stringify(o)); o.sales=s; }catch(e){} }
+  else { const s=salesZGet(); if(s) o.sales=s; else delete o.salesStamp; }
+  return o; }catch(e){ return null; } })();
+if(SHC) lsFree();
 const SHC_STATE={stamp:SHC?SHC.stamp||0:0};
 const SALES_SRC = [['drive',SHC&&SHC.sales],['file',FILE_SALES],['embed',EMBED],['cache',STORED&&STORED.raw]].filter(c=>validSales(c[1]))
   .sort((a,b)=>lastTs(b[1])-lastTs(a[1]) || b[1].tx.length-a[1].tx.length)[0] || ['none',{p:[],b:[],g:[],tx:[]}];
@@ -1179,9 +1191,10 @@ let RECS = (SHC&&SHC.recs&&Array.isArray(SHC.recs.mk))?{fin:[],...SHC.recs}:(()=
 let ART=null;
 const ART_READY = (window.claude && typeof window.claude.use==='function') ? window.claude.use('artifact').then(a=>{ ART=a; return a; }).catch(()=>null) : Promise.resolve(null);
 async function persist({sales,records}){
-  try{ if(sales) localStorage.setItem(STORE_KEY,JSON.stringify({savedAt:Date.now(),raw:sales})); if(records) localStorage.setItem(REC_KEY,JSON.stringify(records)); }catch(e){}
-  // data sales (revenue) tidak dikirim ke spreadsheet: tetap lewat upload CSV/ZIP dan file dashboard
-  if(sales&&SHEET_ON()) await shSalesPush(sales);
+  const sh=SHEET_ON();
+  // tersambung spreadsheet: salinan lokal disimpan terkompresi lewat shSaveCache (tidak dobel di sini)
+  if(!sh) try{ if(sales) localStorage.setItem(STORE_KEY,JSON.stringify({savedAt:Date.now(),raw:sales})); if(records) localStorage.setItem(REC_KEY,JSON.stringify(records)); }catch(e){}
+  if(sales&&sh){ const ok=await shSalesPush(sales); if(!records) return {ok,where:ok?'sheet':'local'}; }
   if(records&&SHEET_ON()){ RECS.book=BOOK; const ok=await shPush(shBuildRecs()); return {ok:!!ok,where:'sheet'}; }
   const a=await ART_READY;
   if(a){ // the artifact saves state by publishing a new version of itself with the data embedded
@@ -1721,7 +1734,7 @@ async function handleFiles(files){
     dpMsg(sum+' Menyimpan…','info');
     const res=await persist({sales:cur});
     let cached=false; try{ cached=lastTs(JSON.parse(localStorage.getItem(STORE_KEY)).raw)===lastTs(cur); }catch(e){}
-    if(res.where==='artifact'||cached){ try{ sessionStorage.setItem('ornakuy-msg',JSON.stringify({sum,where:res.where})); }catch(e){} location.reload(); }
+    if(res.where==='artifact'||(res.where==='sheet'&&res.ok)||cached){ try{ sessionStorage.setItem('ornakuy-msg',JSON.stringify({sum,where:res.where})); }catch(e){} location.reload(); }
     else dpMsg(sum+' Data belum bisa disimpan di sini, jadi klik "Unduh dashboard (.html)" agar data barunya tidak hilang.','err');
   }catch(err){ dpMsg(err.message||String(err),'err'); }
 }
@@ -4917,7 +4930,12 @@ function shParse(j){
   out.empty=!out.book&&!out.mk; return out;
 }
 function shCacheGet(){ try{ return JSON.parse(localStorage.getItem('ornakuy-sheet-cache')||'null')||{}; }catch(e){ return {}; } }
-function shSaveCache(extra){ try{ const o=shCacheGet(); localStorage.setItem('ornakuy-sheet-cache',JSON.stringify({...o,stamp:SHC_STATE.stamp,recs:{...RECS,book:BOOK},...(extra||{})})); }catch(e){ setSaveSt('Salinan lokal spreadsheet terlalu besar untuk browser ini','err'); } }
+function shSaveCache(extra){ const ex={...(extra||{})}, o=shCacheGet(); let ok=true; lsFree();
+  if(o.sales){ if(!ex.sales) ex.sales=o.sales; delete o.sales; }
+  if(ex.sales){ try{ localStorage.setItem(SALES_Z,LZString.compressToUTF16(JSON.stringify(ex.sales))); }catch(e){ ok=false; delete ex.salesStamp; } delete ex.sales; }
+  try{ localStorage.setItem('ornakuy-sheet-cache',JSON.stringify({...o,stamp:SHC_STATE.stamp,recs:{...RECS,book:BOOK},...ex})); }catch(e){ ok=false; }
+  if(!ok) setSaveSt('Penyimpanan browser ini penuh, data terbaru belum bisa disimpan di sini. Hapus data situs afriyoe.github.io di pengaturan browser lalu buka lagi.','err');
+  return ok; }
 async function shCall(params){ const c=shCfg(); const r=await fetch(c.url+(c.url.includes('?')?'&':'?')+new URLSearchParams({...params,key:c.key})); const t=await r.text(); let j; try{ j=JSON.parse(t); }catch(e){ const m=t.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,160); throw new Error('Apps Script error: '+(m||'respon kosong')+'. Biasanya karena izin Gmail/Drive belum diberikan: jalankan pasangOtomatis sekali dari editor.'); } if(!j.ok) throw new Error(j.error||'gagal'); return j; }
 let shQueue=Promise.resolve();
 // Simpan ke spreadsheet: hanya tab yang berubah dikirim. Kalau spreadsheet berubah dari tempat lain (cek TikTok otomatis, edit manual,
@@ -4956,10 +4974,10 @@ async function shRetryUnsaved(manual){ const o=unsavedGet(); if(!o||!SHEET_ON()|
 async function shSalesPush(S){
   const c=shCfg(); setSaveSt('Menyimpan data sales ke Google Drive…');
   try{ const r=await fetch(c.url,{method:'POST',body:JSON.stringify({key:c.key,action:'salesWrite',sales:S})}); const j=await r.json(); if(!j.ok) throw new Error(j.error||'gagal');
-    shSaveCache({sales:S,salesStamp:j.salesStamp}); setSaveSt('Data sales tersimpan di Google Drive','ok'); return true; }
+    if(shSaveCache({sales:S,salesStamp:j.salesStamp})) setSaveSt('Data sales tersimpan di Google Drive','ok'); return true; }
   catch(e){ setSaveSt('Gagal simpan sales ke Drive: '+(e.message||e)+'. Data tetap tersimpan di browser ini.','err'); return false; }
 }
-async function shSalesLoad(){ const j=await shCall({action:'sales'}); if(j.sales&&validSales(j.sales)) shSaveCache({sales:j.sales,salesStamp:j.salesStamp}); else shSaveCache({salesStamp:j.salesStamp}); return j; }
+async function shSalesLoad(){ const j=await shCall({action:'sales'}); j.saved=(j.sales&&validSales(j.sales))?shSaveCache({sales:j.sales,salesStamp:j.salesStamp}):shSaveCache({salesStamp:j.salesStamp}); return j; }
 async function shLoad(reload){
   const j=await shCall({action:'read'}), P=shParse(j);
   if(P.empty) return {empty:true};
@@ -5012,7 +5030,7 @@ function shModal(){
       try{ localStorage.setItem('ornakuy-sheet',JSON.stringify({url,key})); }catch(err){} st('Mengetes koneksi…');
       try{ const j=await shCall({action:'ping'}); st(`Tersambung ke "${j.name}". ${j.stamp?'Klik Muat dari spreadsheet untuk memakai datanya.':'Spreadsheet masih kosong: klik Kirim semua data.'}`,'ok'); shDot(j.stamp?'wait':'err',''); }
       catch(err){ st('Gagal: '+(err.message||err)+'. Cek URL, kata sandi, dan akses "Anyone".','err'); } return; }
-    if(a==='mail'){ st('Mengecek email Roblox… (bisa sampai 1 menit)'); try{ const j=await shCall({action:'import'}); if(!j.email){ st('Tidak ada email "Download Your Sales of Goods" baru dalam 3 hari terakhir (yang lama sudah diproses).',''); return; } st(`${j.email} email diproses, ${fmt(j.baru||0)} transaksi baru.${(j.hasil||[]).length?' '+j.hasil.join(' · '):' Tidak ada tombol Download di email itu.'}`,j.baru?'ok':((j.hasil||[]).some(x=>/^Gagal/.test(x))?'err':'')); if(j.baru){ await shSalesLoad(); location.reload(); } }catch(err){ st('Gagal: '+(err.message||err),'err'); } return; }
+    if(a==='mail'){ st('Mengecek email Roblox… (bisa sampai 1 menit)'); try{ const j=await shCall({action:'import'}); if(!j.email){ st('Tidak ada email "Download Your Sales of Goods" baru dalam 3 hari terakhir (yang lama sudah diproses).',''); return; } st(`${j.email} email diproses, ${fmt(j.baru||0)} transaksi baru.${(j.hasil||[]).length?' '+j.hasil.join(' · '):' Tidak ada tombol Download di email itu.'}`,j.baru?'ok':((j.hasil||[]).some(x=>/^Gagal/.test(x))?'err':'')); if(j.baru){ const s=await shSalesLoad(); if(s.saved===false){ st('Sales baru sudah masuk ke Google Drive, tapi penyimpanan browser ini penuh. Hapus data situs afriyoe.github.io di pengaturan browser, lalu buka dashboard lagi.','err'); return; } location.reload(); } }catch(err){ st('Gagal: '+(err.message||err),'err'); } return; }
     if(a==='load'){ st('Memuat…'); try{ const r=await shLoad(false); if(r.empty){ st('Spreadsheet masih kosong. Klik Kirim semua data dulu.','err'); return; } st('Data dimuat. Memuat ulang halaman…','ok'); location.reload(); }catch(err){ st('Gagal: '+(err.message||err),'err'); } return; }
     if(a==='push'){ if(!await confirmBox('Kirim semua data ke spreadsheet?','Tab Transaksi, Kategori, Pending, Detail TikTok Ads, Postingan, Akun Internal, dan Planning di spreadsheet akan ditimpa dengan data dashboard ini. Data sales disimpan sebagai file terpisah di Google Drive, bukan di spreadsheet.','Kirim')) return;
       st('Mengirim…'); RECS.book=BOOK;
@@ -5113,6 +5131,6 @@ $('shBtn').addEventListener('click',shModal);
 })();
 
 </script>
-<script>(function(){var B='20261105120200';function chk(){if(!/github\.io$/.test(location.hostname))return;fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/ORNA_BUILD='(\d+)'/);if(!m||m[1]===B)return;if(location.search.indexOf("v="+m[1])>=0)return;var d=document.createElement("div");d.textContent="Versi baru dashboard tersedia · memuat ulang…";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8579b;color:#fff;padding:10px 16px;font:600 14px system-ui;text-align:center";document.body.appendChild(d);setTimeout(function(){location.replace(location.pathname+"?v="+m[1]+location.hash)},700)}).catch(function(){})}window.ORNA_BUILD=B;setTimeout(chk,1200);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
-<!-- ORNA_BUILD='20261105120200' -->
+<script>(function(){var B='20261106145429';function chk(){if(!/github\.io$/.test(location.hostname))return;fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/ORNA_BUILD='(\d+)'/);if(!m||m[1]===B)return;if(location.search.indexOf("v="+m[1])>=0)return;var d=document.createElement("div");d.textContent="Versi baru dashboard tersedia · memuat ulang…";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8579b;color:#fff;padding:10px 16px;font:600 14px system-ui;text-align:center";document.body.appendChild(d);setTimeout(function(){location.replace(location.pathname+"?v="+m[1]+location.hash)},700)}).catch(function(){})}window.ORNA_BUILD=B;setTimeout(chk,1200);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
+<!-- ORNA_BUILD='20261106145429' -->
 </body></html>
