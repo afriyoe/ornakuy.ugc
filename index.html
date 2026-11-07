@@ -3459,6 +3459,12 @@ function rebSeries(){ if(REB) return REB; const m=new Map(), ts=[], cum=[]; let 
   let capSum=0; for(const r of TX){ const c=rebCapOf(r.p), p=m.get(r.p)||0, n=p+r.rev; if(!m.has(r.p)) capSum+=c; s+=Math.min(n,c)-Math.min(p,c); m.set(r.p,n); ts.push(r.ts); cum.push(s); }
   REB={ts,cum,items:m.size,total:s,capSum}; return REB; }
 function rebAt(t){ const S=rebSeries(); let lo=0, hi=S.ts.length-1, k=-1; while(lo<=hi){ const mid=(lo+hi)>>1; if(S.ts[mid]<=t){ k=mid; lo=mid+1; } else hi=mid-1; } return k<0?0:S.cum[k]; }
+// Robux keluar sejak catatan terakhir: penjualan Robux di Keuangan (R$ di keterangan, tanggal sesudah catatan)
+// + produk baru yang terdeteksi di data sales sesudah catatan (biaya upload + publishing advance per item, bawaan 80 + 600)
+function rbxOutSince(lt){ const ld=wibStrTs(lt).slice(0,10), P=PROJ(), sales=[], pubs=[];
+  for(const r of bookRows()) if(r.cat==='Penjualan Robux'&&r.d&&r.d>ld){ const f=rbxFind(r.note||''); if(f&&f.n) sales.push({d:r.d,n:f.n,note:r.note}); }
+  const fs=new Map(); for(const r of TX) if(!fs.has(r.p)) fs.set(r.p,r.ts); fs.forEach((ts,p)=>{ if(ts>lt) pubs.push({p,ts,c:P.pubFee+rebCapOf(p)}); });
+  const sold=sales.reduce((s,x)=>s+x.n,0), pub=pubs.reduce((s,x)=>s+x.c,0); return {sales,pubs,sold,pub,tot:sold+pub,fee:P.pubFee}; }
 function renderRobux(){
   renderPubWarn();
   if($('view-fin').dataset.fintab!=='rbx') return;
@@ -3487,8 +3493,10 @@ function renderRobux(){
   const netOut=poDay!=null?poDay:outGeneric; // Robux keluar per hari (payout); rebates dihitung terpisah
   const since=salesEnd>lt?revBetween(lt,salesEnd):0, sinceDays=salesEnd>lt?(salesEnd-lt)/86400:0;
   // saldo & pending ikut data sales: penjualan pindah dari pending ke saldo tepat 30 hari (jam & detik yang sama) setelah terjual
-  const live=salesEnd>lt, cairSince=live?revBetween(lt-HOLD,salesEnd-HOLD):0, sNow=last.s+cairSince+(live&&last.rb!=null?rbSince:0), pNow=live?expPend(salesEnd):last.p, cair24=revBetween(salesEnd-HOLD,salesEnd-HOLD+86400);
-  const nowEst=sNow+pNow-(netOut||0)*sinceDays;
+  const live=salesEnd>lt, cairSince=live?revBetween(lt-HOLD,salesEnd-HOLD):0; let sNow=last.s+cairSince+(live&&last.rb!=null?rbSince:0), pNow=live?expPend(salesEnd):last.p, cair24=revBetween(salesEnd-HOLD,salesEnd-HOLD+86400);
+  const O=live?rbxOutSince(lt):{sales:[],pubs:[],sold:0,pub:0,tot:0}, sGross=sNow; sNow-=O.tot;
+  const estOut=O.sales.length?0:(netOut||0)*sinceDays;   // penjualan Robux sudah dicatat di Keuangan → pakai angka asli, bukan perkiraan
+  const nowEst=sNow+pNow-estOut;
   const rows=bookRows(), bank=rows.length?rows[rows.length-1].bal:0;
   const gap=salesEnd-lt, sync=Math.abs(gap)<=3600?['','✓ Waktu catatan terakhir cocok dengan data sales terakhir.']:gap<0?['warn',`Data sales baru sampai ${dLabT(wibStrTs(salesEnd))}, lebih awal ${fmtDur(-gap)} dari catatan terakhir (${dLabT(last.t)}). Revenue di sela itu belum terhitung: cek email Roblox (tombol Spreadsheet) supaya data sales menyusul.`]:['',`Data sales sudah ${fmtDur(gap)} lebih baru dari catatan terakhir. Revenue sejak catatan ikut dihitung di perkiraan.`];
   const ep=expPend(lt), pd=last.p-ep, pendOk=salesEnd>=lt-60&&Math.abs(pd)<=Math.max(50,last.p*0.002);
@@ -3498,20 +3506,25 @@ function renderRobux(){
   const a14=rbxAvgRev(14), a7=rbxAvgRev(7);
   const proj=(a,d)=>nowEst+(a-(netOut||0))*d+(last.rb!=null?futReb(d):0);
   const nowT=Math.max(lt,salesEnd), clearIn=d=>revBetween(nowT-HOLD,nowT-HOLD+d*86400);
-  const fundsNow=last.s+(salesEnd>lt?revBetween(lt-HOLD,salesEnd-HOLD):0)+(last.rb!=null?rbSince:0)-(netOut||0)*sinceDays;
+  const fundsNow=sNow-estOut;
   $('rbxChecks').innerHTML=`<div class="rbx-sync ${sync[0]}">${sync[1]}</div>${chk}`;
   const warn=sync[0]==='warn'||/rbx-sync warn/.test(chk);
   const snapAge=Math.floor((Date.now()/1000-lt)/86400);
   body.innerHTML=`${snapAge>=7?`<div class="rbx-sync warn">⚠ Catatan saldo Robux terakhir ${dLabT(last.t)} (${snapAge} hari lalu). Payout dan pemakaian Robux tidak terlihat di data sales, jadi upload screenshot Summary lagi supaya saldo tersinkron: <a href="#" data-rbxopen>+ Catat saldo Robux</a>.</div>`:''}${warn?'<div class="rbx-sync warn">⚠ Ada data yang perlu dicek. Klik <b>+ Catat saldo Robux</b> untuk melihat detailnya.</div>':''}
     <div class="kpis rbx-kpis" style="margin-top:14px">
-      ${k('Saldo (Community Funds)',R(sNow),`${Rp(sNow*rate)} · ${live?`catatan ${R(last.s)} + cair ${R(cairSince)}${last.rb!=null&&rbSince?` + rebates ${R(rbSince)}`:''} sejak ${dLabT(last.t)} · belum dikurangi payout sesudahnya`:'siap dicairkan'}`)}
+      ${k('Saldo (Community Funds)',R(sNow),`${Rp(sNow*rate)} · ${live?`catatan ${R(last.s)} + cair ${R(cairSince)}${last.rb!=null&&rbSince?` + rebates ${R(rbSince)}`:''}${O.sold?` − jual Robux ${R(O.sold)} (${O.sales.length} transaksi Keuangan)`:''}${O.pub?` − publish ${R(O.pub)} (${O.pubs.length} produk baru)`:''} sejak ${dLabT(last.t)}${O.sales.length?'':' · penjualan Robux sesudahnya belum dicatat di Keuangan'}`:'siap dicairkan'}`)}
       ${k('Pending',R(pNow),`${Rp(pNow*rate)} · revenue 30 hari terakhir${live?` · ${R(cair24)} cair dalam 24 jam`:''}`)}
       ${k('Saldo + pending',R(sNow+pNow),`${Rp((sNow+pNow)*rate)} · per ${live?dLabT(wibStrTs(salesEnd))+' (data sales terakhir)':dLabT(last.t)}`,'hl')}
-      ${k('Perkiraan sekarang',R(nowEst),`${Rp(nowEst*rate)}${since&&netOut?` · saldo + pending − perkiraan payout ${R((netOut||0)*sinceDays)} sejak catatan`:''}`)}
+      ${k('Perkiraan sekarang',R(nowEst),`${Rp(nowEst*rate)}${estOut?` · saldo + pending − perkiraan payout ${R(estOut)} sejak catatan (belum ada penjualan Robux di Keuangan)`:O.tot?' · saldo + pending (Robux keluar sudah dari Keuangan & produk baru)':''}`)}
       ${k('Payout/hari',netOut==null?'–':R(netOut),netOut==null?'isi payout, atau tunggu catatan kedua':poDay!=null?`${Rp(netOut*rate)}/hari · ${rateSrc}`:`rata-rata ${okPer.length} periode (total keluar)`)}
       ${k('Rebates',R(rbNow),`sudah didapat menurut data sales${last.rb!=null?` · Roblox mencatat ${R(last.rb)} per ${dLabT(last.t)} (selisih ±${R(lag)} masih diproses)`:''} · sisa potensi ${R(rbRemain)}`)}
       ${k('Posisi total',Rp(bank+nowEst*rate),`saldo rekening ${Rp(bank)} + nilai Robux ${Rp(nowEst*rate)}`)}
     </div>
+    ${O.tot?`<details class="panel" style="margin-top:14px"><summary><b>Robux keluar sejak catatan ${dLabT(last.t)}: ${R(O.tot)}</b> <span class="muted">· ${Rp(O.tot*rate)}</span></summary>
+      <div class="tbl-wrap" style="max-height:none"><table><thead><tr><th style="text-align:left">Tanggal</th><th style="text-align:left">Keterangan</th><th>Robux</th></tr></thead><tbody>
+      ${O.sales.map(x=>`<tr><td class="txt" style="text-align:left">${dLabel(x.d)}</td><td class="txt" style="text-align:left">${esc(x.note)} <span class="muted">· Keuangan</span></td><td>−${R(x.n)}</td></tr>`).join('')}
+      ${O.pubs.sort((a,b)=>a.ts-b.ts).map(x=>`<tr><td class="txt" style="text-align:left">${dLabT(wibStrTs(x.ts))}</td><td class="txt" style="text-align:left">Publish ${esc(RAW.p[x.p][0])} <span class="muted">· upload ${R(O.fee)} + advance ${R(x.c-O.fee)}</span></td><td>−${R(x.c)}</td></tr>`).join('')}
+      </tbody></table></div><p class="note" style="margin:6px 0 0">Penjualan Robux dihitung dari transaksi Keuangan berkategori Penjualan Robux dengan nilai R$ di keterangan, bertanggal sesudah tanggal catatan. Produk baru = produk yang pertama kali muncul di data sales sesudah catatan. Advance 600 kembali lewat rebates seiring penjualannya.</p></details>`:''}
     <div class="panel" style="margin-top:14px"><h3 style="color:var(--fg)">Jadwal pending cair ke saldo</h3>
       <p class="note" style="margin:4px 0 0">Dihitung dari data sales: penjualan masuk saldo tepat 30 hari setelah terjual. Angka ini sudah pasti, tidak tergantung penjualan baru.</p>
       <div class="tbl-wrap" style="max-height:none"><table><thead><tr><th style="text-align:left">Dalam</th><th>Robux cair</th><th>Nilai</th><th>Perkiraan saldo</th><th>Nilai saldo</th></tr></thead><tbody>
@@ -5131,6 +5144,6 @@ $('shBtn').addEventListener('click',shModal);
 })();
 
 </script>
-<script>(function(){var B='20261106145429';function chk(){if(!/github\.io$/.test(location.hostname))return;fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/ORNA_BUILD='(\d+)'/);if(!m||m[1]===B)return;if(location.search.indexOf("v="+m[1])>=0)return;var d=document.createElement("div");d.textContent="Versi baru dashboard tersedia · memuat ulang…";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8579b;color:#fff;padding:10px 16px;font:600 14px system-ui;text-align:center";document.body.appendChild(d);setTimeout(function(){location.replace(location.pathname+"?v="+m[1]+location.hash)},700)}).catch(function(){})}window.ORNA_BUILD=B;setTimeout(chk,1200);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
-<!-- ORNA_BUILD='20261106145429' -->
+<script>(function(){var B='20261107174236';function chk(){if(!/github\.io$/.test(location.hostname))return;fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/ORNA_BUILD='(\d+)'/);if(!m||m[1]===B)return;if(location.search.indexOf("v="+m[1])>=0)return;var d=document.createElement("div");d.textContent="Versi baru dashboard tersedia · memuat ulang…";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8579b;color:#fff;padding:10px 16px;font:600 14px system-ui;text-align:center";document.body.appendChild(d);setTimeout(function(){location.replace(location.pathname+"?v="+m[1]+location.hash)},700)}).catch(function(){})}window.ORNA_BUILD=B;setTimeout(chk,1200);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
+<!-- ORNA_BUILD='20261107174236' -->
 </body></html>
