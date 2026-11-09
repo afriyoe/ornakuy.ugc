@@ -627,6 +627,8 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
 #roiTable tr.roi-det>td{background:var(--bg);padding:12px 14px} .roi-sum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:10px}
 .roi-sum>div{display:flex;flex-direction:column;gap:3px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);text-align:left} .roi-sum b{font-size:16px} .roi-sum .muted{font-size:11px}
 table.roi-sub{width:100%;margin-top:8px} table.roi-sub th{font-size:10px} table.roi-sub tr.roi-pay td{background:var(--panel-2)} @media(max-width:700px){.roi-sum{grid-template-columns:repeat(2,minmax(0,1fr))}}
+#pjTable td.txt{min-width:0;white-space:nowrap}
+#pjTable th,#pjTable td{padding-left:12px;padding-right:12px}
 </style>
   <header>
     <div class="eyebrow">Dashboard brand UGC · Group 950136185</div>
@@ -781,14 +783,6 @@ table.roi-sub{width:100%;margin-top:8px} table.roi-sub th{font-size:10px} table.
     </div>
   </section>
 
-  <section id="waktu" data-tab="time">
-    <div class="sec-head"><div><div class="eyebrow">Waktu beli (WIB)</div><h2>Kapan pembeli paling aktif</h2>
-      <p>Jumlah pcs per hari dan jam. Makin pekat, makin ramai.</p></div></div>
-    <div class="grid2">
-      <div class="panel"><h3 style="margin-bottom:12px">Peta hari × jam</h3><div class="heat" id="heat"></div></div>
-      <div class="panel"><h3 style="margin-bottom:12px">Rata-rata per hari dalam seminggu</h3><div class="chart-box" style="height:260px"><canvas id="dowChart"></canvas></div></div>
-    </div>
-  </section>
 
   <section id="loyal" data-tab="buyer">
     <div class="sec-head"><div><div class="eyebrow">Loyalitas</div><h2>Pembeli sekali vs pembeli ulang</h2>
@@ -836,6 +830,36 @@ table.roi-sub{width:100%;margin-top:8px} table.roi-sub th{font-size:10px} table.
       <div class="sumrow" id="sesiSum"></div>
       <div class="tbl-wrap" style="max-height:520px"><table id="sesiTable"></table></div>
       <p class="note" id="sesiNote" style="margin:12px 0 0"></p>
+    </div>
+  </section>
+
+  <section id="perjam" data-tab="time">
+    <div class="sec-head">
+      <div><div class="eyebrow">Per jam (WIB) · 7 hari terakhir</div><h2>Sales sejauh ini vs normal</h2>
+        <p id="pjSub">Jumlah sales (pcs, tanpa revenue) per jam di hari terbaru dibanding 7 hari sebelumnya. Ikut filter kategori di atas, tidak ikut filter tanggal.</p></div>
+      <div class="controls">
+        <div class="tabs" role="group" aria-label="Tampilan grafik" id="pjMode">
+          <button aria-pressed="true" data-m="cum">Kumulatif</button>
+          <button aria-pressed="false" data-m="hour">Per jam</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="sumrow" id="pjSum"></div>
+      <div class="chart-box" style="height:320px;margin-top:14px"><canvas id="pjChart" aria-label="Grafik sales per jam hari terbaru dibanding 7 hari sebelumnya"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="tbl-wrap" style="max-height:640px"><table id="pjTable" style="width:auto"></table></div>
+      <p class="note" id="pjNote" style="margin:12px 0 0"></p>
+    </div>
+  </section>
+
+  <section id="waktu" data-tab="time">
+    <div class="sec-head"><div><div class="eyebrow">Waktu beli (WIB)</div><h2>Kapan pembeli paling aktif</h2>
+      <p>Jumlah pcs per hari dan jam. Makin pekat, makin ramai.</p></div></div>
+    <div class="grid2">
+      <div class="panel"><h3 style="margin-bottom:12px">Peta hari × jam</h3><div class="heat" id="heat"></div></div>
+      <div class="panel"><h3 style="margin-bottom:12px">Rata-rata per hari dalam seminggu</h3><div class="chart-box" style="height:260px"><canvas id="dowChart"></canvas></div></div>
     </div>
   </section>
   </div>
@@ -1291,7 +1315,7 @@ themeChart();
 const tooltip = () => ({backgroundColor:css('--panel-2'),borderColor:css('--line'),borderWidth:1,titleColor:css('--fg'),bodyColor:css('--fg-2'),padding:10,displayColors:false});
 const $ = id => document.getElementById(id);
 
-let D, period='daily', metric='rev', prodKey='pcs', pChart, dowC, freqC;
+let D, period='daily', metric='rev', prodKey='pcs', pChart, dowC, freqC, pjC, pjMode='cum';
 
 function renderHeader(){
   const T=D.total;
@@ -1788,7 +1812,7 @@ function showMain(m){
   if(!MAINS.includes(m)) m='ana'; curMain=m;
   document.querySelectorAll('#mainnav>button').forEach(b=>b.setAttribute('aria-selected',b.dataset.m===m));
   MAINS.forEach(k=>$('view-'+k).hidden=k!==m);
-  if(m==='ana'){ const v=document.querySelector('#vtabs [aria-selected=true]'); if(v) requestAnimationFrame(()=>[pChart,dowC,freqC].forEach(c=>c&&c.resize&&c.resize())); }
+  if(m==='ana'){ const v=document.querySelector('#vtabs [aria-selected=true]'); if(v) requestAnimationFrame(()=>[pChart,dowC,freqC,pjC].forEach(c=>c&&c.resize&&c.resize())); }
   if(m==='mk') renderMk(); if(m==='fin') renderFin(); if(m==='plan') renderPlan();
   try{ localStorage.setItem('ornakuy-main',m); }catch(e){}
 }
@@ -2936,7 +2960,7 @@ function bookRows(){
 const RBX_RATE=125;
 function rbxParse(s,u){ let t=String(s).replace(/[.,](?=\d{3}(?!\d))/g,'').replace(',','.'); let v=parseFloat(t); if(/^(k|rb)$/i.test(u||'')) v*=1000; return Math.round(v)||0; }
 function rbxFind(line){ const N='(\\d[\\d.,]*)\\s*(k|rb)?';
-  const pats=[[`R\\$\\s*${N}`,1],[`\\$R\\s*${N}`,1],[`${N}\\s*(?:R\\$|\\$R)`,1],[`${N}\\s*(?:robux|rbx)\\b`,1],[`\\b(?:robux|rbx)\\s*${N}`,2],[`(?:^|\\s)R\\s+${N}`,2]];
+  const pats=[[`R[$&]\\s*${N}`,1],[`[$&]R\\s*${N}`,1],[`${N}\\s*(?:R[$&]|[$&]R)`,1],[`${N}\\s*(?:robux|rbx)\\b`,1],[`\\b(?:robux|rbx)\\s*${N}`,2],[`(?:^|\\s)R\\s+${N}`,2]];
   for(const [p,soft] of pats){ const m=line.match(new RegExp(p,soft===2&&p.startsWith('(?:^')?'':'i')); if(!m) continue; const n=rbxParse(m[1],m[2]); if(!n) continue;
     if(soft===2&&n>=50000&&!m[2]) continue;   // "robux 275000" = rupiah, bukan Robux
     const lead=m[0].match(/^\s*/)[0]; return {n,pre:line.slice(0,m.index)+lead,post:line.slice(m.index+m[0].length)}; }
@@ -2951,7 +2975,8 @@ function titleCase(s){ let first=true; return String(s).split(/(\s+)/).map(w=>{ 
   return w.replace(/^([^a-zA-Z]*)([a-z])/,(m,a,b)=>a+b.toUpperCase()); }).join(''); }
 function noteNorm(note,cat,inA,outA){ inA=+inA||0; outA=+outA||0;
   let s=String(note||'').replace(/\b(?:rp|idr)\b\.?(?=\s|\d|$)/gi,' ').replace(/\s+/g,' ').trim();
-  const r=rbxFind(s); let n=r?r.n:0; const rest=r?(r.pre+' '+r.post).replace(/\s+/g,' ').trim():s;
+  const r=rbxFind(s); let n=r?r.n:0; let rest=r?(r.pre+' '+r.post).replace(/\s+/g,' ').trim():s;
+  for(let i=0,q;i<3&&r&&(q=rbxFind(rest));i++) rest=(q.pre+' '+q.post).replace(/\s+/g,' ').trim();   // nilai Robux yang ditulis dua kali
   const hasRbx=!!r||/\b(?:robux|rbx)\b/i.test(s);
   const sale=cat==='Penjualan Robux'||(hasRbx&&/\b(?:jual|penjualan|terjual|hasil)\b/i.test(s)&&!/\bbeli\b/i.test(s)&&!outA);
   if(sale&&!/credit|kredit|gift|voucher/i.test(s)){
@@ -3839,7 +3864,7 @@ function showView(v,scroll){
   if(!VIEWS.includes(v)) v='ring';
   document.querySelectorAll('#vtabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.v===v));
   document.querySelectorAll('#content [data-tab]').forEach(el=>el.hidden=el.dataset.tab!==v);
-  requestAnimationFrame(()=>[pChart,dowC,freqC,rbxC].forEach(c=>c&&c.resize&&c.resize()));
+  requestAnimationFrame(()=>[pChart,dowC,freqC,rbxC,pjC].forEach(c=>c&&c.resize&&c.resize()));
   try{ localStorage.setItem('ornakuy-view',v); }catch(e){}
   if(scroll){ const top=$('filter').getBoundingClientRect().bottom; if(top<0||window.scrollY>$('content').offsetTop) window.scrollTo({top:Math.max(0,$('content').offsetTop-($('filter').offsetHeight+24)),behavior:'instant'}); }
 }
@@ -3852,6 +3877,61 @@ tabs('colSort',d=>{colSort=d.s; renderWarna();});
 
 // ---------- per sesi 6 jam ----------
 const SESI=['00–06','06–12','12–18','18–00'];
+const hexA=(c,a)=>{ const m=/^#([0-9a-f]{6})$/i.exec(String(c).trim()); if(!m) return c; const n=parseInt(m[1],16); return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`; };
+// sales per jam: hari terbaru (s/d jam data terakhir) dibanding 7 hari penuh sebelumnya, hanya pcs
+let PJ_NCOL=0, PJ_WANT=0, PJ_W=0, pjRT=null;
+function pjFit(){ const t=document.getElementById('pjTable'), w=t&&t.parentElement?t.parentElement.clientWidth:0; if(!w||!t.tHead) return; const hc=t.tHead.rows[0].cells, n=hc.length-3; if(n<1) return;
+  const dayW=[...hc].slice(3).reduce((s,c)=>s+c.offsetWidth,0)/n, want=Math.max(7,n+Math.floor((w-t.offsetWidth)/dayW)); PJ_W=w; if(want!==PJ_WANT){ PJ_WANT=want; renderPerJam(); } }
+addEventListener('resize',()=>{ clearTimeout(pjRT); pjRT=setTimeout(pjFit,200); });
+document.addEventListener('click',e=>{ if(e.target.closest('#vtabs,#mainnav')) setTimeout(pjFit,80); });
+function renderPerJam(){
+  const ref=MAX, prevAll=Array.from({length:45},(_,i)=>addDays(ref,-(i+1))), prev=prevAll.slice(0,7), days=[ref,...prevAll], H=Array.from({length:24},(_,i)=>i);
+  const m=new Map(days.map(d=>[d,new Array(24).fill(0)])), upTo=new Map(days.map(d=>[d,0]));
+  for(const r of TX){ const a=m.get(r.d); if(!a||!CATS.has(RAW.p[r.p][1])) continue; a[r.h]++; if(r.hm<=LAST_HM) upTo.set(r.d,upTo.get(r.d)+1); }
+  const has=prev.filter(d=>m.get(d).some(v=>v)), n=has.length||1, curH=+LAST_HM.slice(0,2), isToday=ref===todayWIB();
+  const avgH=H.map(h=>has.reduce((s,d)=>s+m.get(d)[h],0)/n), cum=a=>{ let s=0; return a.map(v=>s+=v); };
+  const avgCum=cum(avgH), dayTot=d=>m.get(d).reduce((s,v)=>s+v,0), avgDay=has.reduce((s,d)=>s+dayTot(d),0)/n;
+  const now=upTo.get(ref), avgNow=has.reduce((s,d)=>s+upTo.get(d),0)/n, ups=has.map(d=>upTo.get(d)), lo=ups.length?Math.min(...ups):0, hi=ups.length?Math.max(...ups):0;
+  const diff=avgNow?(now-avgNow)/avgNow:0, est=avgNow?now/avgNow*avgDay:0, nextH=curH<23?avgH[curH+1]:null;
+  const refLab=isToday?'Hari ini':dLabel(ref), sign=v=>(v>=0?'+':'−')+Math.abs(v*100).toLocaleString('id-ID',{maximumFractionDigits:0})+'%';
+  const col=diff>=0.05?'var(--good)':diff<=-0.05?'var(--bad)':'var(--fg)';
+  $('pjSub').textContent=`Jumlah sales (pcs, tanpa revenue) per jam ${isToday?'hari ini':dLabelY(ref)} (data s/d ${LAST_HM} WIB) dibanding 7 hari sebelumnya (${dLabel(prev[6])} – ${dLabel(prev[0])}). Ikut filter kategori di atas, tidak ikut filter tanggal.`;
+  $('pjSum').innerHTML=[
+    [`Normalnya s/d ${LAST_HM}`,`${fmt(avgNow)} pcs`,`rata-rata ${has.length} hari · rentang ${fmt(lo)}–${fmt(hi)} pcs`],
+    [`${refLab} s/d ${LAST_HM}`,`${fmt(now)} pcs`,`<span style="color:${col}">${sign(diff)} dari rata-rata</span>`],
+    ['Perkiraan total sehari',`${fmt(est)} pcs`,`kalau sisa hari mengikuti pola biasa · rata-rata sehari ${fmt(avgDay)} pcs`],
+    [nextH==null?'Jam berikutnya':`Jam ${String(curH+1).padStart(2,'0')}.00 biasanya`,nextH==null?'–':`${fmt(nextH)} pcs`,nextH==null?'hari sudah habis':`total s/d jam itu normalnya ${fmt(avgCum[curH+1])} pcs`]
+  ].map(([a,b,c])=>`<div><span class="eyebrow">${a}</span><b>${b}</b><span>${c}</span></div>`).join('');
+  // grafik
+  const acc=css('--accent'), mut=css('--muted'), fg=css('--fg'), labels=H.map(h=>String(h).padStart(2,'0'));
+  const refS=pjMode==='cum'?cum(m.get(ref)):m.get(ref).slice(), refData=refS.map((v,h)=>h<=curH?v:null);
+  const ds=has.slice().reverse().map((d,i)=>({label:dLabel(d),data:pjMode==='cum'?cum(m.get(d)):m.get(d),borderColor:hexA(mut,0.3+i*0.07),borderWidth:1.2,pointRadius:0,tension:.25,order:3}));
+  ds.push({label:'Rata-rata 7 hari',data:pjMode==='cum'?avgCum:avgH,borderColor:fg,borderWidth:2,borderDash:[6,4],pointRadius:0,tension:.25,order:2});
+  ds.push({label:refLab,data:refData,borderColor:acc,backgroundColor:acc,borderWidth:3,pointRadius:2,tension:.25,order:1});
+  if(pjC) pjC.destroy();
+  pjC=new Chart($('pjChart'),{type:'line',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,labels:{color:fg,boxWidth:14,filter:it=>it.datasetIndex>=ds.length-2}},tooltip:{...tooltip(),displayColors:true,itemSort:(a,b)=>{ const k=x=>x.datasetIndex===ds.length-2?1e3:x.datasetIndex===ds.length-1?999:x.datasetIndex; return k(b)-k(a); },   // rata-rata, hari ini, lalu tanggal terbaru
+      
+      callbacks:{title:it=>`Jam ${it[0].label}.00–${it[0].label}.59${pjMode==='cum'?' (kumulatif sampai akhir jam)':''}`,label:i=>i.raw==null?null:`${i.dataset.label}: ${fmt(i.raw)} pcs`}}},
+    scales:{x:{grid:{display:false},title:{display:true,text:'jam (WIB)'}},y:{beginAtZero:true,grid:{color:css('--line')},border:{display:false},ticks:{callback:v=>fmt(v)},title:{display:true,text:pjMode==='cum'?'total pcs sejak 00.00':'pcs per jam'}}}}});
+  // tabel jam × hari
+  const mx=Math.max(1,...days.flatMap(d=>m.get(d))), cell=(v,h,cs)=>`<td style="background:color-mix(in srgb,var(--accent) ${Math.round(v/mx*38)}%,transparent)">${v?`<b>${fmt(v)}</b>`:'<span class="muted">–</span>'}</td>`;
+  // kolom tanggal: minimal 7 hari; kalau halaman lebar, tanggal yang lebih lama ditambah ke kanan
+  const avail=prevAll.filter(d=>m.get(d).some(v=>v)), wrapW=($('pjTable').parentElement||{}).clientWidth||0, nCol=Math.max(Math.min(7,avail.length),Math.min(avail.length,PJ_WANT||7));
+  const shown=avail.slice(0,nCol); PJ_NCOL=nCol;
+  const cR=cum(m.get(ref)), cP=new Map(shown.map(d=>[d,cum(m.get(d))]));
+  const order=[...H.slice(0,curH+1).reverse(),...H.slice(curH+1).reverse()];   // jam terbaru di atas
+  const rows=order.map(h=>{ const cur=h===curH, past=h<=curH, a=avgH[h], v=m.get(ref)[h], dv=a?(v-a)/a:0;
+    return `<tr${cur?' style="box-shadow:inset 0 0 0 1px var(--accent)"':''}><td class="txt">${labels[h]}.00${cur?` <span class="chip">s/d ${LAST_HM}</span>`:''}</td>
+      <td><b>${fmt(a)}</b></td>
+      <td>${past?`<b>${fmt(v)}</b>${!cur&&a?` <span style="color:${dv>=0.1?'var(--good)':dv<=-0.1?'var(--bad)':'var(--muted)'}">${sign(dv)}</span>`:''}`:'<span class="muted">belum</span>'}</td>
+      ${shown.map(d=>cell(m.get(d)[h],h,cP.get(d)[h])).join('')}</tr>`; }).join('');
+  $('pjTable').innerHTML=`<thead><tr><th style="text-align:left">Jam</th><th>Rata-rata<br><span style="font-weight:400">7 hari</span></th><th>${refLab}</th>${shown.map(d=>`<th>${dLabel(d)}<br><span style="font-weight:400">${HARI[new Date(d+'T00:00:00Z').getUTCDay()]}</span></th>`).join('')}</tr></thead><tbody>${rows}</tbody>
+    <tfoot><tr><td>Total</td><td>${fmt(avgDay)}</td><td>${fmt(dayTot(ref))}${isToday||ref===MAX?` <span class="muted">s/d ${LAST_HM}</span>`:''}</td>${shown.map(d=>`<td>${fmt(dayTot(d))}</td>`).join('')}</tr></tfoot>`;
+  requestAnimationFrame(()=>{ const t=$('pjTable'), w=(t.parentElement||{}).clientWidth||0; if(w&&(w!==PJ_W||(t.offsetWidth>w&&PJ_WANT>7))) pjFit(); });
+  $('pjNote').innerHTML=`Jam terbaru di atas. Angka = sales di jam itu; total sejak 00.00 ada di kartu ringkas dan grafik Kumulatif. Perbandingan "s/d ${LAST_HM}" memakai menit yang sama di tiap hari, jadi jam yang sedang berjalan ikut adil. Persentase di kolom ${refLab.toLowerCase()} = selisih jam itu terhadap rata-rata 7 hari. Data sales masuk dari email Roblox tiap 30 menit, jadi jam terakhir bisa belum lengkap.${has.length<7?` Hanya ${has.length} dari 7 hari sebelumnya yang punya data.`:''}`;
+}
+tabs('pjMode',d=>{ pjMode=d.m; renderPerJam(); });
 function renderSesi(){
   const T=D.total, days=D.daily.map(x=>x.d), m=new Map(days.map(d=>[d,SESI.map(()=>({pcs:0,rev:0}))]));
   for(const r of D.rows){ const c=m.get(r.d)[Math.floor(r.h/6)]; c.pcs++; c.rev+=r.rev; }
@@ -3867,17 +3947,20 @@ function renderSesi(){
   const dayRows=days.slice().reverse().map(d=>{const cs=m.get(d), p=cs.reduce((a,c)=>a+c.pcs,0), rv=cs.reduce((a,c)=>a+c.rev,0);
     const part=D.partialLast&&d===MAX?` <span class="chip">s/d ${LAST_HM}</span>`:'';
     return `<tr><td class="txt" style="min-width:120px">${dLabel(d)} (${HARI[new Date(d+'T00:00:00Z').getUTCDay()]})${part}</td>${cs.map(cell).join('')}<td><b>${fmt(p)}</b> <span class="muted">${R(rv)}</span></td></tr>`;}).join('');
-  $('sesiTable').innerHTML=`<thead><tr><th>Tanggal</th>${SESI.map(n=>`<th>${n}<br><span style="font-weight:400">pcs · revenue</span></th>`).join('')}<th>Total</th></tr></thead><tbody>${dayRows}</tbody>
-    <tfoot><tr><td>Total</td>${tot.map(c=>`<td>${fmt(c.pcs)} · ${R(c.rev)}</td>`).join('')}<td>${fmt(T.pcs)} · ${R(T.rev)}</td></tr>
-    <tr><td>Rata-rata / hari</td>${avg.map(c=>`<td>${fmt(c.pcs/nf)} · ${R(c.rev/nf)}</td>`).join('')}<td>${fmt(avg.reduce((a,c)=>a+c.pcs,0)/nf)} · ${R(avg.reduce((a,c)=>a+c.rev,0)/nf)}</td></tr></tfoot>`;
-  $('sesiNote').innerHTML=`Tanggal terbaru di atas. Warna sel makin pekat = revenue sesi makin besar. `+(D.partialLast&&days.length>1?`Rata-rata per hari tidak memakai ${dLabel(MAX)} karena datanya belum lengkap (s/d ${LAST_HM} WIB).`:'');
+  $('sesiTable').innerHTML=`<thead><tr><th>Tanggal</th>${SESI.map(n=>`<th>${n}<br><span style="font-weight:400">pcs · revenue</span></th>`).join('')}<th>Total</th></tr></thead><tbody><tr class="avg-row" style="background:var(--panel-2)"><td class="txt"><b>Rata-rata / hari</b></td>${avg.map(c=>`<td><b>${fmt(c.pcs/nf)}</b> <span class="muted">${R(c.rev/nf)}</span></td>`).join('')}<td><b>${fmt(avg.reduce((a,c)=>a+c.pcs,0)/nf)}</b> <span class="muted">${R(avg.reduce((a,c)=>a+c.rev,0)/nf)}</span></td></tr>${dayRows}</tbody>
+    <tfoot><tr><td>Total</td>${tot.map(c=>`<td>${fmt(c.pcs)} · ${R(c.rev)}</td>`).join('')}<td>${fmt(T.pcs)} · ${R(T.rev)}</td></tr></tfoot>`;
+  // tampil 8 baris (hari terbaru + 7 hari sebelumnya), sisanya di-scroll
+  const fitSesi=()=>{ const t=$('sesiTable'), w=t.parentElement, rs=[...t.tBodies[0].rows]; if(!rs.length||!t.offsetParent) return;
+    const ft=t.tFoot&&t.tFoot.rows[0]&&getComputedStyle(t.tFoot.rows[0].cells[0]).position==='sticky'?t.tFoot.offsetHeight:0, hh=(t.tHead?t.tHead.offsetHeight:0)+ft+rs.slice(0,9).reduce((s,r)=>s+r.offsetHeight,0); w.style.maxHeight=(rs.length>9?hh+2:hh+40)+'px'; };
+  requestAnimationFrame(fitSesi); if(!window.__fitSesi){ window.__fitSesi=1; addEventListener('resize',()=>requestAnimationFrame(fitSesi)); document.addEventListener('click',e=>{ if(e.target.closest('#vtabs,#mainnav')) setTimeout(fitSesi,60); }); }
+  $('sesiNote').innerHTML=`Baris pertama rata-rata per hari, lalu tanggal terbaru di atas. Warna sel makin pekat = revenue sesi makin besar. `+(D.partialLast&&days.length>1?`Rata-rata per hari tidak memakai ${dLabel(MAX)} karena datanya belum lengkap (s/d ${LAST_HM} WIB).`:'');
 }
 
 function renderAll(){
   const has=D.rows.length>0;
   $('content').hidden=!has; $('empty').hidden=has;
   if(!has){ $('meta').innerHTML=`<span>Rentang <b>${dLabelY(D.from)} – ${dLabelY(D.to)}</b></span>`; return; }
-  renderHeader(); renderInsights(); renderPeriod(); renderProducts(); renderLaunch(); renderBep(); renderReco(); renderTop(); renderMix(); renderHeat(); renderSmall(); renderRepeat(); renderWarna(); renderSesi();
+  renderHeader(); renderInsights(); renderPeriod(); renderProducts(); renderLaunch(); renderBep(); renderReco(); renderTop(); renderMix(); renderHeat(); renderSmall(); renderRepeat(); renderWarna(); renderSesi(); renderPerJam();
 }
 
 // ---------- date filter ----------
@@ -5144,6 +5227,6 @@ $('shBtn').addEventListener('click',shModal);
 })();
 
 </script>
-<script>(function(){var B='20261107174236';function chk(){if(!/github\.io$/.test(location.hostname))return;fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/ORNA_BUILD='(\d+)'/);if(!m||m[1]===B)return;if(location.search.indexOf("v="+m[1])>=0)return;var d=document.createElement("div");d.textContent="Versi baru dashboard tersedia · memuat ulang…";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8579b;color:#fff;padding:10px 16px;font:600 14px system-ui;text-align:center";document.body.appendChild(d);setTimeout(function(){location.replace(location.pathname+"?v="+m[1]+location.hash)},700)}).catch(function(){})}window.ORNA_BUILD=B;setTimeout(chk,1200);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
-<!-- ORNA_BUILD='20261107174236' -->
+<script>(function(){var B='20261109130829';function chk(){if(!/github\.io$/.test(location.hostname))return;fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/ORNA_BUILD='(\d+)'/);if(!m||m[1]===B)return;if(location.search.indexOf("v="+m[1])>=0)return;var d=document.createElement("div");d.textContent="Versi baru dashboard tersedia · memuat ulang…";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8579b;color:#fff;padding:10px 16px;font:600 14px system-ui;text-align:center";document.body.appendChild(d);setTimeout(function(){location.replace(location.pathname+"?v="+m[1]+location.hash)},700)}).catch(function(){})}window.ORNA_BUILD=B;setTimeout(chk,1200);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
+<!-- ORNA_BUILD='20261109130829' -->
 </body></html>
