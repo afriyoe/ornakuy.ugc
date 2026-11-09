@@ -629,6 +629,7 @@ dialog.post-dlg::backdrop{background:rgba(10,8,14,.7)}
 table.roi-sub{width:100%;margin-top:8px} table.roi-sub th{font-size:10px} table.roi-sub tr.roi-pay td{background:var(--panel-2)} @media(max-width:700px){.roi-sum{grid-template-columns:repeat(2,minmax(0,1fr))}}
 #pjTable td.txt{min-width:0;white-space:nowrap}
 #pjTable th,#pjTable td{padding-left:12px;padding-right:12px}
+#sesiTable tfoot td{position:sticky;bottom:0;background:var(--panel-2);z-index:1}
 </style>
   <header>
     <div class="eyebrow">Dashboard brand UGC · Group 950136185</div>
@@ -3947,13 +3948,13 @@ function renderSesi(){
   const dayRows=days.slice().reverse().map(d=>{const cs=m.get(d), p=cs.reduce((a,c)=>a+c.pcs,0), rv=cs.reduce((a,c)=>a+c.rev,0);
     const part=D.partialLast&&d===MAX?` <span class="chip">s/d ${LAST_HM}</span>`:'';
     return `<tr><td class="txt" style="min-width:120px">${dLabel(d)} (${HARI[new Date(d+'T00:00:00Z').getUTCDay()]})${part}</td>${cs.map(cell).join('')}<td><b>${fmt(p)}</b> <span class="muted">${R(rv)}</span></td></tr>`;}).join('');
-  $('sesiTable').innerHTML=`<thead><tr><th>Tanggal</th>${SESI.map(n=>`<th>${n}<br><span style="font-weight:400">pcs · revenue</span></th>`).join('')}<th>Total</th></tr></thead><tbody><tr class="avg-row" style="background:var(--panel-2)"><td class="txt"><b>Rata-rata / hari</b></td>${avg.map(c=>`<td><b>${fmt(c.pcs/nf)}</b> <span class="muted">${R(c.rev/nf)}</span></td>`).join('')}<td><b>${fmt(avg.reduce((a,c)=>a+c.pcs,0)/nf)}</b> <span class="muted">${R(avg.reduce((a,c)=>a+c.rev,0)/nf)}</span></td></tr>${dayRows}</tbody>
-    <tfoot><tr><td>Total</td>${tot.map(c=>`<td>${fmt(c.pcs)} · ${R(c.rev)}</td>`).join('')}<td>${fmt(T.pcs)} · ${R(T.rev)}</td></tr></tfoot>`;
+  $('sesiTable').innerHTML=`<thead><tr><th>Tanggal</th>${SESI.map(n=>`<th>${n}<br><span style="font-weight:400">pcs · revenue</span></th>`).join('')}<th>Total</th></tr></thead><tbody>${dayRows}<tr><td class="txt"><b>Total</b></td>${tot.map(c=>`<td><b>${fmt(c.pcs)}</b> <span class="muted">${R(c.rev)}</span></td>`).join('')}<td><b>${fmt(T.pcs)}</b> <span class="muted">${R(T.rev)}</span></td></tr></tbody>
+    <tfoot><tr>${[`<td style="text-align:left">Rata-rata / hari</td>`,...avg.map(c=>`<td><b>${fmt(c.pcs/nf)}</b> <span class="muted">${R(c.rev/nf)}</span></td>`),`<td><b>${fmt(avg.reduce((a,c)=>a+c.pcs,0)/nf)}</b> <span class="muted">${R(avg.reduce((a,c)=>a+c.rev,0)/nf)}</span></td>`].join('')}</tr></tfoot>`;
   // tampil 8 baris (hari terbaru + 7 hari sebelumnya), sisanya di-scroll
   const fitSesi=()=>{ const t=$('sesiTable'), w=t.parentElement, rs=[...t.tBodies[0].rows]; if(!rs.length||!t.offsetParent) return;
-    const ft=t.tFoot&&t.tFoot.rows[0]&&getComputedStyle(t.tFoot.rows[0].cells[0]).position==='sticky'?t.tFoot.offsetHeight:0, hh=(t.tHead?t.tHead.offsetHeight:0)+ft+rs.slice(0,9).reduce((s,r)=>s+r.offsetHeight,0); w.style.maxHeight=(rs.length>9?hh+2:hh+40)+'px'; };
+    const ft=t.tFoot&&t.tFoot.rows[0]&&getComputedStyle(t.tFoot.rows[0].cells[0]).position==='sticky'?t.tFoot.offsetHeight:0, hh=(t.tHead?t.tHead.offsetHeight:0)+ft+rs.slice(0,8).reduce((s,r)=>s+r.offsetHeight,0); w.style.maxHeight=(rs.length>8?hh+2:hh+40)+'px'; };
   requestAnimationFrame(fitSesi); if(!window.__fitSesi){ window.__fitSesi=1; addEventListener('resize',()=>requestAnimationFrame(fitSesi)); document.addEventListener('click',e=>{ if(e.target.closest('#vtabs,#mainnav')) setTimeout(fitSesi,60); }); }
-  $('sesiNote').innerHTML=`Baris pertama rata-rata per hari, lalu tanggal terbaru di atas. Warna sel makin pekat = revenue sesi makin besar. `+(D.partialLast&&days.length>1?`Rata-rata per hari tidak memakai ${dLabel(MAX)} karena datanya belum lengkap (s/d ${LAST_HM} WIB).`:'');
+  $('sesiNote').innerHTML=`Tanggal terbaru di atas, rata-rata per hari selalu terlihat di baris paling bawah. Warna sel makin pekat = revenue sesi makin besar. `+(D.partialLast&&days.length>1?`Rata-rata per hari tidak memakai ${dLabel(MAX)} karena datanya belum lengkap (s/d ${LAST_HM} WIB).`:'');
 }
 
 function renderAll(){
@@ -5227,6 +5228,6 @@ $('shBtn').addEventListener('click',shModal);
 })();
 
 </script>
-<script>(function(){var B='20261109130829';function chk(){if(!/github\.io$/.test(location.hostname))return;fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/ORNA_BUILD='(\d+)'/);if(!m||m[1]===B)return;if(location.search.indexOf("v="+m[1])>=0)return;var d=document.createElement("div");d.textContent="Versi baru dashboard tersedia · memuat ulang…";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8579b;color:#fff;padding:10px 16px;font:600 14px system-ui;text-align:center";document.body.appendChild(d);setTimeout(function(){location.replace(location.pathname+"?v="+m[1]+location.hash)},700)}).catch(function(){})}window.ORNA_BUILD=B;setTimeout(chk,1200);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
-<!-- ORNA_BUILD='20261109130829' -->
+<script>(function(){var B='20261109131225';function chk(){if(!/github\.io$/.test(location.hostname))return;fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/ORNA_BUILD='(\d+)'/);if(!m||m[1]===B)return;if(location.search.indexOf("v="+m[1])>=0)return;var d=document.createElement("div");d.textContent="Versi baru dashboard tersedia · memuat ulang…";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8579b;color:#fff;padding:10px 16px;font:600 14px system-ui;text-align:center";document.body.appendChild(d);setTimeout(function(){location.replace(location.pathname+"?v="+m[1]+location.hash)},700)}).catch(function(){})}window.ORNA_BUILD=B;setTimeout(chk,1200);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
+<!-- ORNA_BUILD='20261109131225' -->
 </body></html>
