@@ -1263,6 +1263,7 @@ let CATS = new Set(ALL_TYPES);
 const catLabel = () => CATS.size===ALL_TYPES.length ? 'Semua' : ALL_TYPES.filter(t=>CATS.has(t)).map(tname).join(', ');
 const addDays = (s,n) => { const d=new Date(s+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); };
 const wdOf = s => (new Date(s+'T00:00:00Z').getUTCDay()+6)%7;
+const STALE_DAYS=2;   // tanda ! di Kreator & postingan: 2 hari tanpa postingan baru (atau 2 hari sejak payment tanpa postingan)
 const daysBetween = (a,b) => Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/864e5)+1;
 function agg(rows){ const s=new Set(); let pcs=0,rev=0,price=0; for(const r of rows){pcs++;rev+=r.rev;price+=r.price;s.add(r.b);} return {pcs,rev,price,buyers:s.size}; }
 function groupBy(rows,fn){ const m=new Map(); for(const r of rows){const k=fn(r); if(!m.has(k)) m.set(k,[]); m.get(k).push(r);} return m; }
@@ -1984,10 +1985,10 @@ function renderEndorse(){
   const rows=byU.sort((a,b)=>b.left-a.left||a.u.localeCompare(b.u)), PA=promoByPid(), PU=promoByAcc(); S.PA=PA; S.PU=PU;
   $('endTable').innerHTML=`<thead><tr><th style="width:26px"></th><th style="text-align:left">Kreator</th><th style="text-align:left">Status</th><th>Foto slide</th><th>Video</th><th>Payment</th><th>Belum terpos&shy;ting</th><th title="Hijau: ada iklan TikTok yang masih berjalan · merah: iklan sudah selesai · kosong: tidak diiklankan">Ads</th></tr></thead>`+intGroupHtml(S)+
     rows.map(x=>{ const [sl,sc]=st(x), open=endOpen.has(x.u), m=sumM(x.posts.map(p=>p.p));
-      // pengingat: status Sebagian tapi tidak ada postingan baru (foto slide / video) selama 3 hari atau lebih
+      // pengingat: status Sebagian tapi tidak ada postingan baru (foto slide / video) selama STALE_DAYS hari atau lebih
       const lastD=x.posts.map(p=>p.t.d||p.p.d||'').filter(Boolean).sort().pop()||'', idle=lastD?daysBetween(lastD,todayWIB())-1:null;
       const payD=x.g.map(d=>d.d).filter(Boolean).sort()[0]||'', payIdle=payD?daysBetween(payD,todayWIB())-1:null, sisa=`${x.lf?x.lf+' foto slide':''}${x.lf&&x.lv?' + ':''}${x.lv?x.lv+' video':''}`;
-      const stale=(sl==='Sebagian'&&idle!=null&&idle>=3)||(sl==='Belum posting'&&payIdle!=null&&payIdle>=3);
+      const stale=(sl==='Sebagian'&&idle!=null&&idle>=STALE_DAYS)||(sl==='Belum posting'&&payIdle!=null&&payIdle>=STALE_DAYS);
       const tip=!stale?'':sl==='Belum posting'?`Sudah dibayar sejak ${dLabel(payD)} (${payIdle} hari) tapi belum ada postingan sama sekali. ${sisa} belum diposting.`:`Belum ada postingan terbaru selama ${idle} hari (terakhir ${dLabel(lastD)}). Sisa ${sisa} belum diposting.`;
       const pays=x.g.map(d=>`${d.d?dLabel(d.d):'?'}: ${d.foto?d.foto+' post foto slide':''}${d.foto&&d.video?' + ':''}${d.video?d.video+' post video':''} · ${Rp(d.amt)}`).join(' &nbsp;|&nbsp; ');
       const AU=PU.get(handleKey(x.u)), AD=adsAdd(adsSum(PA,x.posts.map(p=>p.t.pid)),AU);
@@ -5228,6 +5229,6 @@ $('shBtn').addEventListener('click',shModal);
 })();
 
 </script>
-<script>(function(){var B='20261111104849';function chk(){if(!/github\.io$/.test(location.hostname))return;fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/ORNA_BUILD='(\d+)'/);if(!m||m[1]===B)return;if(location.search.indexOf("v="+m[1])>=0)return;var d=document.createElement("div");d.textContent="Versi baru dashboard tersedia · memuat ulang…";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8579b;color:#fff;padding:10px 16px;font:600 14px system-ui;text-align:center";document.body.appendChild(d);setTimeout(function(){location.replace(location.pathname+"?v="+m[1]+location.hash)},700)}).catch(function(){})}window.ORNA_BUILD=B;setTimeout(chk,1200);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
-<!-- ORNA_BUILD='20261111104849' -->
+<script>(function(){var B='20261111153134';function chk(){if(!/github\.io$/.test(location.hostname))return;fetch(location.pathname+"?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var m=t.match(/ORNA_BUILD='(\d+)'/);if(!m||m[1]===B)return;if(location.search.indexOf("v="+m[1])>=0)return;var d=document.createElement("div");d.textContent="Versi baru dashboard tersedia · memuat ulang…";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8579b;color:#fff;padding:10px 16px;font:600 14px system-ui;text-align:center";document.body.appendChild(d);setTimeout(function(){location.replace(location.pathname+"?v="+m[1]+location.hash)},700)}).catch(function(){})}window.ORNA_BUILD=B;setTimeout(chk,1200);document.addEventListener("visibilitychange",function(){if(!document.hidden)chk()})})();</script>
+<!-- ORNA_BUILD='20261111153134' -->
 </body></html>
